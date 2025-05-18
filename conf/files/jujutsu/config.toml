@@ -1,0 +1,7 @@
+[ui]
+conflict-marker-style = "git"
+editor = "emacsclient -a nvim -r"
+
+[user]
+email = "krisbalintona@gmail.com"
+name = "Kristoffer Balintona"

@@ -16,6 +16,7 @@
   #:use-module (gnu home services ssh)
   #:use-module (gnu services)
   #:use-module (guix gexp)
+  #:use-module (gnu home services)
   #:use-module (gnu home services shells)
   #:use-module (krisb packages jujutsu))
 
@@ -74,7 +75,6 @@
 				       (identity-file "~/.ssh/id_ed25519"))))))
 	     (service home-fish-service-type
 		      (home-fish-configuration
-		       (environment-variables '(("DISPLAY" . ":0")))
 		       ;; These files are appended to
 		       ;; ~/.config/fish/config.fish
 		       (config (list (local-file
@@ -89,7 +89,13 @@
 		       (bashrc (list (local-file "files/bash/.bashrc" "bashrc")))
 		       (bash-profile (list (local-file
 					    "files/bash/.bash_profile"
-					    "bash_profile"))))))
+					    "bash_profile")))))
+	     (simple-service 'krisb-wslg-display-service
+			     home-environment-variables-service-type
+			     '(("DISPLAY" . ":0")))
+	     (service home-xdg-configuration-files-service-type
+		      `(("git/config" ,(local-file "files/git/config"))
+			("jj/config.toml" ,(local-file "files/jujutsu/config.toml")))))
             %base-home-services))))
 
 krisb-home-environment
