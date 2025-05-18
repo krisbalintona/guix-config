@@ -7,20 +7,19 @@
   #:use-module (guix packages)
   #:use-module (guix profiles)
   #:use-module (ice-9 pretty-print)
-  #:use-module (srfi srfi-1))
+  #:use-module (srfi srfi-1)
+  #:use-module (gnu services desktop)
+  #:use-module (gnu packages shells)
+  #:use-module (gnu services)
+  #:use-module (gnu services shepherd)
+  #:use-module (guix gexp)
+  #:use-module (gnu packages base))
 
-(use-modules (gnu)
-	     (gnu packages shells)
-	     (gnu services)
-             (gnu services shepherd)
-             (guix gexp)
-	     (gnu packages base))	; For coreutils
-
-;; Workaround for WSL2.  See
-;; https://github.com/microsoft/WSL/issues/11261
+;; Workarounds for WSL2
 (define %xdg-runtime-dir "/run/user/1000")
 
-(define symlink-wayland-service
+;; See https://github.com/microsoft/WSL/issues/11261
+(define krisb-symlink-wayland-service
   (shepherd-service
    (provision '(symlink-wayland-socket))
    (documentation "Symlink Wayland socket to XDG_RUNTIME_DIR for WSL2.")
@@ -40,13 +39,34 @@
 	      (format #t "Symlinked successfully!\n")
               #t))))
 
-(define symlink-wayland-service-type
+;; See https://github.com/microsoft/WSL/issues/10846
+(define krisb-xdg-runtime-dir-ownership-service
+  (shepherd-service
+   (provision '(fix-xdg-runtime-dir-ownership))
+   (requirement '(symlink-wayland-socket))
+   (documentation "Ensure correct ownership and permissions of XDG_RUNTIME_DIR for WSL2.")
+   (one-shot? #t)
+   (start #~(lambda _
+              (use-modules (ice-9 format))
+              (let ((dir #$%xdg-runtime-dir))
+                (format #t "Ensuring directory exists: ~a\n" dir)
+                (mkdir-p dir)
+                (format #t "Changing ownership to UID 1000, GID 1000...\n")
+		;; TODO: Don’t hardcode my personal user?
+		(system* "sudo" "chown" "-R" "krisbalintona:users" dir)
+		(format #t "Setting permissions to 700...\n")
+		(system* "sudo" "chmod" "-R" "700" dir)
+		(format #t "All done!\n")
+		#t)))))
+
+(define krisb-wsl-correct-xdg-runtime-dir-service-type
   (service-type
-   (name 'symlink-wayland)
+   (name 'wsl-corrections)
    (description "Workaround for symlinking /mnt/wslg/ wayland sockets to XDG_RUNTIME_DIR.")
    (extensions
     (list (service-extension shepherd-root-service-type
-                             (const (list symlink-wayland-service)))))
+                             (const (list krisb-symlink-wayland-service
+					  krisb-xdg-runtime-dir-ownership-service)))))
    (default-value #f)))
 
 (define-public wsl-operating-system
@@ -88,7 +108,7 @@
      (append (list)
 	     %base-packages))
 
-    (services (list (service symlink-wayland-service-type)
+    (services (list (service krisb-wsl-correct-xdg-runtime-dir-service-type)
 		    (service guix-service-type)
                     (service special-files-service-type
                              `(("/usr/bin/env" ,(file-append coreutils "/bin/env"))))))))
