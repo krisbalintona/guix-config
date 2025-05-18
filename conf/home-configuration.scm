@@ -62,6 +62,7 @@
    ;; services, run 'guix home search KEYWORD' in a terminal.
    (services
     (append (list
+	     ;; Ssh
 	     (service home-openssh-service-type
 		      (home-openssh-configuration
 		       (add-keys-to-agent "yes")
@@ -73,9 +74,14 @@
 			 (openssh-host (name "github.com")
 				       (user "krisbalintona")
 				       (identity-file "~/.ssh/id_ed25519"))))))
+	     ;; Config files
+	     (service home-xdg-configuration-files-service-type
+		      `(("git/config" ,(local-file "files/git/config"))
+			("jj/config.toml" ,(local-file "files/jujutsu/config.toml"))))
+	     ;; Shells
 	     (service home-fish-service-type
 		      (home-fish-configuration
-		       ;; These files are appended to
+		       ;; These are appended to
 		       ;; ~/.config/fish/config.fish
 		       (config (list (local-file
 				      "files/fish/keychain.fish"
@@ -92,10 +98,7 @@
 					    "bash_profile")))))
 	     (simple-service 'krisb-wslg-display-service
 			     home-environment-variables-service-type
-			     '(("DISPLAY" . ":0")))
-	     (service home-xdg-configuration-files-service-type
-		      `(("git/config" ,(local-file "files/git/config"))
-			("jj/config.toml" ,(local-file "files/jujutsu/config.toml")))))
+			     '(("DISPLAY" . ":0"))))
             %base-home-services))))
 
 krisb-home-environment
