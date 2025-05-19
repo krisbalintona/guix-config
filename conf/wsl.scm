@@ -13,7 +13,8 @@
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (guix gexp)
-  #:use-module (gnu packages base))
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages certs))
 
 ;; Workarounds for WSL2
 (define %xdg-runtime-dir "/run/user/1000")
@@ -26,17 +27,17 @@
    (one-shot? #t)
    (start #~(lambda _
               (use-modules (ice-9 popen)
-			   (ice-9 format))
-	      (format #t "Making ~a if necessary..." #$%xdg-runtime-dir)
-	      (mkdir-p #$%xdg-runtime-dir)
-	      (format #t "Starting symlinking...\n")
+                           (ice-9 format))
+              (format #t "Making ~a if necessary..." #$%xdg-runtime-dir)
+              (mkdir-p #$%xdg-runtime-dir)
+              (format #t "Starting symlinking...\n")
               (system* #$(file-append coreutils "/bin/ln") "-sf"
                        "/mnt/wslg/runtime-dir/wayland-0"
                        (string-append #$%xdg-runtime-dir "/wayland-0"))
               (system* #$(file-append coreutils "/bin/ln") "-sf"
                        "/mnt/wslg/runtime-dir/wayland-0.lock"
                        (string-append #$%xdg-runtime-dir "/wayland-0.lock"))
-	      (format #t "Symlinked successfully!\n")
+              (format #t "Symlinked successfully!\n")
               #t))))
 
 ;; See https://github.com/microsoft/WSL/issues/10846
@@ -52,12 +53,12 @@
                 (format #t "Ensuring directory exists: ~a\n" dir)
                 (mkdir-p dir)
                 (format #t "Changing ownership to UID 1000, GID 1000...\n")
-		;; TODO: Don’t hardcode my personal user?
-		(system* "sudo" "chown" "-R" "krisbalintona:users" dir)
-		(format #t "Setting permissions to 700...\n")
-		(system* "sudo" "chmod" "-R" "700" dir)
-		(format #t "All done!\n")
-		#t)))))
+                ;; TODO: Don’t hardcode my personal user?
+                (system* "sudo" "chown" "-R" "krisbalintona:users" dir)
+                (format #t "Setting permissions to 700...\n")
+                (system* "sudo" "chmod" "-R" "700" dir)
+                (format #t "All done!\n")
+                #t)))))
 
 (define krisb-wsl-correct-xdg-runtime-dir-service-type
   (service-type
@@ -66,50 +67,50 @@
    (extensions
     (list (service-extension shepherd-root-service-type
                              (const (list krisb-symlink-wayland-service
-					  krisb-xdg-runtime-dir-ownership-service)))))
+                                          krisb-xdg-runtime-dir-ownership-service)))))
    (default-value #f)))
 
 (define-public wsl-operating-system
   (operating-system
-    (host-name "Guix-WSL")
-    (timezone "America/Chicago")
-    (locale "en_US.utf8")
+   (host-name "Guix-WSL")
+   (timezone "America/Chicago")
+   (locale "en_US.utf8")
 
-    ;; User accounts
-    (users (cons (user-account
-                  (name "krisbalintona")
-                  (group "users")
-                  (supplementary-groups '("wheel"))
-		  (shell (file-append fish "/bin/fish")))
-                 %base-user-accounts))
+   ;; User accounts
+   (users (cons (user-account
+                 (name "krisbalintona")
+                 (group "users")
+                 (supplementary-groups '("wheel"))
+                 (shell (file-append fish "/bin/fish")))
+                %base-user-accounts))
 
-    (kernel hello)
-    (initrd (lambda* (. rest) (plain-file "dummyinitrd" "dummyinitrd")))
-    (initrd-modules '())
-    (firmware '())
+   (kernel hello)
+   (initrd (lambda* (. rest) (plain-file "dummyinitrd" "dummyinitrd")))
+   (initrd-modules '())
+   (firmware '())
 
-    (bootloader
-     (bootloader-configuration
+   (bootloader
+    (bootloader-configuration
+     (bootloader
       (bootloader
-       (bootloader
-	(name 'dummybootloader)
-	(package hello)
-	(configuration-file "/dev/null")
-	(configuration-file-generator (lambda* (. rest) (computed-file "dummybootloader" #~(mkdir #$output))))
-	(installer #~(const #t))))))
+       (name 'dummybootloader)
+       (package hello)
+       (configuration-file "/dev/null")
+       (configuration-file-generator (lambda* (. rest) (computed-file "dummybootloader" #~(mkdir #$output))))
+       (installer #~(const #t))))))
 
-    (file-systems (list (file-system
-                          (device "/dev/sdb")
-                          (mount-point "/")
-                          (type "ext4")
-                          (mount? #t))))
+   (file-systems (list (file-system
+                        (device "/dev/sdb")
+                        (mount-point "/")
+                        (type "ext4")
+                        (mount? #t))))
 
-    (packages
-     (append (list)
-	     %base-packages))
+   (packages
+    (append (list)
+            %base-packages))
 
-    (services (list (service krisb-wsl-correct-xdg-runtime-dir-service-type)
-		    (service guix-service-type)
+   (services (list (service krisb-wsl-correct-xdg-runtime-dir-service-type)
+                    (service guix-service-type)
                     (service special-files-service-type
                              `(("/usr/bin/env" ,(file-append coreutils "/bin/env"))))))))
 
