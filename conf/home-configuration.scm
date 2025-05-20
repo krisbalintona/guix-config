@@ -5,6 +5,7 @@
 ;; "Replicating Guix" section in the manual.
 
 (define-module (conf home-configuration)
+  #:use-module (guix gexp)
   #:use-module (gnu home)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
@@ -12,10 +13,11 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages monitoring)
-  :use-module (gnu packages crypto)
-  #:use-module (gnu home services ssh)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu services)
-  #:use-module (guix gexp)
+  #:use-module (gnu home services syncthing)
+  #:use-module (gnu home services ssh)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
   #:use-module (krisb packages jujutsu)
@@ -87,6 +89,39 @@
 
    (services
     (append (list
+             ;; Syncthing
+             (service home-syncthing-service-type
+                      (let* ((wsl-arch-device
+                              (syncthing-device
+                               (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
+                               (name "G14 2024 Arch WSL")))
+                             (mobile-device
+                              (syncthing-device
+                               (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
+                               (name "OnePlus 7 Pro")))
+                             (agenda-folder
+                              (syncthing-folder
+                               (id "k4vqh-rny7b")
+                               (label "Agenda")
+                               (path "~/Documents/org-database/agenda/")
+                               (devices (list wsl-arch-device mobile-device))))
+                             (notes-folder
+                              (syncthing-folder
+                               (id "qtuzy-ufufb")
+                               (label "Notes")
+                               (path "~/Documents/org-database/notes")
+                               (devices (list wsl-arch-device mobile-device)))))
+                        (for-home
+                         (syncthing-configuration
+                          (arguments (list "--no-default-folder"))
+                          (user "krisbalintona") ; My user
+                          (config-file
+                           (syncthing-config-file
+                            ;; We use a non-standard port because we are on WSL
+                            ;; with other distros and we want them using
+                            ;; different ports
+                            (gui-address "127.0.0.1:8386")
+                            (folders (list agenda-folder notes-folder))))))))
              ;; Ssh
              (service home-openssh-service-type
                       (home-openssh-configuration
@@ -114,8 +149,7 @@
                              '(("SSL_CERT_DIR" . "$HOME/.guix-profile/etc/ssl/certs")
                                ("SSL_CERT_FILE" . "$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt")
                                ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
-                               ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")
-                               ))
+                               ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")))
              ;; Shells
              (service home-fish-service-type
                       (home-fish-configuration
