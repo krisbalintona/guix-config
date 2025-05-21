@@ -22,7 +22,8 @@
   #:use-module (gnu home services shells)
   #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
-  #:use-module (krisb packages atuin))
+  #:use-module (krisb packages atuin)
+  #:use-module (krisb packages emacs))
 
 (define krisb-home-environment
   (home-environment
@@ -65,8 +66,11 @@
                 "make"
                 "atuin-bin" ; Don't forget to log in and sync atuin on first install
                 ;; Emacs
-                "emacs-master"
-                "emacs-guix"
+		;; 2025-05-21: Custom Emacs build.  I use pgtk for
+		;; support of the alpha-background frame parameter.
+		;; emacs-master-pgtk also suffices for this purpose
+                "emacs-master-custom"
+		"emacs-guix"
                 "emacs-arei" "guile-next" "guile-ares-rs"
                 "jujutsu-bin"
                 "patch"                  ; Needed for vc-jj
