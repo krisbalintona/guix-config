@@ -59,6 +59,7 @@
                "fzf"
                "ripgrep"
                "font-iosevka"
+	       "xdg-utils"
 	       "xdg-user-dirs"
 	       "make"
                ;; Emacs
