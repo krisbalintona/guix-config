@@ -1,0 +1,17 @@
+[database]
+path=/home/krisbalintona/Documents/emails
+
+[maildir]
+synchronize_flags=true
+
+[new]
+ignore=/.*[.](json|lock|bak)$/
+tags=unread;inbox
+
+[search]
+exclude_tags=deleted
+
+[user]
+name=Kristoffer Balintona
+other_email=kristoffer_balintona@alumni.brown.edu
+primary_email=krisbalintona@gmail.com

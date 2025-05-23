@@ -96,7 +96,9 @@
                "font-jetbrains-mono-nerd-font"
                "texinfo"               ; To make info files
                "plocate"               ; For consult
-               )))
+               ;; TODO 2025-05-23: Add xargs and bash as dependencies
+               ;; when I create a “notmuch” module
+               "notmuch")))
 
    (services
     (append (list
@@ -151,8 +153,10 @@
                              `(("git/config" ,(local-file "files/git/config"))
                                ("jj/config.toml"
                                 ,(local-file "files/jujutsu/config.toml"))
-                               ("atuin/config.toml"
-                                ,(local-file "files/atuin/config.toml"))))
+                               ;; ("atuin/config.toml"
+                               ;;  ,(local-file "files/atuin/config.toml"))
+                               ("notmuch/default"
+                                ,(local-file "files/notmuch" #:recursive? #t))))
              ;; WSL2-specific
              (simple-service 'krisb-wslg-display-service-type
                              home-environment-variables-service-type
