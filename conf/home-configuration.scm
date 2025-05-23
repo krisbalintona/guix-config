@@ -65,6 +65,7 @@
                 "xdg-user-dirs"
                 "make"
                 "atuin-bin" ; Don't forget to log in and sync atuin on first install
+                "wl-clipboard"
                 ;; Emacs
 		;; 2025-05-21: Custom Emacs build.  I use pgtk for
 		;; support of the alpha-background frame parameter.
