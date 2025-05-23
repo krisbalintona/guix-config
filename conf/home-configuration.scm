@@ -23,6 +23,7 @@
   #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
+  #:use-module (krisb packages lieer)
   #:use-module (krisb packages emacs))
 
 (define krisb-home-environment
@@ -66,6 +67,7 @@
                "make"
                "atuin-bin" ; Don't forget to log in and sync atuin on first install
                "wl-clipboard"
+               "python-lieer"
                ;; Emacs
                ;; 2025-05-21: Custom Emacs build.  I use pgtk for
                ;; support of the alpha-background frame parameter.
