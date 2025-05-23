@@ -75,7 +75,10 @@
                 "jujutsu-bin"
                 "patch"                  ; Needed for vc-jj
                 "emacs-pdf-tools"
-                "enchant" "emacs-jinx" "gcc-toolchain"
+                "enchant" "emacs-jinx"
+		"aspell" "aspell-dict-en"
+		"hunspell" "hunspell-dict-en" "hunspell-dict-en-us"
+		"nuspell"
                 "hugo"
                 "texlive-latexmk"
                 "emacs-lsp-booster"
