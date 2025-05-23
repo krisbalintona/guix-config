@@ -110,8 +110,8 @@
             %base-packages))
 
    (services (list (service krisb-wsl-correct-xdg-runtime-dir-service-type)
-                    (service guix-service-type)
-                    (service special-files-service-type
-                             `(("/usr/bin/env" ,(file-append coreutils "/bin/env"))))))))
+                   (service guix-service-type)
+                   (service special-files-service-type
+                            `(("/usr/bin/env" ,(file-append coreutils "/bin/env"))))))))
 
 wsl-operating-system
