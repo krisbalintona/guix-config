@@ -15,11 +15,14 @@
   #:use-module (gnu packages monitoring)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages wordnet)
   #:use-module (gnu services)
+  #:use-module (gnu services dict)
   #:use-module (gnu home services syncthing)
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
+  #:use-module (gnu home services dict)
   #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
@@ -100,10 +103,33 @@
                "plocate"               ; For consult
                ;; TODO 2025-05-23: Add xargs and bash as dependencies
                ;; when I create a “notmuch” module
-               "notmuch")))
+               "notmuch"
+               "dico" "gcide" "wordnet")))
 
    (services
     (append (list
+             ;; FIXME 2025-05-24: Currently does not work, at least in
+             ;; WSLg where I am writing this.  Although the non-inetd
+             ;; mode version works (tested while running manually in
+             ;; the CLI), inetd mode gives troubles.  For now I leave
+             ;; this in, since my guesss is that it should be
+             ;; sufficient in non-WSLg systems.
+             ;; Dictd (dictionary server implementation)
+             (service home-dicod-service-type
+                      (for-home
+                       (dicod-configuration
+                        (handlers (list
+                                   (dicod-handler
+                                    (name "wordnet")
+                                    (module "wordnet")
+                                    (options
+                                     (list #~(string-append "wnhome=" #$wordnet))))))
+                        (databases (list
+                                    (dicod-database
+                                     (name "wordnet")
+                                     (complex? #t)
+                                     (handler "wordnet"))
+                                    %dicod-database:gcide)))))
              ;; Syncthing
              (service home-syncthing-service-type
                       (let* ((wsl-arch-device
