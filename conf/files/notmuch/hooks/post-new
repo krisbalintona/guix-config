@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # post-new --- Notmuch rules that run after notmuch new
 
