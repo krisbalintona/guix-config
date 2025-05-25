@@ -211,8 +211,8 @@
                               `(("git/config" ,(local-file "files/git/config"))
                                 ("jj/config.toml"
                                  ,(local-file "files/jujutsu/config.toml"))
-                                ;; ("atuin/config.toml"
-                                ;;  ,(local-file "files/atuin/config.toml"))
+                                ("atuin/config.toml"
+                                 ,(local-file "files/atuin/config.toml"))
                                 ("notmuch/default"
                                  ,(local-file "files/notmuch" #:recursive? #t))))
               ;; WSL2-specific
