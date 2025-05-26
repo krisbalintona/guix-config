@@ -1,0 +1,28 @@
+# Configuration file for lore2maildir (l2md).  Documentation found:
+# https://kernel.googlesource.com/pub/scm/linux/kernel/git/dborkman/l2md/+/refs/heads/master/README
+
+[general]
+base = ~/Documents/emails/l2md/metadata # l2d metadata
+maildir = ~/Documents/emails/l2md/other # Default maildir
+period = 120                    # Update interval (if not oneshot)
+oneshot = 1
+
+# https://yhetil.org/guix-user
+[repo guix-help]
+url = https://yhetil.org/guix-user/0
+maildir = ~/Documents/emails/l2md/guix-help
+
+# https://yhetil.org/guix-patches
+[repo guix-patches]
+url = https://yhetil.org/guix-patches/1
+maildir = ~/Documents/emails/l2md/guix-patches
+
+# https://yhetil.org/guix-devel
+[repo guix-devel]
+url = https://yhetil.org/guix-devel/0
+maildir = ~/Documents/emails/l2md/guix-devel
+
+# https://yhetil.org/mumi-bugs
+[repo mumi-bugs]
+url = https://yhetil.org/mumi-bugs/0
+maildir = ~/Documents/emails/l2md/mumi-bugs
