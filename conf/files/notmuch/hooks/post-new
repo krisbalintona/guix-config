@@ -9,9 +9,9 @@ notmuch tag +list +emacs +humanities -- from:emacs-humanities@gnu.org or to:emac
 notmuch tag +list +emacs -- from:help-gnu-emacs@gnu.org or to:help-gnu-emacs@gnu.org
 notmuch tag +list +emacs -- from:emacs-tangents@gnu.org or to:emacs-tangents@gnu.org
 notmuch tag +list +emacs -- from:@info-gnu-emacs@gnu.org or to:@info-gnu-emacs@gnu.org
-notmuch tag +list -- path:l2md/**
-notmuch tag +list +guix -- path:/^l2md\/guix-[^/]+\/.*/
-notmuch tag +list +guix +mumi -- path:l2md/mumi-bugs/**
+notmuch tag +list -- "path:l2md/**"
+notmuch tag +list +guix -- "path:/^l2md\/guix-[^/]+\/.*/"
+notmuch tag +list +guix +mumi -- "path:l2md/mumi-bugs/**"
 
 # Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
