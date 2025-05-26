@@ -115,15 +115,20 @@
                              home-shepherd-service-type
                              (list
                               (shepherd-timer '(l2md-sync-mailing-lists)
-                                              "*/5 * * * *" ; Run every 5 minutes
+                                              ;; Run every 15 minutes.
+                                              ;; Cannot run too
+                                              ;; frequently, otherwise
+                                              ;; risk an 504 timeout
+                                              ;; error when trying to
+                                              ;; fetch emails.
+                                              "*/15 * * * *"
                                               #~("sh" "-c"
                                                  #$(string-join '("echo 'Starting l2md fetch...'" "&&"
                                                                   "l2md" "--verbose" "&&"
                                                                   "echo 'Done fetching!'" "&&"
                                                                   "echo 'Starting notmuch new...'" "&&"
                                                                   "notmuch" "new" "&&"
-                                                                  "echo 'All done!'"))))
-                              ))
+                                                                  "echo 'All done!'"))))))
              ;; Syncing emails with lieer
              (simple-service 'gmi-sync
                              home-shepherd-service-type

@@ -4,7 +4,7 @@
 [general]
 base = ~/Documents/emails/l2md/metadata # l2d metadata
 maildir = ~/Documents/emails/l2md/other # Default maildir
-period = 120                    # Update interval (if not oneshot)
+period = 900                    # Update interval (if not oneshot)
 oneshot = 1
 
 # https://yhetil.org/guix-user
