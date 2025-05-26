@@ -2,18 +2,23 @@
 
 # post-new --- Notmuch rules that run after notmuch new
 
-# Mailing lists
-notmuch tag +list +emacs -- from:emacs-devel@gnu.org or to:emacs-devel@gnu.org
-notmuch tag +list +emacs -- from:emacs-orgmode@gnu.org or to:emacs-orgmode@gnu.org
-notmuch tag +list +emacs +humanities -- from:emacs-humanities@gnu.org or to:emacs-humanities@gnu.org
-notmuch tag +list +emacs -- from:help-gnu-emacs@gnu.org or to:help-gnu-emacs@gnu.org
-notmuch tag +list +emacs -- from:emacs-tangents@gnu.org or to:emacs-tangents@gnu.org
-notmuch tag +list +emacs -- from:@info-gnu-emacs@gnu.org or to:@info-gnu-emacs@gnu.org
+# * Mailing lists
+# Everything for the mailing lists I’ve subscribed to with my personal
+# emails or that I pull in locally using lore 2 maildir (l2md).  For
+# clarity, I give each mailing list at least its own line, rather than
+# grouping common tag operations into a single notmuch query.  We we
+# trade clarity for potential succinctness.
+notmuch tag +list +emacs -- 'List:"<emacs-devel.gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<help-gnu-emacs@gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<emacs-tangents@gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<bug-gnu-emacs.gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<emacs-orgmode@gnu.org>"'
+notmuch tag +list +emacs +humanities -- 'List:"<emacs-humanities@gnu.org>"'
 notmuch tag +list -- "path:l2md/**"
 notmuch tag +list +guix -- "path:/^l2md\/guix-[^/]+\/.*/"
 notmuch tag +list +guix +mumi -- "path:l2md/mumi-bugs/**"
 
-# Newsletters/subscriptions
+# * Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
 notmuch tag +list +humanities +writing -- from:amugofinsights@substack.com
 notmuch tag +sub +writing -- from:poem-a-day@poets.org
@@ -37,33 +42,37 @@ notmuch tag +sub +conspire_creative -- from:"The Profitable Author from Conspire
 notmuch tag +sub +crc -- from:"Brown University Curricular Resource Center"
 notmuch tag +sub +productivity -- from:dinigroup@kouroshdini.com
 
-# Updates
+# * Parents’ condo
+notmuch tag +condo -- from:"Belmont Row HOA"
+
+# * Job search
+notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
+
+# * Parents
+notmuch tag +parents -- 'from:christine.balintona@ascension.org or to:christine.balintona@ascension.org'
+notmuch tag +parents -- 'from:christine.balintona@gmail.com or to:christine.balintona@gmail.com'
+notmuch tag +parents -- 'from:CBalintona@presencehealth.org or to:CBalintona@presencehealth.org'
+notmuch tag +parents -- 'from:reyes.jason@gmail.com or to:reyes.jason@gmail.com'
+
+# * Updates
 notmuch tag +update -- from:"no.reply.alerts@chase.com"
 notmuch tag +update -- from:noreply@redditmail.com
 
-# Parents
-notmuch tag +parents -- from:christine.balintona@ascension.org or to:christine.balintona@ascension.org
-notmuch tag +parents -- from:christine.balintona@gmail.com or to:christine.balintona@gmail.com
-notmuch tag +parents -- from:CBalintona@presencehealth.org or to:CBalintona@presencehealth.org
-notmuch tag +parents -- from:reyes.jason@gmail.com or to:reyes.jason@gmail.com
+# * Spam
+# Generally I should take care of my inbox by unsubscribing from lists
+# I do not like.  But below are the exceptions.
+notmuch tag -inbox +spam +trash +sub -- 'from:jesse_polhemus@brown.edu' # Sender of CS department mailing lists
+notmuch tag -inbox +spam +trash +sub -- 'from:dsi@browndatascience.ccsend.com'
 
-# Condo
-notmuch tag +condo -- from:"Belmont Row HOA"
+# * Machine-local
 
-# Job search
-notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
-
-# Sent (sending from Gmail doesn't add the "sent" tag)
+# ** Sent
+# Sending from Gmail doesn't add the "sent" tag, so we manually add
+# it.
 notmuch tag +sent -- "(from:kristoffer_balintona@brown.edu or from:krisbalintona@gmail.com or from:kristoffer_balintona@alumni.brown.edu) and not path:drafts/**"
 
-# Spam
-notmuch tag -inbox +spam +trash +sub -- from:jesse_polhemus@brown.edu # Sender of CS department mailing lists
-notmuch tag -inbox +spam +trash +sub -- from:"GiGi's Playhouse"
-notmuch tag -inbox +spam +trash -- from:"Grammarly Insights"
-notmuch tag -inbox +spam +trash +sub -- from:dsi@browndatascience.ccsend.com
-
-# Local drafts
-notmuch tag +draft -inbox -unread -- path:drafts/**
-# Mark local email drafts that are more than 1 month old for deletion. See
-# pre-new hook for how I delete these files.
-notmuch tag +delete -- path:drafts/ and date:..1month
+# ** Email drafts
+notmuch tag +draft -inbox -unread -- 'path:drafts/**'
+# Mark local email drafts that are more than 1 month old for deletion.
+# See pre-new hook for how I delete these files.
+notmuch tag +delete -- 'path:drafts/** and date:..1month'
