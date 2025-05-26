@@ -15,3 +15,9 @@ exclude_tags=deleted
 name=Kristoffer Balintona
 other_email=kristoffer_balintona@alumni.brown.edu
 primary_email=krisbalintona@gmail.com
+
+[show]
+extra_headers=List-Id
+
+[index]
+header.List=List-Id
