@@ -30,12 +30,12 @@
 ;;     ;;    #:phases
 ;;     ;;    (modify-phases %standard-phases
 ;;     ;;      (add-after 'unpack 'set-openssl-env
-;;     ;; 	   (lambda* (#:key inputs #:allow-other-keys)
-;;     ;; 	     (setenv "OPENSSL_DIR" (assoc-ref inputs "openssl"))
-;;     ;; 	     #t)))))
+;;     ;;          (lambda* (#:key inputs #:allow-other-keys)
+;;     ;;            (setenv "OPENSSL_DIR" (assoc-ref inputs "openssl"))
+;;     ;;            #t)))))
 ;;     (native-inputs
 ;;      (list pkg-config ;; cmake clang
-;; 	   which))
+;;         which))
 ;;     (inputs
 ;;      (list openssl))
 ;;     (home-page "https://martinvonz.github.io/jj/latest/")
@@ -45,20 +45,20 @@
 
 (define-public jujutsu-bin
   (package
-    (name "jujutsu-bin")
-    (version "0.29.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/martinvonz/jj/releases/download/v"
-                           version "/jj-v" version "-x86_64-unknown-linux-musl.tar.gz"))
-       (sha256 (base32 "18x8c5a1yj1njb4p9y3n75fq4r6pr0l96vsvzh4v3ikyyyjpqb8b"))))
-    (supported-systems '("x86_64-linux"))
-    (build-system binary-build-system)
-    (arguments
-     `(#:install-plan
-       '(("jj" "bin/jj"))))
-    (home-page "https://martinvonz.github.io/jj/latest/")
-    (synopsis "Binary for jujuts, a Git-compatible VCS that is both simple and powerful")
-    (description "Jujutsu, a Git-compatible VCS that is both simple and powerful.")
-    (license license:asl2.0)))
+   (name "jujutsu-bin")
+   (version "0.29.0")
+   (source
+    (origin
+     (method url-fetch)
+     (uri (string-append "https://github.com/martinvonz/jj/releases/download/v"
+                         version "/jj-v" version "-x86_64-unknown-linux-musl.tar.gz"))
+     (sha256 (base32 "18x8c5a1yj1njb4p9y3n75fq4r6pr0l96vsvzh4v3ikyyyjpqb8b"))))
+   (supported-systems '("x86_64-linux"))
+   (build-system binary-build-system)
+   (arguments
+    `(#:install-plan
+      '(("jj" "bin/jj"))))
+   (home-page "https://martinvonz.github.io/jj/latest/")
+   (synopsis "Binary for jujuts, a Git-compatible VCS that is both simple and powerful")
+   (description "Jujutsu, a Git-compatible VCS that is both simple and powerful.")
+   (license license:asl2.0)))

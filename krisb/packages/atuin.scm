@@ -35,9 +35,9 @@
       #:install-plan '(("atuin-x86_64-unknown-linux-gnu/atuin" "bin/"))
       #:patchelf-plan `(("atuin-x86_64-unknown-linux-gnu/atuin" ("glibc" "gcc:lib")))
       #:phases (modify-phases %standard-phases
-                 (replace 'unpack
-                   (lambda* (#:key inputs source #:allow-other-keys)
-                     (invoke "tar" "-zxf" source))))))
+                              (replace 'unpack
+                                       (lambda* (#:key inputs source #:allow-other-keys)
+                                         (invoke "tar" "-zxf" source))))))
    (home-page "https://atuin.sh/")
    (synopsis "Sync, search and backup shell history")
    (description "Atuin lets you sync, search and backup shell history. It stores your shell
