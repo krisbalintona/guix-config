@@ -147,14 +147,14 @@
                                                "*/4 * * * *" ; Run every 4 minutes
                                                #~("sh" "-c"
                                                   ;; Run from $HOME
-                                                  #$(string-join '("cd" "Documents/emails/personal/" "&&"
+                                                  #$(string-join '("cd Documents/emails/personal/" "&&"
                                                                    "echo 'Starting sync...'" "&&"
-                                                                   "(" "gmi" "sync" "||"
+                                                                   "(" "gmi sync --verbose" "||"
                                                                    "{" "cp .state.gmailieer.json{.bak,}" "&&"
-                                                                   "gmi" "sync;" "}" ")" "&&"
+                                                                   "gmi sync --verbose;" "}" ")" "&&"
                                                                    "echo 'Done with sync!'" "&&"
                                                                    "echo 'Starting notmuch new...'" "&&"
-                                                                   "notmuch" "new" "&&"
+                                                                   "notmuch new" "&&"
                                                                    "echo 'All done!'"))))
                                (shepherd-timer '(gmi-sync-uni)
                                                "*/4 * * * *" ; Run every 4 minutes
@@ -162,12 +162,12 @@
                                                #~("sh" "-c"
                                                   #$(string-join '("cd" "Documents/emails/uni/" "&&"
                                                                    "echo 'Starting sync...'" "&&"
-                                                                   "(" "gmi" "sync" "||"
+                                                                   "(" "gmi sync --verbose" "||"
                                                                    "{" "cp .state.gmailieer.json{.bak,}" "&&"
-                                                                   "gmi" "sync;" "}" ")" "&&"
+                                                                   "gmi sync --verbose;" "}" ")" "&&"
                                                                    "echo 'Done with sync!'" "&&"
                                                                    "echo 'Starting notmuch new...'" "&&"
-                                                                   "notmuch" "new" "&&"
+                                                                   "notmuch new" "&&"
                                                                    "echo 'All done!'"))))))
               ;; FIXME 2025-05-24: Currently does not work, at least in
               ;; WSLg where I am writing this.  Although the non-inetd
