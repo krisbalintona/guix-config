@@ -17,6 +17,11 @@ maildir = ~/Documents/emails/l2md/guix-help
 url = https://yhetil.org/guix-patches/1
 maildir = ~/Documents/emails/l2md/guix-patches
 
+# https://yhetil.org/guix-bugs/
+[repo guix-bugs]
+url = https://yhetil.org/guix-bugs/0
+maildir = ~/Documents/emails/l2md/guix-bugs
+
 # https://yhetil.org/guix-devel
 [repo guix-devel]
 url = https://yhetil.org/guix-devel/0
