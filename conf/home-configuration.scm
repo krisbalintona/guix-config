@@ -169,28 +169,30 @@
                                                 "*/4 * * * *" ; Run every 4 minutes
                                                 #~("sh" "-c"
                                                    ;; Run from $HOME
-                                                   #$(string-join '("cd " personal-email-dir "&&"
-                                                                    "echo 'Starting sync...'" "&&"
-                                                                    "(" gmi-sync "||"
-                                                                    "{" gmi-rescue "&&"
-                                                                    gmi-sync "}" ")" "&&"
-                                                                    "echo 'Done with sync!'" "&&"
-                                                                    "echo 'Starting notmuch new...'" "&&"
-                                                                    notmuch-new "&&"
-                                                                    "echo 'All done!'"))))
+                                                   #$(string-join
+                                                      (list "cd " personal-email-dir "&&"
+                                                            "echo 'Starting sync...'" "&&"
+                                                            "(" gmi-sync "||"
+                                                            "{" gmi-rescue "&&"
+                                                            gmi-sync ";" "}" ")" "&&"
+                                                            "echo 'Done with sync!'" "&&"
+                                                            "echo 'Starting notmuch new...'" "&&"
+                                                            notmuch-new "&&"
+                                                            "echo 'All done!'"))))
                                 (shepherd-timer '(gmi-sync-uni)
                                                 "*/4 * * * *" ; Run every 4 minutes
                                                 ;; Run from $HOME
                                                 #~("sh" "-c"
-                                                   #$(string-join '("cd " uni-email-dir "&&"
-                                                                    "echo 'Starting sync...'" "&&"
-                                                                    "(" gmi-sync "||"
-                                                                    "{" gmi-rescue "&&"
-                                                                    gmi-sync "}" ")" "&&"
-                                                                    "echo 'Done with sync!'" "&&"
-                                                                    "echo 'Starting notmuch new...'" "&&"
-                                                                    notmuch-new "&&"
-                                                                    "echo 'All done!'")))))))
+                                                   #$(string-join
+                                                      (list "cd " uni-email-dir "&&"
+                                                            "echo 'Starting sync...'" "&&"
+                                                            "(" gmi-sync "||"
+                                                            "{" gmi-rescue "&&"
+                                                            gmi-sync ";" "}" ")" "&&"
+                                                            "echo 'Done with sync!'" "&&"
+                                                            "echo 'Starting notmuch new...'" "&&"
+                                                            notmuch-new "&&"
+                                                            "echo 'All done!'")))))))
              ;; FIXME 2025-05-24: Currently does not work, at least in
              ;; WSLg where I am writing this.  Although the non-inetd
              ;; mode version works (tested while running manually in
