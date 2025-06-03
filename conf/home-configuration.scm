@@ -157,7 +157,7 @@
                                    ;; next sync, but that is
                                    ;; preferable to my mail not being
                                    ;; synced unknowingly.
-                                   (gmi-sync "gmi sync --resume --verbose")
+                                   (gmi-sync "gmi sync --verbose")
                                    ;; This restores the gmi internal
                                    ;; state if gmi sync fails; this is
                                    ;; like a “last resort.”
@@ -264,7 +264,8 @@
              ;; Config files
              (simple-service 'symlink-config-files-service-type
                              home-xdg-configuration-files-service-type
-                             `(("git/config" ,(local-file "files/git/config"))
+                             `(("git/config"
+                                ,(local-file "files/git/config"))
                                ("jj/config.toml"
                                 ,(local-file "files/jujutsu/config.toml"))
                                ("atuin/config.toml"
