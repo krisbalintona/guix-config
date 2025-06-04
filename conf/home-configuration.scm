@@ -108,7 +108,8 @@
                ;; TODO 2025-05-23: Add xargs and bash as dependencies
                ;; when I create a “notmuch” module
                "notmuch"
-               "dico" "gcide" "wordnet")))
+               "dico" "gcide" "wordnet"
+               "vale" "python-proselint")))
 
    (services
     (append (list
