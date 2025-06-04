@@ -31,3 +31,8 @@ maildir = ~/Documents/emails/l2md/guix-devel
 [repo mumi-bugs]
 url = https://yhetil.org/mumi-bugs/0
 maildir = ~/Documents/emails/l2md/mumi-bugs
+
+# https://yhetil.org/notmuch/
+[repo mumi-bugs]
+url = https://yhetil.org/notmuch/0
+maildir = ~/Documents/emails/l2md/notmuch
