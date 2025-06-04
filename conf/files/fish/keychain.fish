@@ -4,5 +4,5 @@ set -lx SHELL fish
 
 if status is-login
     and status is-interactive
-    keychain --agents ssh --quick --quiet --inherit any-once --eval id_ed25519 --noask | source
+    keychain --quick --quiet --ssh-allow-forwarded --eval id_ed25519 --noask | source
 end
