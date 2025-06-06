@@ -79,7 +79,7 @@
                ;; 2025-05-21: Custom Emacs build.  I use pgtk for
                ;; support of the alpha-background frame parameter.
                ;; emacs-master-pgtk also suffices for this purpose
-               "emacs-master-custom"
+               "emacs-master-igc-custom"
                "emacs-guix"
                "emacs-arei" "guile-next" "guile-ares-rs"
                "jujutsu-bin"
