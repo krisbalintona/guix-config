@@ -71,8 +71,9 @@ notmuch tag -inbox +spam +trash +sub -- 'from:dsi@browndatascience.ccsend.com'
 # it.
 notmuch tag +sent -- "(from:kristoffer_balintona@brown.edu or from:krisbalintona@gmail.com or from:kristoffer_balintona@alumni.brown.edu) and not path:drafts/**"
 
-# ** Email drafts
+# ** Email drafts and sent
 notmuch tag +draft -inbox -unread -- 'path:drafts/**'
+notmuch tag -inbox -unread -- 'tag:sent'
 # Mark local email drafts that are more than 1 month old for deletion.
 # See pre-new hook for how I delete these files.
 notmuch tag +delete -- 'path:drafts/** and date:..1month'
