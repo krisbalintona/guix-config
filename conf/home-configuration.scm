@@ -262,6 +262,15 @@
                          (openssh-host (name "github.com")
                                        (user "krisbalintona")
                                        (identity-file "~/.ssh/id_ed25519"))))))
+             ;; Vale
+             (simple-service 'symlink-vale-config-file-service-type
+                             home-xdg-configuration-files-service-type
+                             `(("vale/.vale.ini"
+                                ,(local-file "files/vale/vale.ini"))))
+             (simple-service 'symlink-vale-styles-service-type
+                             home-files-service-type
+                             `((".local/share/vale/styles/krisb-custom"
+                                ,(local-file "files/vale/krisb-custom" #:recursive? #t))))
              ;; Config files
              (simple-service 'symlink-config-files-service-type
                              home-xdg-configuration-files-service-type
