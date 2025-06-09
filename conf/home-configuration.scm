@@ -6,6 +6,7 @@
 
 (define-module (conf home-configuration)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (gnu home)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
@@ -16,6 +17,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages wordnet)
+  #:use-module (gnu packages gnupg)
   #:use-module (gnu services)
   #:use-module (gnu services dict)
   #:use-module (gnu home services)
@@ -24,6 +26,9 @@
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services shells)
   #:use-module (gnu home services dict)
+  #:use-module (gnu home services gnupg)
+  #:use-module (sops secrets)
+  #:use-module (sops home services sops)
   #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
@@ -75,6 +80,7 @@
                "l2md"
                "zotero"
                "python"
+               "gnupg" "pinentry" "sops"
                ;; Emacs
                ;; 2025-05-21: Custom Emacs build.  I use pgtk for
                ;; support of the alpha-background frame parameter.
@@ -113,6 +119,35 @@
 
    (services
     (append (list
+             ;; SOPS
+             (service home-sops-secrets-service-type
+                      (home-sops-service-configuration
+                       (config
+                        (local-file (string-append (current-source-directory) "/../.sops.yaml")
+                                    ;; Paths in the store cannot start
+                                    ;; with dots
+                                    "sops.yaml"))
+                       (secrets
+                        (list
+                         (sops-secret
+                          (key '(".authinfo"))
+                          (file
+                           (local-file "files/secrets.yaml"))
+                          ;; Make file unwritable, and only my user
+                          ;; can read the file
+                          (permissions #o400))))))
+             (simple-service 'symlink-sops-files
+                             home-files-service-type
+                             `((".authinfo"
+                                ,(local-file (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo")
+                                             ;; Paths in the store
+                                             ;; cannot start with dots
+                                             "authinfo"))))
+             ;; GPG
+             (service home-gpg-agent-service-type
+                      (home-gpg-agent-configuration
+                       (pinentry-program
+                        (file-append pinentry "/bin/pinentry"))))
              ;; Maintain notmuch database
              (simple-service 'notmuch-maintain
                              home-shepherd-service-type
