@@ -14,3 +14,6 @@ wsl:
 
 home:
 	guix home reconfigure -L . conf/home-configuration.scm
+
+build:
+	guix build -L . $(PACKAGE)
