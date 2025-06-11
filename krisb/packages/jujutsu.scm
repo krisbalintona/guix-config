@@ -13,6 +13,8 @@
   #:use-module (gnu packages base)
   #:use-module ((nonguix build-system binary) #:select (binary-build-system)))
 
+;; NOTE 2025-06-10: Below is my WIP attempt at writing a non-binary
+;; build of jujutsu
 ;; (define-public jujutsu
 ;;   (package
 ;;     (name "jujutsu")
@@ -46,13 +48,13 @@
 (define-public jujutsu-bin
   (package
    (name "jujutsu-bin")
-   (version "0.29.0")
+   (version "0.30.0")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://github.com/martinvonz/jj/releases/download/v"
                          version "/jj-v" version "-x86_64-unknown-linux-musl.tar.gz"))
-     (sha256 (base32 "18x8c5a1yj1njb4p9y3n75fq4r6pr0l96vsvzh4v3ikyyyjpqb8b"))))
+     (sha256 (base32 "02zp11p11bz2rkgw7v5lz3nn1kzfawg0979kwg6pr1kiim1vah2m"))))
    (supported-systems '("x86_64-linux"))
    (build-system binary-build-system)
    (arguments
