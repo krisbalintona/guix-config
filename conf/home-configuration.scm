@@ -123,7 +123,7 @@
              (service home-sops-secrets-service-type
                       (home-sops-service-configuration
                        (config
-                        (local-file (string-append (current-source-directory) "/../.sops.yaml")
+                        (local-file "files/sops/.sops.yaml"
                                     ;; Paths in the store cannot start
                                     ;; with dots
                                     "sops.yaml"))
@@ -132,7 +132,7 @@
                          (sops-secret
                           (key '(".authinfo"))
                           (file
-                           (local-file "files/secrets.yaml"))
+                           (local-file "files/sops/secrets.yaml"))
                           ;; Make file unwritable, and only my user
                           ;; can read the file
                           (permissions #o400))))))
