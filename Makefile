@@ -7,6 +7,8 @@ pull:
 lock:
 	guix describe -f channels > ${LOCKFILE}
 
+upgrade: pull lock
+
 wsl:
 	sudo guix system reconfigure --no-bootloader -L . conf/wsl.scm
 
