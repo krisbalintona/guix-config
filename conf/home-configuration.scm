@@ -334,9 +334,6 @@
                       (home-fish-configuration
                        ;; These are appended to ~/.config/fish/config.fish
                        (config (list (local-file "files/fish/keychain.fish")
-                                     ;; TODO 2025-05-21: Is there a
-                                     ;; way to not have to create
-                                     ;; this small, specialized file?
                                      (local-file "files/atuin/atuin_init.fish")))))
              (service home-bash-service-type
                       (home-bash-configuration
@@ -344,14 +341,8 @@
                                   ("la" . "ls -la")
                                   ("ll" . "ls -l")
                                   ("ls" . "ls -p --color=auto")))
-                       (bashrc (list (local-file "files/bash/.bashrc" "bashrc")
-                                     ;; TODO 2025-05-21: Is there a
-                                     ;; way to not have to create
-                                     ;; this small, specialized file?
-                                     (local-file "files/atuin/atuin_init.bash")))
-                       (bash-profile (list (local-file
-                                            "files/bash/.bash_profile"
-                                            "bash_profile"))))))
+                       (bashrc (list (local-file "files/atuin/atuin_init.bash")))
+                       (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
             %base-home-services))))
 
 krisb-home-environment
