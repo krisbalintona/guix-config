@@ -8,15 +8,16 @@
 # clarity, I give each mailing list at least its own line, rather than
 # grouping common tag operations into a single notmuch query.  We we
 # trade clarity for potential succinctness.
-notmuch tag +list +emacs -- 'List:"<emacs-devel.gnu.org>"'
-notmuch tag +list +emacs -- 'List:"<help-gnu-emacs@gnu.org>"'
-notmuch tag +list +emacs -- 'List:"<emacs-tangents@gnu.org>"'
-notmuch tag +list +emacs -- 'List:"<bug-gnu-emacs.gnu.org>"'
-notmuch tag +list +emacs -- 'List:"<emacs-orgmode@gnu.org>"'
-notmuch tag +list +emacs +humanities -- 'List:"<emacs-humanities@gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<emacs-devel.gnu.org>" or to:"<emacs-devel.gnu.org>"'
+notmuch tag +list +emacs -- 'List:"<help-gnu-emacs@gnu.org>" or to:"help-gnu-emacs@gnu.org"'
+notmuch tag +list +emacs -- 'List:"<emacs-tangents@gnu.org>" or to:"emacs-tangents@gnu.org"'
+notmuch tag +list +emacs -- 'List:"<bug-gnu-emacs.gnu.org>" or to:"bug-gnu-emacs.gnu.org"'
+notmuch tag +list +emacs -- 'List:"<emacs-orgmode@gnu.org>" or to:"emacs-orgmode@gnu.org"'
+notmuch tag +list +emacs +humanities -- 'List:"<emacs-humanities@gnu.org>" or to:"emacs-humanities@gnu.org"'
 notmuch tag +list -- "path:l2md/**"
 notmuch tag +list +guix -- "path:/^l2md\/guix-[^/]+\/.*/"
 notmuch tag +list +guix +mumi -- "path:l2md/mumi-bugs/**"
+notmuch tag +list +guix +emacs -- '"List:<~abcdw/rde-discuss.lists.sr.ht>" or to:"~abcdw/rde-discuss.lists.sr.ht"'
 
 # * Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
@@ -50,6 +51,7 @@ notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
 
 # * Parents
 notmuch tag +parents -- 'from:christine.balintona@ascension.org or to:christine.balintona@ascension.org'
+notmuch tag +parents -- 'from:bebetyn@gmail.com or to:bebetyn@gmail.com'
 notmuch tag +parents -- 'from:christine.balintona@gmail.com or to:christine.balintona@gmail.com'
 notmuch tag +parents -- 'from:CBalintona@presencehealth.org or to:CBalintona@presencehealth.org'
 notmuch tag +parents -- 'from:reyes.jason@gmail.com or to:reyes.jason@gmail.com'
