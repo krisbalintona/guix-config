@@ -1,7 +1,72 @@
-[ui]
-conflict-marker-style = "git"
-editor = "emacsclient -a nvim -r"
+### COMMENTARY ###
+# I have designated "WIP" commits to be the descendants of all
+# git.private-commits commits.  All "left_behind" commits are commits
+# that are WIP but not at or after trunk() (e.g., the main bookmark).
 
 [user]
 email = "krisbalintona@gmail.com"
 name = "Kristoffer Balintona"
+
+[ui]
+conflict-marker-style = "git"
+editor = "emacsclient -a nvim -r"
+show-cryptographic-signatures = true
+
+[aliases]
+lr = ["log", "--reversed"]
+n = ["new"]
+retrunk = ["rebase", "-r", "left_behind()", "-d", "trunk()"]
+
+[revset-aliases]
+# Inspired by
+# https://github.com/jj-vcs/jj/discussions/5812#discussioncomment-12328051.
+# See https://jj-vcs.github.io/jj/latest/revsets/#string-patterns and
+# https://docs.rs/glob/latest/glob/struct.Pattern.html for an
+# explanation of jj's globbing syntax
+'wip()' = 'descendants(description(glob:"*[[][wW][iI][pP][]]*"))'
+'left_behind()' = '~(ancestors(trunk()) | descendants(trunk())) & wip()'
+
+[template-aliases]
+'left_behind(commit)' = 'commit.contained_in("left_behind()")'
+# Taken from
+# https://github.com/jj-vcs/jj/discussions/5812#discussioncomment-12320164.
+# Particularly useful in templates.log_node.
+'in_branch(commit)' = 'commit.contained_in("immutable_heads()..bookmarks()")'
+
+[templates]
+# Format jj config list to show the config variable type and path.
+# Taken from
+# https://jj-vcs.github.io/jj/latest/config/#default-template
+config_list = "builtin_config_list_detailed"
+# Add the output of diff.stat to the default commit description.
+# Modified from
+# https://jj-vcs.github.io/jj/latest/config/#default-description
+draft_commit_description = '''
+concat(
+  coalesce(description, default_commit_description, "\n"),
+  surround(
+    "\nJJ: This commit contains the following changes:\n", "",
+    indent("JJ:     ", diff.stat(72)),
+  ),
+)
+'''
+# Customize how nodes on the jj log graph look like.  Modified from a
+# combination of
+# https://jj-vcs.github.io/jj/latest/config/#graph-style and
+# https://github.com/jj-vcs/jj/discussions/5812#discussioncomment-12320164.
+# The final if statement matches nodes that are in a local branch that
+# would be pushed were that branch pushed
+log_node = '''
+coalesce(
+  if(!self, "🮀"),
+  if(current_working_copy, "@"), 
+  if(root, "┴"),
+  if(self && !current_working_copy && !conflict && left_behind(self), "⬚"),
+  if(self && !current_working_copy && !immutable && !conflict && in_branch(self), "◇"),
+  builtin_log_node,
+)
+'''
+
+[git]
+push-bookmark-prefix = "krisbalintona/push-"
+private-commits = 'wip()'    # These are commits that cannot be pushed
