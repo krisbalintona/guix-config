@@ -81,6 +81,7 @@
                "zotero"
                "python"
                "gnupg" "pinentry" "sops"
+               "mpv"
                ;; Emacs
                ;; 2025-05-21: Custom Emacs build.  I use pgtk for
                ;; support of the alpha-background frame parameter.
