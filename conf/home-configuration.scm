@@ -106,6 +106,7 @@
                "font-iosevka"
                "font-iosevka-aile-nerd-font"
                "font-iosevka-term-ss04-nerd-font"
+               "font-iosevka-ss11"
                "font-iosevka-ss11-nerd-font"
                "font-iosevka-term-ss11-nerd-font"
                "font-overpass-nerd-font"
