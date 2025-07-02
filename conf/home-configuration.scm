@@ -334,8 +334,14 @@
              ;; Certificates
              (simple-service 'krisb-ssl-certs ; Requires nss-certs package
                              home-environment-variables-service-type
-                             '(("SSL_CERT_DIR" . "$HOME/.guix-profile/etc/ssl/certs")
-                               ("SSL_CERT_FILE" . "$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt")
+                             ;; NOTE: We install nss-certs via guix
+                             ;; home, so SSL_CERT_DIR is relative to
+                             ;; ~/.guix-home/.  If nss-certs is
+                             ;; installed via e.g. guix install, then
+                             ;; it would be relative to
+                             ;; ~/.guix-profile/.
+                             '(("SSL_CERT_DIR" . "$HOME/.guix-home/profile/etc/ssl/certs")
+                               ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
                                ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
                                ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")))
              ;; REVIEW 2025-07-02: Don't remember if all of these are
