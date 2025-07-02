@@ -43,6 +43,7 @@
               (list
                ;; Basic stuff
                "nss-certs"
+               "glibc-locales"
                "coreutils"
                "findutils"
                "grep"
@@ -328,6 +329,8 @@
              (simple-service 'krisb-wslg-display-service-type
                              home-environment-variables-service-type
                              '(("DISPLAY" . ":0")))
+             ;; REVIEW 2025-07-02: Don't remember if needed on Guix
+             ;; system or just a foreign distro.
              ;; Certificates
              (simple-service 'krisb-ssl-certs ; Requires nss-certs package
                              home-environment-variables-service-type
@@ -335,6 +338,19 @@
                                ("SSL_CERT_FILE" . "$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt")
                                ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
                                ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")))
+             ;; REVIEW 2025-07-02: Don't remember if all of these are
+             ;; foreign distro-only.
+             ;; Guix on a foreign distro
+             (simple-service 'krisb-foreign-distro
+                             home-environment-variables-service-type
+                             '(;; GUIX_PROFILE
+                               ("GUIX_PROFILE" . "$HOME/.guix-profile")
+                               ;; Guile stuff
+                               ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
+                               ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
+                               ;; Locales.  Requires the glibc-locales
+                               ;; package
+                               ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale")))
              ;; Shells
              (service home-fish-service-type
                       (home-fish-configuration
