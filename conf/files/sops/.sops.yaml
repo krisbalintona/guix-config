@@ -1,2 +1,8 @@
+keys:
+  - &age_passwordless age1j6ckqzahshwqczq66u9xm6g07yecxh4sr4f5tvz4qkg8mx36f9ws93esl8
+  - &gpg D102 5112 713D 2931 39E3  BE1B 0A2A 8307 DFC5 9CEF
+  - &gpg_passwordless 1C3B BA16 1AF4 82A0 E0D8  929E 3CAC 1A1C 8486 F0C1
 creation_rules:
-  - pgp: 4FE6F01C3BD9CD1783EDA4C3D95EF597C3FEB9D3
+  - path_regex: ^secrets.yaml$
+    pgp: *gpg_passwordless
+    age: *age_passwordless
