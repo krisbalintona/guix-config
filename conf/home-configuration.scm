@@ -44,6 +44,7 @@
                ;; Basic stuff
                "nss-certs"
                "glibc-locales"
+               "man-db"
                "coreutils"
                "findutils"
                "grep"
