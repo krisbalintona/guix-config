@@ -42,6 +42,7 @@
    (packages (specifications->packages
               (list
                ;; Basic stuff
+               "nss-certs"
                "coreutils"
                "findutils"
                "grep"
@@ -325,7 +326,8 @@
              (simple-service 'krisb-wslg-display-service-type
                              home-environment-variables-service-type
                              '(("DISPLAY" . ":0")))
-             (simple-service 'krisb-ssl-certs
+             ;; Certificates
+             (simple-service 'krisb-ssl-certs ; Requires nss-certs package
                              home-environment-variables-service-type
                              '(("SSL_CERT_DIR" . "$HOME/.guix-profile/etc/ssl/certs")
                                ("SSL_CERT_FILE" . "$HOME/.guix-profile/etc/ssl/certs/ca-certificates.crt")
