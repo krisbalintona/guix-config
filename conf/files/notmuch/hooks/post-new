@@ -2,6 +2,15 @@
 
 # post-new --- Notmuch rules that run after notmuch new
 
+# * Add the inbox and unread tags
+# I set new.tags in my notmuch config to be empty.  Instead, we add
+# the inbox and unread tags to incoming email that don't come from
+# gmi-managed directories.  Consequently, we let notmuch tags for
+# gmi-managed emails be managed by gmi and untouched by notmuch new.
+# This approach also prevents the initial gmi pull/sync from adding
+# tags to every newly indexed email.
+notmuch tag +inbox +unread -- 'not (folder:/personal/ or folder:/uni/ or folder:/drafts/)'
+
 # * Mailing lists
 # Everything for the mailing lists I’ve subscribed to with my personal
 # emails or that I pull in locally using lore 2 maildir (l2md).  For
