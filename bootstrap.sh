@@ -8,7 +8,8 @@ MAIL_ROOT="$(notmuch config list | grep database.mail_root | cut -d'=' -f2-)"
 # ** Notmuch and lieer
 PERSONAL_MAILDIR=$MAIL_ROOT/personal
 UNI_MAILDIR=$MAIL_ROOT/uni
-GMI_FILES=$SCRIPT_DIR/conf/files/gmi
+GMI_CONFIG_FILES=$SCRIPT_DIR/conf/files/gmi
+GMI_CREDENTIAL_FILES="/run/user/$(id -u)/secrets/gmi-credentials"
 
 echo "       Bootstrapping notmch"
 
@@ -38,14 +39,18 @@ else
     echo "Notmuch database found."
 fi
 
-# Copy lieer files
-echo "Copying lieer files into email directories..."
+# FIXME 2025-07-02: Consider doing this symlinking in my guix home
+# configuration, how I symlink .authinfo from the files decrypted by
+# sops-guix.
+# Symlink lieer setting and credential files
+echo "Symlinking lieer setting files into email directories..."
 # Configuration files
-cp $GMI_FILES/personal-config.json $PERSONAL_MAILDIR/.gmailieer.json
-cp $GMI_FILES/uni-config.json $UNI_MAILDIR/.gmailieer.json
+ln -sf $GMI_CONFIG_FILES/personal-config.json $PERSONAL_MAILDIR/.gmailieer.json
+ln -sf $GMI_CONFIG_FILES/uni-config.json $UNI_MAILDIR/.gmailieer.json
+echo "Symlinking lieer credential files into email directories..."
 # Credentials
-cp $GMI_FILES/personal-credentials.json $PERSONAL_MAILDIR/.credentials.gmailieer.json
-cp $GMI_FILES/uni-credentials.json $UNI_MAILDIR/.credentials.gmailieer.json
+ln -sf $GMI_CREDENTIAL_FILES/personal $PERSONAL_MAILDIR/.credentials.gmailieer.json
+ln -sf $GMI_CREDENTIAL_FILES/uni $PERSONAL_MAILDIR/.credentials.gmailieer.json
 echo "Done!"
 
 # Initial gmi pulls

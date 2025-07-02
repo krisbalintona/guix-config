@@ -124,31 +124,18 @@
 
    (services
     (append
-     ;; SOPS
+     ;; Authinfo
      (list
-      (service home-sops-secrets-service-type
-               (home-sops-service-configuration
-                (config
-                 (local-file "files/sops/.sops.yaml"
-                             ;; Paths in the store cannot start
-                             ;; with dots
-                             "sops.yaml"))
-                (secrets
-                 (list
-                  (sops-secret
-                   (key '(".authinfo"))
-                   (file
-                    (local-file "files/sops/secrets.yaml"))
-                   ;; Make file unwritable, and only my user
-                   ;; can read the file
-                   (permissions #o400))))))
-      (simple-service 'symlink-sops-files
-                      home-files-service-type
-                      `((".authinfo"
-                         ,(local-file (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo")
-                                      ;; Paths in the store
-                                      ;; cannot start with dots
-                                      "authinfo")))))
+      (simple-service 'krisb-symlink-authinfo
+                      home-activation-service-type
+                      #~(begin
+                          (use-modules (guix build utils))
+                          (let* ((source (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo"))
+                                 (target (string-append (getenv "HOME") "/.authinfo")))
+                            (format #t "Symlinking ~a to ~a~%" source target)
+                            (when (file-exists? target)
+                              (delete-file target))
+                            (symlink source target)))))
      ;; GPG
      (list
       (service home-gpg-agent-service-type
@@ -304,6 +291,34 @@
                      ;; different ports
                      (gui-address "127.0.0.1:8386")
                      (folders (list agenda-folder notes-folder)))))))))
+     ;; SOPS
+     (list
+      (service home-sops-secrets-service-type
+               (home-sops-service-configuration
+                (config
+                 (local-file "files/sops/.sops.yaml"
+                             ;; Paths in the store cannot start with
+                             ;; dots
+                             "sops.yaml"))
+                (secrets
+                 (list
+                  (sops-secret
+                   (key '(".authinfo"))
+                   (file
+                    (local-file "files/sops/secrets.yaml"))
+                   ;; Make file unwritable, and only my user can read
+                   ;; the file
+                   (permissions #o400))
+                  (sops-secret
+                   (key '("gmi-credentials" "personal"))
+                   (file
+                    (local-file "files/sops/secrets.yaml"))
+                   (permissions #o400))
+                  (sops-secret
+                   (key '("gmi-credentials" "uni"))
+                   (file
+                    (local-file "files/sops/secrets.yaml"))
+                   (permissions #o400)))))))
      ;; Ssh
      (list
       (service home-openssh-service-type
