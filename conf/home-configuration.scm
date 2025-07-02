@@ -122,255 +122,285 @@
                "vale" "python-proselint")))
 
    (services
-    (append (list
-             ;; SOPS
-             (service home-sops-secrets-service-type
-                      (home-sops-service-configuration
-                       (config
-                        (local-file "files/sops/.sops.yaml"
-                                    ;; Paths in the store cannot start
-                                    ;; with dots
-                                    "sops.yaml"))
-                       (secrets
+    (append
+     ;; SOPS
+     (list
+      (service home-sops-secrets-service-type
+               (home-sops-service-configuration
+                (config
+                 (local-file "files/sops/.sops.yaml"
+                             ;; Paths in the store cannot start
+                             ;; with dots
+                             "sops.yaml"))
+                (secrets
+                 (list
+                  (sops-secret
+                   (key '(".authinfo"))
+                   (file
+                    (local-file "files/sops/secrets.yaml"))
+                   ;; Make file unwritable, and only my user
+                   ;; can read the file
+                   (permissions #o400))))))
+      (simple-service 'symlink-sops-files
+                      home-files-service-type
+                      `((".authinfo"
+                         ,(local-file (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo")
+                                      ;; Paths in the store
+                                      ;; cannot start with dots
+                                      "authinfo")))))
+     ;; GPG
+     (list
+      (service home-gpg-agent-service-type
+               (home-gpg-agent-configuration
+                (pinentry-program
+                 (file-append pinentry "/bin/pinentry")))))
+     ;; Notmuch
+     (list
+      (simple-service 'krisb-symlink-notmuch-config-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("notmuch/default"
+                         ,(local-file "files/notmuch" #:recursive? #t))))
+      (simple-service 'notmuch-maintain
+                      home-shepherd-service-type
+                      (list
+                       (shepherd-timer
+                        '(notmuch-compact)
+                        ;; Run every Friday at 9pm
+                        "0 21 * * 5"
+                        #~("notmuch" "compact")
+                        #:documentation "Compact notmuch mail database weekly."))))
+     ;; Pulling emails
+     (list
+      ;; Syncing mailing lists with lore2maildir (l2md)
+      (simple-service 'l2md-sync-mailing-lists
+                      home-shepherd-service-type
+                      (list
+                       (shepherd-timer '(l2md-sync-mailing-lists)
+                                       ;; Run every 15 minutes.
+                                       ;; Cannot run too
+                                       ;; frequently, otherwise
+                                       ;; risk an 504 timeout
+                                       ;; error when trying to
+                                       ;; fetch emails.
+                                       "*/15 * * * *"
+                                       #~("sh" "-c"
+                                          #$(string-join '("echo 'Starting l2md fetch...'" "&&"
+                                                           "l2md" "--verbose" "&&"
+                                                           "echo 'Done fetching!'" "&&"
+                                                           "echo 'Starting notmuch new...'" "&&"
+                                                           "notmuch" "new" "&&"
+                                                           "echo 'All done!'"))))))
+      (simple-service 'krisb-symlink-l2md-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("l2md/config"
+                         ,(local-file "files/l2md/config"))))
+      ;; Syncing emails with lieer
+      (simple-service 'gmi-sync
+                      home-shepherd-service-type
+                      (let ((personal-email-dir "Documents/emails/personal/")
+                            (uni-email-dir "Documents/emails/personal/")
+                            ;; For gmi sync, use --verbose to
+                            ;; have the most useful log
+                            ;; messages, and use --resume such
+                            ;; that in the case of a sudden
+                            ;; power off, the .lock file will
+                            ;; not cause a lock up.  Of course,
+                            ;; this may lead to the local
+                            ;; changes to be ignored until the
+                            ;; next sync, but that is
+                            ;; preferable to my mail not being
+                            ;; synced unknowingly.
+                            (gmi-sync "gmi sync --verbose")
+                            ;; This restores the gmi internal
+                            ;; state if gmi sync fails; this is
+                            ;; like a “last resort.”
+                            (gmi-rescue "cp .state.gmailieer.json{.bak,}")
+                            ;; Show as much as possible in the
+                            ;; logs.
+                            (notmuch-new "notmuch new --verbose"))
                         (list
-                         (sops-secret
-                          (key '(".authinfo"))
-                          (file
-                           (local-file "files/sops/secrets.yaml"))
-                          ;; Make file unwritable, and only my user
-                          ;; can read the file
-                          (permissions #o400))))))
-             (simple-service 'symlink-sops-files
-                             home-files-service-type
-                             `((".authinfo"
-                                ,(local-file (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo")
-                                             ;; Paths in the store
-                                             ;; cannot start with dots
-                                             "authinfo"))))
-             ;; GPG
-             (service home-gpg-agent-service-type
-                      (home-gpg-agent-configuration
-                       (pinentry-program
-                        (file-append pinentry "/bin/pinentry"))))
-             ;; Maintain notmuch database
-             (simple-service 'notmuch-maintain
-                             home-shepherd-service-type
-                             (list
-                              (shepherd-timer
-                               '(notmuch-compact)
-                               ;; Run every Friday at 9pm
-                               "0 21 * * 5"
-                               #~("notmuch" "compact")
-                               #:documentation "Compact notmuch mail database weekly.")))
-             ;; Syncing mailing lists with lore2maildir (l2md)
-             (simple-service 'l2md-sync-mailing-lists
-                             home-shepherd-service-type
-                             (list
-                              (shepherd-timer '(l2md-sync-mailing-lists)
-                                              ;; Run every 15 minutes.
-                                              ;; Cannot run too
-                                              ;; frequently, otherwise
-                                              ;; risk an 504 timeout
-                                              ;; error when trying to
-                                              ;; fetch emails.
-                                              "*/15 * * * *"
-                                              #~("sh" "-c"
-                                                 #$(string-join '("echo 'Starting l2md fetch...'" "&&"
-                                                                  "l2md" "--verbose" "&&"
-                                                                  "echo 'Done fetching!'" "&&"
-                                                                  "echo 'Starting notmuch new...'" "&&"
-                                                                  "notmuch" "new" "&&"
-                                                                  "echo 'All done!'"))))))
-             ;; Syncing emails with lieer
-             (simple-service 'gmi-sync
-                             home-shepherd-service-type
-                             (let ((personal-email-dir "Documents/emails/personal/")
-                                   (uni-email-dir "Documents/emails/personal/")
-                                   ;; For gmi sync, use --verbose to
-                                   ;; have the most useful log
-                                   ;; messages, and use --resume such
-                                   ;; that in the case of a sudden
-                                   ;; power off, the .lock file will
-                                   ;; not cause a lock up.  Of course,
-                                   ;; this may lead to the local
-                                   ;; changes to be ignored until the
-                                   ;; next sync, but that is
-                                   ;; preferable to my mail not being
-                                   ;; synced unknowingly.
-                                   (gmi-sync "gmi sync --verbose")
-                                   ;; This restores the gmi internal
-                                   ;; state if gmi sync fails; this is
-                                   ;; like a “last resort.”
-                                   (gmi-rescue "cp .state.gmailieer.json{.bak,}")
-                                   ;; Show as much as possible in the
-                                   ;; logs.
-                                   (notmuch-new "notmuch new --verbose"))
-                               (list
-                                (shepherd-timer '(gmi-sync-personal)
-                                                "*/4 * * * *" ; Run every 4 minutes
-                                                #~("sh" "-c"
-                                                   ;; Run from $HOME
-                                                   #$(string-join
-                                                      (list "cd " personal-email-dir "&&"
-                                                            "echo 'Starting sync...'" "&&"
-                                                            "(" gmi-sync "||"
-                                                            "{" gmi-rescue "&&"
-                                                            gmi-sync ";" "}" ")" "&&"
-                                                            "echo 'Done with sync!'" "&&"
-                                                            "echo 'Starting notmuch new...'" "&&"
-                                                            notmuch-new "&&"
-                                                            "echo 'All done!'"))))
-                                (shepherd-timer '(gmi-sync-uni)
-                                                "*/4 * * * *" ; Run every 4 minutes
-                                                ;; Run from $HOME
-                                                #~("sh" "-c"
-                                                   #$(string-join
-                                                      (list "cd " uni-email-dir "&&"
-                                                            "echo 'Starting sync...'" "&&"
-                                                            "(" gmi-sync "||"
-                                                            "{" gmi-rescue "&&"
-                                                            gmi-sync ";" "}" ")" "&&"
-                                                            "echo 'Done with sync!'" "&&"
-                                                            "echo 'Starting notmuch new...'" "&&"
-                                                            notmuch-new "&&"
-                                                            "echo 'All done!'")))))))
-             ;; FIXME 2025-05-24: Currently does not work, at least in
-             ;; WSLg where I am writing this.  Although the non-inetd
-             ;; mode version works (tested while running manually in
-             ;; the CLI), inetd mode gives troubles.  For now I leave
-             ;; this in, since my guesss is that it should be
-             ;; sufficient in non-WSLg systems.
-             ;; Dictd (dictionary server implementation)
-             (service home-dicod-service-type
-                      (for-home
-                       (dicod-configuration
-                        (handlers (list
-                                   (dicod-handler
-                                    (name "wordnet")
-                                    (module "wordnet")
-                                    (options
-                                     (list #~(string-append "wnhome=" #$wordnet))))))
-                        (databases (list
-                                    (dicod-database
-                                     (name "wordnet")
-                                     (complex? #t)
-                                     (handler "wordnet"))
-                                    %dicod-database:gcide)))))
-             ;; Syncthing
-             (service home-syncthing-service-type
-                      (let* ((wsl-arch-device
-                              (syncthing-device
-                               (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
-                               (name "G14 2024 Arch WSL")))
-                             (mobile-device
-                              (syncthing-device
-                               (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
-                               (name "OnePlus 7 Pro")))
-                             (agenda-folder
-                              (syncthing-folder
-                               (id "k4vqh-rny7b")
-                               (label "Agenda")
-                               (path "~/Documents/org-database/agenda/")
-                               (devices (list wsl-arch-device mobile-device))))
-                             (notes-folder
-                              (syncthing-folder
-                               (id "qtuzy-ufufb")
-                               (label "Notes")
-                               (path "~/Documents/org-database/notes")
-                               (devices (list wsl-arch-device mobile-device)))))
-                        (for-home
-                         (syncthing-configuration
-                          (arguments (list "--no-default-folder"))
-                          (user "krisbalintona") ; My user
-                          (config-file
-                           (syncthing-config-file
-                            ;; We use a non-standard port because we are on WSL
-                            ;; with other distros and we want them using
-                            ;; different ports
-                            (gui-address "127.0.0.1:8386")
-                            (folders (list agenda-folder notes-folder))))))))
-             ;; Ssh
-             (service home-openssh-service-type
-                      (home-openssh-configuration
-                       (add-keys-to-agent "yes")
-                       (hosts
-                        (list
-                         (openssh-host (name "gitlab.com")
-                                       (user "PreciousPudding")
-                                       (identity-file "~/.ssh/id_ed25519"))
-                         (openssh-host (name "github.com")
-                                       (user "krisbalintona")
-                                       (identity-file "~/.ssh/id_ed25519"))))))
-             ;; Vale
-             (simple-service 'symlink-vale-config-file-service-type
-                             home-xdg-configuration-files-service-type
-                             `(("vale/.vale.ini"
-                                ,(local-file "files/vale/vale.ini"))))
-             (simple-service 'symlink-vale-styles-service-type
-                             home-files-service-type
-                             `((".local/share/vale/styles/krisb-custom"
-                                ,(local-file "files/vale/krisb-custom" #:recursive? #t))))
-             ;; Config files
-             (simple-service 'symlink-config-files-service-type
-                             home-xdg-configuration-files-service-type
-                             `(("git/config"
-                                ,(local-file "files/git/config"))
-                               ("jj/config.toml"
-                                ,(local-file "files/jujutsu/config.toml"))
-                               ("atuin/config.toml"
-                                ,(local-file "files/atuin/config.toml"))
-                               ("notmuch/default"
-                                ,(local-file "files/notmuch" #:recursive? #t))
-                               ("l2md/config"
-                                ,(local-file "files/l2md/config"))
-                               ("enchant/enchant.ordering"
-                                ,(local-file "files/enchant/enchant.ordering"))))
-             ;; WSL2-specific
-             (simple-service 'krisb-wslg-display-service-type
-                             home-environment-variables-service-type
-                             '(("DISPLAY" . ":0")))
-             ;; REVIEW 2025-07-02: Don't remember if needed on Guix
-             ;; system or just a foreign distro.
-             ;; Certificates
-             (simple-service 'krisb-ssl-certs ; Requires nss-certs package
-                             home-environment-variables-service-type
-                             ;; NOTE: We install nss-certs via guix
-                             ;; home, so SSL_CERT_DIR is relative to
-                             ;; ~/.guix-home/.  If nss-certs is
-                             ;; installed via e.g. guix install, then
-                             ;; it would be relative to
-                             ;; ~/.guix-profile/.
-                             '(("SSL_CERT_DIR" . "$HOME/.guix-home/profile/etc/ssl/certs")
-                               ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
-                               ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
-                               ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")))
-             ;; REVIEW 2025-07-02: Don't remember if all of these are
-             ;; foreign distro-only.
-             ;; Guix on a foreign distro
-             (simple-service 'krisb-foreign-distro
-                             home-environment-variables-service-type
-                             '(;; GUIX_PROFILE
-                               ("GUIX_PROFILE" . "$HOME/.guix-profile")
-                               ;; Guile stuff
-                               ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
-                               ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
-                               ;; Locales.  Requires the glibc-locales
-                               ;; package
-                               ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale")))
-             ;; Shells
-             (service home-fish-service-type
-                      (home-fish-configuration
-                       ;; These are appended to ~/.config/fish/config.fish
-                       (config (list (local-file "files/fish/keychain.fish")
-                                     (local-file "files/atuin/atuin_init.fish")))))
-             (service home-bash-service-type
-                      (home-bash-configuration
-                       (aliases '(("grep" . "grep --color=auto")
-                                  ("la" . "ls -la")
-                                  ("ll" . "ls -l")
-                                  ("ls" . "ls -p --color=auto")))
-                       (bashrc (list (local-file "files/atuin/atuin_init.bash")))
-                       (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
-            %base-home-services))))
+                         (shepherd-timer '(gmi-sync-personal)
+                                         "*/4 * * * *" ; Run every 4 minutes
+                                         #~("sh" "-c"
+                                            ;; Run from $HOME
+                                            #$(string-join
+                                               (list "cd " personal-email-dir "&&"
+                                                     "echo 'Starting sync...'" "&&"
+                                                     "(" gmi-sync "||"
+                                                     "{" gmi-rescue "&&"
+                                                     gmi-sync ";" "}" ")" "&&"
+                                                     "echo 'Done with sync!'" "&&"
+                                                     "echo 'Starting notmuch new...'" "&&"
+                                                     notmuch-new "&&"
+                                                     "echo 'All done!'"))))
+                         (shepherd-timer '(gmi-sync-uni)
+                                         "*/4 * * * *" ; Run every 4 minutes
+                                         ;; Run from $HOME
+                                         #~("sh" "-c"
+                                            #$(string-join
+                                               (list "cd " uni-email-dir "&&"
+                                                     "echo 'Starting sync...'" "&&"
+                                                     "(" gmi-sync "||"
+                                                     "{" gmi-rescue "&&"
+                                                     gmi-sync ";" "}" ")" "&&"
+                                                     "echo 'Done with sync!'" "&&"
+                                                     "echo 'Starting notmuch new...'" "&&"
+                                                     notmuch-new "&&"
+                                                     "echo 'All done!'"))))))))
+     ;; Dictd (dictionary server implementation)
+     (list
+      ;; FIXME 2025-05-24: Currently does not work, at least in WSLg
+      ;; where I am writing this.  Although the non-inetd mode version
+      ;; works (tested while running manually in the CLI), inetd mode
+      ;; gives troubles.  For now I leave this in, since my guesss is
+      ;; that it should be sufficient in non-WSLg systems.
+      (service home-dicod-service-type
+               (for-home
+                (dicod-configuration
+                 (handlers (list
+                            (dicod-handler
+                             (name "wordnet")
+                             (module "wordnet")
+                             (options
+                              (list #~(string-append "wnhome=" #$wordnet))))))
+                 (databases (list
+                             (dicod-database
+                              (name "wordnet")
+                              (complex? #t)
+                              (handler "wordnet"))
+                             %dicod-database:gcide))))))
+     ;; Syncthing
+     (list
+      (service home-syncthing-service-type
+               (let* ((wsl-arch-device
+                       (syncthing-device
+                        (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
+                        (name "G14 2024 Arch WSL")))
+                      (mobile-device
+                       (syncthing-device
+                        (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
+                        (name "OnePlus 7 Pro")))
+                      (agenda-folder
+                       (syncthing-folder
+                        (id "k4vqh-rny7b")
+                        (label "Agenda")
+                        (path "~/Documents/org-database/agenda/")
+                        (devices (list wsl-arch-device mobile-device))))
+                      (notes-folder
+                       (syncthing-folder
+                        (id "qtuzy-ufufb")
+                        (label "Notes")
+                        (path "~/Documents/org-database/notes")
+                        (devices (list wsl-arch-device mobile-device)))))
+                 (for-home
+                  (syncthing-configuration
+                   (arguments (list "--no-default-folder"))
+                   (user "krisbalintona") ; My user
+                   (config-file
+                    (syncthing-config-file
+                     ;; We use a non-standard port because we are on WSL
+                     ;; with other distros and we want them using
+                     ;; different ports
+                     (gui-address "127.0.0.1:8386")
+                     (folders (list agenda-folder notes-folder)))))))))
+     ;; Ssh
+     (list
+      (service home-openssh-service-type
+               (home-openssh-configuration
+                (add-keys-to-agent "yes")
+                (hosts
+                 (list
+                  (openssh-host (name "gitlab.com")
+                                (user "PreciousPudding")
+                                (identity-file "~/.ssh/id_ed25519"))
+                  (openssh-host (name "github.com")
+                                (user "krisbalintona")
+                                (identity-file "~/.ssh/id_ed25519")))))))
+     ;; Vale
+     (list
+      (simple-service 'symlink-vale-config-file-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("vale/.vale.ini"
+                         ,(local-file "files/vale/vale.ini"))))
+      (simple-service 'symlink-vale-styles-service-type
+                      home-files-service-type
+                      `((".local/share/vale/styles/krisb-custom"
+                         ,(local-file "files/vale/krisb-custom" #:recursive? #t)))))
+     ;; Git
+     (list
+      (simple-service 'krisb-symlink-git-config-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("git/config"
+                         ,(local-file "files/git/config")))))
+     ;; Jujutsu
+     (list
+      (simple-service 'krisb-symlink-jj-config-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("jj/config.toml"
+                         ,(local-file "files/jujutsu/config.toml")))))
+     ;; Atuin
+     (list
+      (simple-service 'krisb-symlink-atuin-config-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("atuin/config.toml"
+                         ,(local-file "files/atuin/config.toml")))))
+     ;; Enchant
+     (list
+      (simple-service 'krisb-symlink-enchant-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("enchant/enchant.ordering"
+                         ,(local-file "files/enchant/enchant.ordering")))))
+     ;; WSL2-specific
+     (list
+      (simple-service 'krisb-wslg-display-service-type
+                      home-environment-variables-service-type
+                      '(("DISPLAY" . ":0"))))
+     ;; REVIEW 2025-07-02: Don't remember if needed on Guix system or
+     ;; just a foreign distro.
+     ;; Certificates
+     (list
+      (simple-service 'krisb-ssl-certs ; Requires nss-certs package
+                      home-environment-variables-service-type
+                      ;; NOTE: We install nss-certs via guix
+                      ;; home, so SSL_CERT_DIR is relative to
+                      ;; ~/.guix-home/.  If nss-certs is
+                      ;; installed via e.g. guix install, then
+                      ;; it would be relative to
+                      ;; ~/.guix-profile/.
+                      '(("SSL_CERT_DIR" . "$HOME/.guix-home/profile/etc/ssl/certs")
+                        ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
+                        ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
+                        ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE"))))
+     ;; REVIEW 2025-07-02: Don't remember if all of these are foreign
+     ;; distro-only.
+     ;; Guix on a foreign distro
+     (list
+      (simple-service 'krisb-foreign-distro
+                      home-environment-variables-service-type
+                      '(;; GUIX_PROFILE
+                        ("GUIX_PROFILE" . "$HOME/.guix-profile")
+                        ;; Guile stuff
+                        ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
+                        ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
+                        ;; Locales.  Requires the glibc-locales
+                        ;; package
+                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale"))))
+     ;; Shells
+     (list
+      (service home-fish-service-type
+               (home-fish-configuration
+                ;; These are appended to ~/.config/fish/config.fish
+                (config (list (local-file "files/fish/keychain.fish")
+                              (local-file "files/atuin/atuin_init.fish")))))
+      (service home-bash-service-type
+               (home-bash-configuration
+                (aliases '(("grep" . "grep --color=auto")
+                           ("la" . "ls -la")
+                           ("ll" . "ls -l")
+                           ("ls" . "ls -p --color=auto")))
+                (bashrc (list (local-file "files/atuin/atuin_init.bash")))
+                (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
+     ;; Base services
+     %base-home-services))))
 
 krisb-home-environment
