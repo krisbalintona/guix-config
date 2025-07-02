@@ -321,7 +321,9 @@
                                ("notmuch/default"
                                 ,(local-file "files/notmuch" #:recursive? #t))
                                ("l2md/config"
-                                ,(local-file "files/l2md/config"))))
+                                ,(local-file "files/l2md/config"))
+                               ("enchant/enchant.ordering"
+                                ,(local-file "files/enchant/enchant.ordering"))))
              ;; WSL2-specific
              (simple-service 'krisb-wslg-display-service-type
                              home-environment-variables-service-type
