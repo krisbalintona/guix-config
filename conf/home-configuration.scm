@@ -102,7 +102,7 @@
                "texlive-latexmk"
                "emacs-lsp-booster"
                "emacs-nerd-icons"
-               "notmuch"
+               "notmuch" "l2md"
                "xmodmap"
                "font-google-noto-emoji" ; For emojis
                "font-iosevka"
