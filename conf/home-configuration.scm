@@ -85,6 +85,8 @@
                "python"
                "gnupg" "pinentry" "sops"
                "mpv"
+               ;; Fish shell
+               "grc"           ; For oh-my-fish/plugin-grc fish plugin
                ;; Emacs
                ;; 2025-05-21: Custom Emacs build.  I use pgtk for
                ;; support of the alpha-background frame parameter.
@@ -310,7 +312,7 @@
                           (use-modules (guix build utils))
                           (let* ((source (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo"))
                                  (target (string-append (getenv "HOME") "/.authinfo")))
-                            (format #t "Symlinking ~a to ~a~%" source target)
+                            (format #t "Directly symlinking .authinfo (~a) to ~a~%" source target)
                             (when (file-exists? target)
                               (delete-file target))
                             (symlink source target)))))
@@ -382,13 +384,36 @@
                         ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
                         ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
                         ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE"))))
-     ;; Shells
+     ;; Fish
      (list
       (service home-fish-service-type
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
                 (config (list (local-file "files/fish/keychain.fish")
                               (local-file "files/atuin/atuin_init.fish")))))
+      (simple-service 'krisb-fisher
+                      ;; Install fisher if it isn't already installed,
+                      ;; then symlink fish_plugins, then update
+                      ;; plugins.  We do this altogether to ensure the
+                      ;; operations are done in sequence.
+                      home-activation-service-type
+                      #~(begin
+                          (use-modules (guix build utils))
+                          (let* ((source (canonicalize-path "conf/files/fish/fish_plugins"))
+                                 (target (string-append (getenv "XDG_CONFIG_HOME") "/fish/fish_plugins")))
+                            (format #t "Directly symlinking fish_plugins (~a) to ~a~%" source target)
+                            (when (file-exists? target)
+                              (delete-file target))
+                            (symlink source target))
+                          (if (not (file-exists? (string-append (getenv "XDG_CONFIG_HOME") "/fish/functions/fisher.fish")))
+                              (begin
+                                (format #t "Installing fisher~%")
+                                (system (string-append "fish -c \"curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | "
+                                                       "source && fisher install jorgebucaran/fisher\""))))
+                          (format #t "Updating fisher plugins~%")
+                          (system "fish -c \"fisher update\""))))
+     ;; Bash
+     (list
       (service home-bash-service-type
                (home-bash-configuration
                 (aliases '(("grep" . "grep --color=auto")
