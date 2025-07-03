@@ -2,14 +2,16 @@
 
 # post-new --- Notmuch rules that run after notmuch new
 
-# * Add the inbox and unread tags
-# I set new.tags in my notmuch config to be empty.  Instead, we add
-# the inbox and unread tags to incoming email that don't come from
-# gmi-managed directories.  Consequently, we let notmuch tags for
-# gmi-managed emails be managed by gmi and untouched by notmuch new.
-# This approach also prevents the initial gmi pull/sync from adding
-# tags to every newly indexed email.
-notmuch tag +inbox +unread -- 'not (folder:/personal/ or folder:/uni/ or folder:/drafts/)'
+# * Process "new" tags
+# Instead of adding the inbox and unread tags to all emails (via the
+# notmuch new.tags setting), I add the "new" tag.  This is to allow
+# all emails synced by lieer to be untouched (the inbox and unread
+# tags are not added to them); we simply remove the new tag from these
+# emails.  For non-lieer-managed emails, we add the inbox and unread
+# tags.  This approach means we don't have any unexpected behaviors
+# with lieer's syncing of gmail labels.
+notmuch tag -new -- 'tag:new and (folder:/personal/ or folder:/uni/ or folder:/drafts/)'
+notmuch tag -new +inbox +unread -- 'tag:new and not (folder:/personal/ or folder:/uni/ or folder:/drafts/)'
 
 # * Mailing lists
 # Everything for the mailing lists I’ve subscribed to with my personal
