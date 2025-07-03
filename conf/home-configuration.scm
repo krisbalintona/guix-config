@@ -85,6 +85,8 @@
                "python"
                "gnupg" "pinentry" "sops"
                "mpv"
+               ;; Fancy CLI tools
+               "bat"
                ;; Fish shell
                "grc"           ; For oh-my-fish/plugin-grc fish plugin
                ;; Emacs
@@ -390,7 +392,10 @@
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
                 (config (list (local-file "files/fish/keychain.fish")
-                              (local-file "files/atuin/atuin_init.fish")))))
+                              (local-file "files/atuin/atuin_init.fish")))
+                (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
+                                                    "--style=plain,header-filesize,grid,snip --paging auto"
+                                                    "--italic-text=always --nonprintable-notation=caret")))))))
       (simple-service 'krisb-fisher
                       ;; Install fisher if it isn't already installed,
                       ;; then symlink fish_plugins, then update
@@ -422,6 +427,14 @@
                            ("ls" . "ls -p --color=auto")))
                 (bashrc (list (local-file "files/atuin/atuin_init.bash")))
                 (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
+     ;; Basic environment for all shells
+     (list
+      (simple-service 'basic-environment-service-type
+                      home-environment-variables-service-type
+                      '(("PAGER" . "less -RKF")
+                        ;; Use bat as a pager for man.  Taken from
+                        ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
+                        ("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'"))))
      ;; WSL2-specific
      (list
       (simple-service 'krisb-wslg-display-service-type
