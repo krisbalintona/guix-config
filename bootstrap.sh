@@ -50,7 +50,7 @@ ln -sf $GMI_CONFIG_FILES/uni-config.json $UNI_MAILDIR/.gmailieer.json
 echo "Symlinking lieer credential files into email directories..."
 # Credentials
 ln -sf $GMI_CREDENTIAL_FILES/personal $PERSONAL_MAILDIR/.credentials.gmailieer.json
-ln -sf $GMI_CREDENTIAL_FILES/uni $PERSONAL_MAILDIR/.credentials.gmailieer.json
+ln -sf $GMI_CREDENTIAL_FILES/uni $UNI_MAILDIR/.credentials.gmailieer.json
 echo "Done!"
 
 # Initial gmi pulls
