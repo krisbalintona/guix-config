@@ -124,24 +124,6 @@
 
    (services
     (append
-     ;; Authinfo
-     (list
-      (simple-service 'krisb-symlink-authinfo
-                      home-activation-service-type
-                      #~(begin
-                          (use-modules (guix build utils))
-                          (let* ((source (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo"))
-                                 (target (string-append (getenv "HOME") "/.authinfo")))
-                            (format #t "Symlinking ~a to ~a~%" source target)
-                            (when (file-exists? target)
-                              (delete-file target))
-                            (symlink source target)))))
-     ;; GPG
-     (list
-      (service home-gpg-agent-service-type
-               (home-gpg-agent-configuration
-                (pinentry-program
-                 (file-append pinentry "/bin/pinentry")))))
      ;; Notmuch
      (list
       (simple-service 'krisb-symlink-notmuch-config-files-service-type
@@ -235,28 +217,6 @@
                                                      "echo 'Starting notmuch new...'" "&&"
                                                      notmuch-new "&&"
                                                      "echo 'All done!'"))))))))
-     ;; Dictd (dictionary server implementation)
-     (list
-      ;; FIXME 2025-05-24: Currently does not work, at least in WSLg
-      ;; where I am writing this.  Although the non-inetd mode version
-      ;; works (tested while running manually in the CLI), inetd mode
-      ;; gives troubles.  For now I leave this in, since my guesss is
-      ;; that it should be sufficient in non-WSLg systems.
-      (service home-dicod-service-type
-               (for-home
-                (dicod-configuration
-                 (handlers (list
-                            (dicod-handler
-                             (name "wordnet")
-                             (module "wordnet")
-                             (options
-                              (list #~(string-append "wnhome=" #$wordnet))))))
-                 (databases (list
-                             (dicod-database
-                              (name "wordnet")
-                              (complex? #t)
-                              (handler "wordnet"))
-                             %dicod-database:gcide))))))
      ;; Syncthing
      (list
       (service home-syncthing-service-type
@@ -291,6 +251,69 @@
                      ;; different ports
                      (gui-address "127.0.0.1:8386")
                      (folders (list agenda-folder notes-folder)))))))))
+     ;; Dicod (dictionary server implementation)
+     (list
+      ;; FIXME 2025-05-24: Currently does not work, at least in WSLg
+      ;; where I am writing this.  Although the non-inetd mode version
+      ;; works (tested while running manually in the CLI), inetd mode
+      ;; gives troubles.  For now I leave this in, since my guesss is
+      ;; that it should be sufficient in non-WSLg systems.
+      (service home-dicod-service-type
+               (for-home
+                (dicod-configuration
+                 (handlers (list
+                            (dicod-handler
+                             (name "wordnet")
+                             (module "wordnet")
+                             (options
+                              (list #~(string-append "wnhome=" #$wordnet))))))
+                 (databases (list
+                             (dicod-database
+                              (name "wordnet")
+                              (complex? #t)
+                              (handler "wordnet"))
+                             %dicod-database:gcide))))))
+     ;; Vale
+     (list
+      (simple-service 'symlink-vale-config-file-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("vale/.vale.ini"
+                         ,(local-file "files/vale/vale.ini"))))
+      (simple-service 'symlink-vale-styles-service-type
+                      home-files-service-type
+                      `((".local/share/vale/styles/krisb-custom"
+                         ,(local-file "files/vale/krisb-custom" #:recursive? #t)))))
+     ;; Enchant
+     (list
+      (simple-service 'krisb-symlink-enchant-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("enchant/enchant.ordering"
+                         ,(local-file "files/enchant/enchant.ordering")))))
+     ;; Ssh
+     (list
+      (service home-openssh-service-type
+               (home-openssh-configuration
+                (add-keys-to-agent "yes")
+                (hosts
+                 (list
+                  (openssh-host (name "gitlab.com")
+                                (user "PreciousPudding")
+                                (identity-file "~/.ssh/id_ed25519"))
+                  (openssh-host (name "github.com")
+                                (user "krisbalintona")
+                                (identity-file "~/.ssh/id_ed25519")))))))
+     ;; Authinfo
+     (list
+      (simple-service 'krisb-symlink-authinfo
+                      home-activation-service-type
+                      #~(begin
+                          (use-modules (guix build utils))
+                          (let* ((source (string-append "/run/user/" (number->string (getuid)) "/secrets/.authinfo"))
+                                 (target (string-append (getenv "HOME") "/.authinfo")))
+                            (format #t "Symlinking ~a to ~a~%" source target)
+                            (when (file-exists? target)
+                              (delete-file target))
+                            (symlink source target)))))
      ;; SOPS
      (list
       (service home-sops-secrets-service-type
@@ -319,58 +342,30 @@
                    (file
                     (local-file "files/sops/secrets.yaml"))
                    (permissions #o400)))))))
-     ;; Ssh
+     ;; GPG
      (list
-      (service home-openssh-service-type
-               (home-openssh-configuration
-                (add-keys-to-agent "yes")
-                (hosts
-                 (list
-                  (openssh-host (name "gitlab.com")
-                                (user "PreciousPudding")
-                                (identity-file "~/.ssh/id_ed25519"))
-                  (openssh-host (name "github.com")
-                                (user "krisbalintona")
-                                (identity-file "~/.ssh/id_ed25519")))))))
-     ;; Vale
-     (list
-      (simple-service 'symlink-vale-config-file-service-type
-                      home-xdg-configuration-files-service-type
-                      `(("vale/.vale.ini"
-                         ,(local-file "files/vale/vale.ini"))))
-      (simple-service 'symlink-vale-styles-service-type
-                      home-files-service-type
-                      `((".local/share/vale/styles/krisb-custom"
-                         ,(local-file "files/vale/krisb-custom" #:recursive? #t)))))
-     ;; Git
-     (list
-      (simple-service 'krisb-symlink-git-config-files-service-type
-                      home-xdg-configuration-files-service-type
-                      `(("git/config"
-                         ,(local-file "files/git/config")))))
+      (service home-gpg-agent-service-type
+               (home-gpg-agent-configuration
+                (pinentry-program
+                 (file-append pinentry "/bin/pinentry")))))
      ;; Jujutsu
      (list
       (simple-service 'krisb-symlink-jj-config-files-service-type
                       home-xdg-configuration-files-service-type
                       `(("jj/config.toml"
                          ,(local-file "files/jujutsu/config.toml")))))
+     ;; Git
+     (list
+      (simple-service 'krisb-symlink-git-config-files-service-type
+                      home-xdg-configuration-files-service-type
+                      `(("git/config"
+                         ,(local-file "files/git/config")))))
      ;; Atuin
      (list
       (simple-service 'krisb-symlink-atuin-config-files-service-type
                       home-xdg-configuration-files-service-type
                       `(("atuin/config.toml"
                          ,(local-file "files/atuin/config.toml")))))
-     ;; Enchant
-     (list
-      (simple-service 'krisb-symlink-enchant-files-service-type
-                      home-xdg-configuration-files-service-type
-                      `(("enchant/enchant.ordering"
-                         ,(local-file "files/enchant/enchant.ordering")))))
-     ;; WSL2-specific
-     (list
-      (simple-service 'krisb-wslg-display-service-type
-                      home-environment-variables-service-type
-                      '(("DISPLAY" . ":0"))))
      ;; REVIEW 2025-07-02: Don't remember if needed on Guix system or
      ;; just a foreign distro.
      ;; Certificates
@@ -387,20 +382,6 @@
                         ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
                         ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
                         ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE"))))
-     ;; REVIEW 2025-07-02: Don't remember if all of these are foreign
-     ;; distro-only.
-     ;; Guix on a foreign distro
-     (list
-      (simple-service 'krisb-foreign-distro
-                      home-environment-variables-service-type
-                      '(;; GUIX_PROFILE
-                        ("GUIX_PROFILE" . "$HOME/.guix-profile")
-                        ;; Guile stuff
-                        ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
-                        ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
-                        ;; Locales.  Requires the glibc-locales
-                        ;; package
-                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale"))))
      ;; Shells
      (list
       (service home-fish-service-type
@@ -416,6 +397,25 @@
                            ("ls" . "ls -p --color=auto")))
                 (bashrc (list (local-file "files/atuin/atuin_init.bash")))
                 (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
+     ;; WSL2-specific
+     (list
+      (simple-service 'krisb-wslg-display-service-type
+                      home-environment-variables-service-type
+                      '(("DISPLAY" . ":0"))))
+     ;; REVIEW 2025-07-02: Don't remember if all of these are foreign
+     ;; distro-only.
+     ;; Guix on a foreign distro
+     (list
+      (simple-service 'krisb-foreign-distro
+                      home-environment-variables-service-type
+                      '(;; GUIX_PROFILE
+                        ("GUIX_PROFILE" . "$HOME/.guix-profile")
+                        ;; Guile stuff
+                        ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
+                        ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
+                        ;; Locales.  Requires the glibc-locales
+                        ;; package
+                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale"))))
      ;; Base services
      %base-home-services))))
 
