@@ -453,7 +453,9 @@
                         ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
                         ;; Locales.  Requires the glibc-locales
                         ;; package
-                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale"))))
+                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale")
+                        ;; Guix Info manual
+                        ("INFOPATH" . "$HOME/.guix-profile/share/info:$INFOPATH"))))
      ;; Base services
      %base-home-services))))
 
