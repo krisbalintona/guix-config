@@ -32,7 +32,7 @@ notmuch tag +list +guix +emacs -- '"List:<~abcdw/rde-discuss.lists.sr.ht>" or to
 
 # * Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
-notmuch tag +list +humanities +writing -- from:amugofinsights@substack.com
+notmuch tag +list +humanities +writing -- from:"amugofinsights@substack.com" or from:"a-mug-of-insights@ghost.io"
 notmuch tag +sub +writing -- from:poem-a-day@poets.org
 notmuch tag +sub +news -- from:nytdirect@nytimes.com
 notmuch tag +sub -- from:early-modern-world@brown.edu
@@ -53,12 +53,18 @@ notmuch tag +sub +writing -- from:thehighpony@buttondown.email
 notmuch tag +sub +conspire_creative -- from:"The Profitable Author from Conspire Creative" or subject:"Your ABC Nudge, vol."
 notmuch tag +sub +crc -- from:"Brown University Curricular Resource Center"
 notmuch tag +sub +productivity -- from:dinigroup@kouroshdini.com
+notmuch tag +sub -- from:"Medium Daily Digest <noreply@medium.com>"
+notmuch tag +sub -- from:"Diane Callahan <subscriptions@medium.com>"
+notmuch tag +sub +philosophy -- from:"Joan Westenberg <subscriptions@medium.com>"
 
 # * Parents’ condo
 notmuch tag +condo -- from:"Belmont Row HOA"
 
 # * Job search
+notmuch tag +job_search +sub -- from:"Indeed <donotreply@match.indeed.com>"
 notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
+notmuch tag +job_search +sub -- from:alert@email.nexxt.com
+notmuch tag +job_search +sub -- from:"Nexxt <TopJob@email.nexxt.com>"
 
 # * Parents
 notmuch tag +parents -- 'from:christine.balintona@ascension.org or to:christine.balintona@ascension.org'
@@ -70,6 +76,7 @@ notmuch tag +parents -- 'from:reyes.jason@gmail.com or to:reyes.jason@gmail.com'
 # * Updates
 notmuch tag +update -- from:"no.reply.alerts@chase.com"
 notmuch tag +update -- from:noreply@redditmail.com
+notmuch tag +update -- from:notifications@github.com
 
 # * Spam
 # Generally I should take care of my inbox by unsubscribing from lists
