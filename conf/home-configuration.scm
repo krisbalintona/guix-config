@@ -394,8 +394,8 @@
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
                 (config (list (local-file "files/fish/keychain.fish")
-                              (local-file "files/atuin/atuin_init.fish")
-                              (local-file "files/zoxide/zoxide_init.fish")))
+                              (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
+                              (plain-file "zoxide_init.fish" "zoxide init fish | source")))
                 (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                     "--style=plain,header-filesize,grid,snip --paging auto"
                                                     "--italic-text=always --nonprintable-notation=caret")))))
@@ -429,8 +429,8 @@
                            ("la" . "ls -la")
                            ("ll" . "ls -l")
                            ("ls" . "ls -p --color=auto")))
-                (bashrc (list (local-file "files/atuin/atuin_init.bash")
-                              (local-file "files/zoxide/zoxide_init.bash")))
+                (bashrc (list (plain-file "atuin_init.bash" "eval '$(atuin init bash --disable-up-arrow)'")
+                              (plain-file "zoxide_init.bash" "eval '$(zoxide init bash)'")))
                 (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
      ;; Basic environment for all shells
      (list
