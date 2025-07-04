@@ -77,7 +77,6 @@
                "xdg-utils"
                "xdg-user-dirs"
                "make"
-               "atuin-bin" ; Don't forget to log in and sync atuin on first install
                "wl-clipboard"
                "python-lieer"
                "l2md"
@@ -86,7 +85,10 @@
                "gnupg" "pinentry" "sops"
                "mpv"
                ;; Fancy CLI tools
-               "bat"
+               "atuin-bin" ; Don't forget to log in and sync atuin on first install
+               "bat"       ; Also a dependency for zoxide
+               "fd"        ; Also a dependency for zoxide
+               "zoxide"
                ;; Fish shell
                "grc"           ; For oh-my-fish/plugin-grc fish plugin
                ;; Emacs
@@ -392,10 +394,12 @@
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
                 (config (list (local-file "files/fish/keychain.fish")
-                              (local-file "files/atuin/atuin_init.fish")))
+                              (local-file "files/atuin/atuin_init.fish")
+                              (local-file "files/zoxide/zoxide_init.fish")))
                 (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                     "--style=plain,header-filesize,grid,snip --paging auto"
-                                                    "--italic-text=always --nonprintable-notation=caret")))))))
+                                                    "--italic-text=always --nonprintable-notation=caret")))))
+                (abbreviations '(("cd" . "z")))))
       (simple-service 'krisb-fisher
                       ;; Install fisher if it isn't already installed,
                       ;; then symlink fish_plugins, then update
@@ -425,7 +429,8 @@
                            ("la" . "ls -la")
                            ("ll" . "ls -l")
                            ("ls" . "ls -p --color=auto")))
-                (bashrc (list (local-file "files/atuin/atuin_init.bash")))
+                (bashrc (list (local-file "files/atuin/atuin_init.bash")
+                              (local-file "files/zoxide/zoxide_init.bash")))
                 (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
      ;; Basic environment for all shells
      (list
