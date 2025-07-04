@@ -15,8 +15,8 @@
        (inherit (package-source emacs-master:emacs-master))
        (uri (git-reference
              (url "https://github.com/emacs-mirror/emacs.git")
-             (commit "eb788fd8fd2026fa4d29b918ff95b12d8e3e0bab")))
-       (sha256 (base32 "1bpsbyqs58p474qfrxhydxmnyabi79bzl10k7rds4xl0wbfx3ivg"))))
+             (commit "3b6e8c5e3c464efbf01d51f39d044cf9d24f5eaf")))
+       (sha256 (base32 "02y01llq3kkj1i1hpfrk092g58y047vj8jql5ldac0zl277svpl8"))))
     (arguments
      (substitute-keyword-arguments (package-arguments emacs-master:emacs-master)
        ((#:configure-flags flags)
@@ -39,8 +39,8 @@
        (inherit (package-source emacs-master:emacs-master-igc))
        (uri (git-reference
              (url "https://github.com/krisbalintona/emacs.git")
-             (commit "e70e3cf5e9855a2fb55d7128d601bbca0e6e0119")))
-       (sha256 (base32 "113h525s2510mxrjrmbz3db0f5qp2203i5s0yq7k839fcizz4ri4"))))
+             (commit "1c19182e28e90b619a4c3d5553e3b5ae03eccd12")))
+       (sha256 (base32 "0dsfd3fb533yjc4bhnfsf4f7dslfp73rnb4kqnramsjyp8s1r4lx"))))
     (arguments
      (substitute-keyword-arguments (package-arguments emacs-master:emacs-master-igc)
        ((#:configure-flags flags)
