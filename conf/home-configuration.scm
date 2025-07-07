@@ -53,10 +53,7 @@
                "gawk"
                "less"
                "which"
-               "gzip"
-               "bzip2"
-               "xz"
-               "tar"
+               "unzip" "zip" "gzip" "bzip2" "xz" "tar"
                "diffutils"
                "file"
                "psmisc"
@@ -127,7 +124,9 @@
                ;; when I create a “notmuch” module
                "notmuch"
                "dico" "gcide" "wordnet"
-               "vale" "python-proselint")))
+               "vale" "python-proselint"
+               ;; Other
+               "libreoffice")))
 
    (services
     (append
