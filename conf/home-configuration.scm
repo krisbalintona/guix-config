@@ -67,7 +67,7 @@
                "openssh"
                "keychain"
                "git"
-               "neovim"
+               "neovim" "nano"
                "fontconfig"
                "fzf"
                "ripgrep"
