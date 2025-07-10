@@ -125,6 +125,7 @@
                "notmuch"
                "dico" "gcide" "wordnet"
                "vale" "python-proselint"
+               "pdftk"                  ; For pdf-meta-edit
                ;; Other
                "libreoffice")))
 
