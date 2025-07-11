@@ -15,15 +15,15 @@
        (inherit (package-source emacs-master:emacs-master))
        (uri (git-reference
              (url "https://github.com/emacs-mirror/emacs.git")
-             (commit "8ff6e7fe58466e413b5eed22ea93869e60da8d3d")))
-       (sha256 (base32 "1f8bxh1kh9z53dqjzxqgk05jv9rggdxzmxa3m63i3pwrdgvnlaaq"))))
+             (commit "9d750c7e8041437758c919f6088d6f3686847812")))
+       (sha256 (base32 "1vb5mbszpcis8vgw019ynpw8ynh41cgpzj4kjl5klwizgyvy5ziq"))))
     (arguments
      (substitute-keyword-arguments (package-arguments emacs-master:emacs-master)
        ((#:configure-flags flags)
         ;; I manipulate the build flags here.  I can add, remove, or
         ;; replace flags that are already declared in the package this
         ;; inherits from.
-        `(delete-duplicates (append '("--with-pgtk"
+        `(delete-duplicates (append '("--with-x-toolkit=gtk3"
                                       "--with-x-widgets")
                                     ,flags)
                             equal?))))))
