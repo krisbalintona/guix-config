@@ -7,6 +7,7 @@
 (define-module (conf home-configuration)
   #:use-module (guix gexp)
   #:use-module (guix utils)
+  #:use-module (guix transformations)
   #:use-module (ice-9 exceptions)
   #:use-module (gnu home)
   #:use-module (gnu packages)
@@ -30,6 +31,7 @@
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
+  #:use-module (divya-lambda packages emacs-xyz)
   #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
@@ -40,91 +42,97 @@
   (home-environment
    ;; Below is the list of packages that will show up in your Home profile,
    ;; under ~/.guix-home/profile.
-   (packages (specifications->packages
-              (list
-               ;; Basic stuff
-               "nss-certs"
-               "glibc-locales"
-               "man-db"
-               "coreutils"
-               "findutils"
-               "grep"
-               "sed"
-               "gawk"
-               "less"
-               "which"
-               "unzip" "zip" "gzip" "bzip2" "xz" "tar"
-               "diffutils"
-               "file"
-               "psmisc"
-               "procps"
-               "inetutils"
-               "net-tools"
-               "wget"
-               "curl"
-               "tree"
-               "bash-completion"
-               "openssh"
-               "keychain"
-               "git"
-               "neovim" "nano"
-               "fontconfig"
-               "fzf"
-               "ripgrep"
-               "font-iosevka"
-               "xdg-utils"
-               "xdg-user-dirs"
-               "make"
-               "wl-clipboard"
-               "python-lieer"
-               "l2md"
-               "zotero"
-               "python"
-               "gnupg" "pinentry" "sops"
-               "mpv"
-               ;; Fancy CLI tools
-               "atuin-bin" ; Don't forget to log in and sync atuin on first install
-               "bat"       ; Also a dependency for zoxide
-               "fd"        ; Also a dependency for zoxide
-               "zoxide"
-               ;; Fish shell
-               "grc"           ; For oh-my-fish/plugin-grc fish plugin
-               ;; Emacs
-               "emacs-master-custom"
-               "emacs-guix"
-               "emacs-arei" "guile-next" "guile-ares-rs"
-               "jujutsu-bin"
-               "patch"                  ; Needed for vc-jj
-               "emacs-pdf-tools"
-               "enchant" "emacs-jinx"
-               "aspell" "aspell-dict-en"
-               "hunspell" "hunspell-dict-en" "hunspell-dict-en-us"
-               "nuspell"
-               "hugo"
-               "texlive-latexmk"
-               "emacs-lsp-booster"
-               "emacs-nerd-icons"
-               "notmuch" "l2md"
-               "xmodmap"
-               "font-google-noto-emoji" ; For emojis
-               "font-iosevka"
-               "font-iosevka-aile-nerd-font"
-               "font-iosevka-term-ss04-nerd-font"
-               "font-iosevka-ss11"
-               "font-iosevka-ss11-nerd-font"
-               "font-iosevka-term-ss11-nerd-font"
-               "font-overpass-nerd-font"
-               "font-jetbrains-mono-nerd-font"
-               "texinfo"               ; To make info files
-               "plocate"               ; For consult
-               ;; TODO 2025-05-23: Add xargs and bash as dependencies
-               ;; when I create a “notmuch” module
-               "notmuch"
-               "dico" "gcide" "wordnet"
-               "vale" "python-proselint"
-               "pdftk"                  ; For pdf-meta-edit
-               ;; Other
-               "libreoffice")))
+   (packages (append (specifications->packages
+                      (list
+                       ;; Basic stuff
+                       "nss-certs"
+                       "glibc-locales"
+                       "man-db"
+                       "coreutils"
+                       "findutils"
+                       "grep"
+                       "sed"
+                       "gawk"
+                       "less"
+                       "which"
+                       "unzip" "zip" "gzip" "bzip2" "xz" "tar"
+                       "diffutils"
+                       "file"
+                       "psmisc"
+                       "procps"
+                       "inetutils"
+                       "net-tools"
+                       "wget"
+                       "curl"
+                       "tree"
+                       "bash-completion"
+                       "openssh"
+                       "keychain"
+                       "git"
+                       "neovim" "nano"
+                       "fontconfig"
+                       "fzf"
+                       "ripgrep"
+                       "font-iosevka"
+                       "xdg-utils"
+                       "xdg-user-dirs"
+                       "make"
+                       "wl-clipboard"
+                       "python-lieer"
+                       "l2md"
+                       "zotero"
+                       "python"
+                       "gnupg" "pinentry" "sops"
+                       "mpv"
+                       ;; Fancy CLI tools
+                       "atuin-bin" ; Don't forget to log in and sync atuin on first install
+                       "bat"       ; Also a dependency for zoxide
+                       "fd"        ; Also a dependency for zoxide
+                       "zoxide"
+                       ;; Fish shell
+                       "grc"   ; For oh-my-fish/plugin-grc fish plugin
+                       ;; Emacs
+                       "emacs-master-custom"
+                       "emacs-guix"
+                       "emacs-arei" "guile-next" "guile-ares-rs"
+                       "jujutsu-bin"
+                       "patch"          ; Needed for vc-jj
+                       "emacs-pdf-tools"
+                       "enchant" "emacs-jinx"
+                       "aspell" "aspell-dict-en"
+                       "hunspell" "hunspell-dict-en" "hunspell-dict-en-us"
+                       "nuspell"
+                       "hugo"
+                       "texlive-latexmk"
+                       "emacs-lsp-booster"
+                       "emacs-nerd-icons"
+                       "notmuch" "l2md"
+                       "xmodmap"
+                       "font-google-noto-emoji" ; For emojis
+                       "font-iosevka"
+                       "font-iosevka-aile-nerd-font"
+                       "font-iosevka-term-ss04-nerd-font"
+                       "font-iosevka-ss11"
+                       "font-iosevka-ss11-nerd-font"
+                       "font-iosevka-term-ss11-nerd-font"
+                       "font-overpass-nerd-font"
+                       "font-jetbrains-mono-nerd-font"
+                       "texinfo"        ; To make info files
+                       "plocate"        ; For consult
+                       ;; TODO 2025-05-23: Add xargs and bash as
+                       ;; dependencies when I create a “notmuch”
+                       ;; module
+                       "notmuch"
+                       "dico" "gcide" "wordnet"
+                       "vale" "python-proselint"
+                       "pdftk"          ; For pdf-meta-edit
+                       ;; Other
+                       "libreoffice"))
+                     ;; Master branch of divya-lambda's emacs-reader
+                     ;; package
+                     (list ((options->transformation
+                             '((with-branch . "emacs-reader=master")))
+                            emacs-reader))))
 
    (services
     (append
