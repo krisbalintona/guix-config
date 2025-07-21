@@ -79,6 +79,7 @@ notmuch tag +update -- from:noreply@redditmail.com
 notmuch tag +update -- from:notifications@github.com
 
 # * Spam
+notmuch tag -spam -- tag:emacs
 # Generally I should take care of my inbox by unsubscribing from lists
 # I do not like.  But below are the exceptions.
 notmuch tag -inbox +spam +trash +sub -- 'from:jesse_polhemus@brown.edu' # Sender of CS department mailing lists
