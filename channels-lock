@@ -3,7 +3,7 @@
         (url "https://github.com/fishinthecalculator/sops-guix")
         (branch "main")
         (commit
-          "8005f05fb1790cad007df3835798f4563e5ca550")
+          "120f621973b410f8fbf0e3739baa9451da0f4167")
         (introduction
           (make-channel-introduction
             "0bbaf1fdd25266c7df790f65640aaa01e6d2dbc9"
@@ -14,7 +14,7 @@
         (url "https://github.com/gs-101/emacs-master.git")
         (branch "main")
         (commit
-          "53bf0c45798fb25b028bf2f76708d09d954e8e9e")
+          "af065b2af4da9eb24ef6948a1ad2c5eb4fb64329")
         (introduction
           (make-channel-introduction
             "568579841d0ca41a9d222a2cfcad9a7367f9073b"
@@ -25,7 +25,7 @@
         (url "https://gitlab.com/nonguix/nonguix")
         (branch "master")
         (commit
-          "cf446261cfbdaf1bc7ff725f1f34cf2fd20d6a22")
+          "e14d2feb7a61166a1843e6fdafa455525b5142ef")
         (introduction
           (make-channel-introduction
             "897c1a470da759236cc11798f4e0a5f7d4d59fbc"
@@ -36,7 +36,7 @@
         (url "https://codeberg.org/guix/guix.git")
         (branch "master")
         (commit
-          "13cd6c9a1386533e62780c19a8eb57d01ef4eea8")
+          "a440ce45676eb96b3cfbcc01a498345e3905b769")
         (introduction
           (make-channel-introduction
             "9edb3f66fd807b096b48283debdcddccfea34bad"
