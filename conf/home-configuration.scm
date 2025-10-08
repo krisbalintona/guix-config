@@ -30,7 +30,6 @@
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
-  #:use-module (krisb packages jujutsu)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
   #:use-module (krisb packages lieer)
@@ -93,7 +92,7 @@
                "emacs-master-custom"
                "emacs-guix"
                "emacs-arei" "guile-next" "guile-ares-rs"
-               "jujutsu-bin"
+               "jujutsu"
                "patch"                  ; Needed for vc-jj
                "emacs-pdf-tools"
                "enchant" "emacs-jinx"
