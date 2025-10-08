@@ -23,7 +23,7 @@ retrunk = ["rebase", "-r", "left_behind()", "-d", "trunk()"]
 # See https://jj-vcs.github.io/jj/latest/revsets/#string-patterns and
 # https://docs.rs/glob/latest/glob/struct.Pattern.html for an
 # explanation of jj's globbing syntax
-'wip()' = 'descendants(description(glob:"*[[][wW][iI][pP][]]*"))'
+'wip()' = 'description(glob:"*[[][wW][iI][pP][]]*")'
 'left_behind()' = '~(ancestors(trunk()) | descendants(trunk())) & wip()'
 
 [template-aliases]
