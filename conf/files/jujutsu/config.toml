@@ -34,6 +34,7 @@ retrunk = ["rebase", "-r", "left_behind()", "-d", "trunk()"]
 'in_branch(commit)' = 'commit.contained_in("immutable_heads()..bookmarks()")'
 
 [templates]
+git_push_bookmark = '"krisbalintona/push-" ++ change_id.short()'
 # Format jj config list to show the config variable type and path.
 # Taken from
 # https://jj-vcs.github.io/jj/latest/config/#default-template
@@ -68,5 +69,4 @@ coalesce(
 '''
 
 [git]
-push-bookmark-prefix = "krisbalintona/push-"
 private-commits = 'wip()'    # These are commits that cannot be pushed
