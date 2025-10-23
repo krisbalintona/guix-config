@@ -74,6 +74,7 @@
                "xdg-utils"
                "xdg-user-dirs"
                "make"
+               "cmake"
                "wl-clipboard"
                "python-lieer"
                "l2md"
