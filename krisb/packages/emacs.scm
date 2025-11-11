@@ -15,8 +15,8 @@
        (inherit (package-source emacs-master:emacs-master))
        (uri (git-reference
              (url "https://github.com/emacs-mirror/emacs.git")
-             (commit "4ec24ce2a13661e3cd721b795f36bf76e0428abe")))
-       (sha256 (base32 "0c8qrialfdbk0z2vmx6ywvfpylnrqmjk838kfjscq0hdzqn4hn6g"))))
+             (commit "9709cb8d162c5696c9960abd4449078a4400b369")))
+       (sha256 (base32 "0bry21hgwcz3wb3nhb46x2bvzsvhcqm79wbfa3j53rp7gplnbvdm"))))
     (arguments
      (substitute-keyword-arguments (package-arguments emacs-master:emacs-master)
        ((#:configure-flags flags)

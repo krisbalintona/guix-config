@@ -14,7 +14,7 @@
         (url "https://github.com/gs-101/emacs-master.git")
         (branch "main")
         (commit
-          "137eb3a9de21d7e832c9e4f222a272b45e42d0b8")
+          "456f0ff91cde8bcdc0a75aeeb0a8a6845e542cbe")
         (introduction
           (make-channel-introduction
             "568579841d0ca41a9d222a2cfcad9a7367f9073b"
@@ -25,7 +25,7 @@
         (url "https://gitlab.com/nonguix/nonguix")
         (branch "master")
         (commit
-          "a345ef84fbdf3b2491acb2c2b6665a4eb97bd4aa")
+          "ba6ce23e785d1ccd9194202d8f27f6db4b649170")
         (introduction
           (make-channel-introduction
             "897c1a470da759236cc11798f4e0a5f7d4d59fbc"
@@ -36,7 +36,7 @@
         (url "https://codeberg.org/guix/guix.git")
         (branch "master")
         (commit
-          "140b6abef4bdbbd33a58670b44d0104eb62eeca2")
+          "f347ccde0159ea4b1417fe2399d699f65a0337f9")
         (introduction
           (make-channel-introduction
             "9edb3f66fd807b096b48283debdcddccfea34bad"
