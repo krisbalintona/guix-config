@@ -47,6 +47,8 @@ notmuch tag +sub +job_search -- from:handshake@notifications.joinhandshake.com
 notmuch tag +sub -- from:crc@messages.brown.edu
 notmuch tag +sub +news +brown -- from:herald@browndailyherald.com
 notmuch tag +sub +brown -- from:brown-fund@brown.edu
+notmuch tag +sub +brown -- from:president@brown.edu
+notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
 notmuch tag +sub -- from:video@mailer.e-flux.com
 notmuch tag +sub +buoy -- from:buoyinspirations@64429489.mailchimpapp.com
 notmuch tag +sub +productivity -- from:@flourishedhope.com
