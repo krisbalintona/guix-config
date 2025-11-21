@@ -37,7 +37,6 @@ notmuch tag +sub +writing -- from:poem-a-day@poets.org
 notmuch tag +sub +news -- from:nytdirect@nytimes.com
 notmuch tag +sub -- from:early-modern-world@brown.edu
 notmuch tag +sub -- from:"Aeon+Psyche Daily"
-notmuch tag +sub +news -- from:"News from Brown"
 notmuch tag +sub -- from:newsletter@thebaffler.com
 notmuch tag +sub +news -- from:email@washingtonpost.com
 notmuch tag +sub +job_search -- from:jobs-noreply@linkedin.com
@@ -49,6 +48,9 @@ notmuch tag +sub +news +brown -- from:herald@browndailyherald.com
 notmuch tag +sub +brown -- from:brown-fund@brown.edu
 notmuch tag +sub +brown -- from:president@brown.edu
 notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
+notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
+notmuch tag +sub +news +brown -- from:"News from Brown"
+notmuch tag +sub +brown -- from:brownclubofchicago@mail.brown.edu
 notmuch tag +sub -- from:video@mailer.e-flux.com
 notmuch tag +sub +buoy -- from:buoyinspirations@64429489.mailchimpapp.com
 notmuch tag +sub +productivity -- from:@flourishedhope.com
