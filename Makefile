@@ -17,3 +17,6 @@ home:
 
 build:
 	guix build -L . $(PACKAGE)
+
+shell:
+	guix shell -L . $(PACKAGE)
