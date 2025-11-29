@@ -10,7 +10,6 @@ name = "Kristoffer Balintona"
 [ui]
 conflict-marker-style = "git"
 editor = "emacsclient -a nvim -r"
-show-cryptographic-signatures = true
 
 [aliases]
 lr = ["log", "--reversed"]
