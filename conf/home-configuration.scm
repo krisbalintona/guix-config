@@ -32,8 +32,7 @@
   #:use-module (sops home services sops)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
-  #:use-module (krisb packages lieer)
-  #:use-module (krisb packages emacs))
+  #:use-module (krisb packages lieer))
 
 (define krisb-home-environment
   (home-environment
@@ -90,7 +89,7 @@
                ;; Fish shell
                "grc"           ; For oh-my-fish/plugin-grc fish plugin
                ;; Emacs
-               "emacs-master-custom"
+               "emacs-master"
                "emacs-guix"
                "emacs-arei" "guile-next" "guile-ares-rs"
                "jujutsu"
