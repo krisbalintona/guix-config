@@ -159,7 +159,7 @@
                                        "*/15 * * * *"
                                        #~("sh" "-c"
                                           #$(string-join '("echo 'Starting l2md fetch...'" "&&"
-                                                           "l2md" "--verbose" "&&"
+                                                           "l2md" "&&"
                                                            "echo 'Done fetching!'" "&&"
                                                            "echo 'Starting notmuch new...'" "&&"
                                                            "notmuch" "new" "&&"
