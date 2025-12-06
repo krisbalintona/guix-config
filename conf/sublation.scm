@@ -1,6 +1,7 @@
 (use-modules (gnu)
              (gnu packages shells)
-             (nonguix transformations))
+             (nonguix transformations)
+             (rosenthal services web))
 (use-service-modules cups desktop networking ssh xorg)
 
 ((compose (nonguix-transformation-guix)
@@ -23,10 +24,17 @@
                  (supplementary-groups '("wheel" "netdev" "audio" "video")))
                 %base-user-accounts))
 
+  (packages
+   (cons glibc-locales
+         %base-packages))
+
   ;; Below is the list of system services.  To search for available
   ;; services, run 'guix system search KEYWORD' in a terminal.
   (services
    (append (list
+            (service caddy-service-type
+                     (caddy-configuration
+	              (caddyfile (local-file "files/caddy/Caddyfile"))))
             (service openssh-service-type)
             (service network-manager-service-type)
             (service wpa-supplicant-service-type)

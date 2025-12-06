@@ -2,19 +2,35 @@
 ;; home directory in the same declarative manner as Guix System.
 ;; For more information, see the Home Configuration section of the manual.
 (define-module (guix-home-config)
+  #:use-module (guix gexp)
+  #:use-module (gnu system shadow)
+  #:use-module (gnu services)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
-  #:use-module (gnu services)
-  #:use-module (gnu system shadow)
+  #:use-module (gnu home services shepherd)
   #:use-module (gnu home services ssh)
-  #:use-module (guix gexp))
+  #:use-module (gnu packages python))
 
 (define home-config
   (home-environment
     (services
       (append
         (list
+         (simple-service 'copyparty-server
+                         home-shepherd-service-type
+                         (list
+                          (shepherd-service
+                           (provision '(copyparty-server))
+                           (documentation "Start my Copyparty server.")
+                           (auto-start? #t)
+                           (start #~(make-forkexec-constructor
+                                     '(#$(file-append python "/bin/python3")
+                                       #$(local-file "files/copyparty/copyparty-sfx.py")
+                                       "-c" #$(local-file "files/copyparty/copyparty.conf"))))
+                           (stop #~(make-kill-destructor))
+                           (respawn? #t)
+                           (respawn-delay 2))))
          (service home-bash-service-type
                   (home-bash-configuration
                    (bashrc

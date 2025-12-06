@@ -1,0 +1,8 @@
+localhost {
+    tls internal
+    reverse_proxy localhost:6969
+}
+
+party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
+    reverse_proxy localhost:6969
+}
