@@ -51,6 +51,7 @@ notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
 notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
 notmuch tag +sub +news +brown -- from:"News from Brown"
 notmuch tag +sub +brown -- from:brownclubofchicago@mail.brown.edu
+notmuch tag +sub +brown -- from:reunions@brown.edu
 notmuch tag +sub -- from:video@mailer.e-flux.com
 notmuch tag +sub +buoy -- from:buoyinspirations@64429489.mailchimpapp.com
 notmuch tag +sub +productivity -- from:@flourishedhope.com
