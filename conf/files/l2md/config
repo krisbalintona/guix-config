@@ -33,6 +33,6 @@ url = https://yhetil.org/mumi-bugs/0
 maildir = ~/Documents/emails/l2md/mumi-bugs
 
 # https://yhetil.org/notmuch/
-[repo mumi-bugs]
+[repo notmuch]
 url = https://yhetil.org/notmuch/0
 maildir = ~/Documents/emails/l2md/notmuch
