@@ -8,6 +8,15 @@
           "0bbaf1fdd25266c7df790f65640aaa01e6d2dbc9"
           (openpgp-fingerprint
            "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))
+      (channel
+        (name 'abbe)
+        (url "https://codeberg.org/group/guix-modules.git")
+        (branch "mainline")
+        (introduction
+         (make-channel-introduction
+          "8c754e3a4b49af7459a8c99de130fa880e5ca86a"
+          (openpgp-fingerprint
+           "F682 CDCC 39DC 0FEA E116  20B6 C746 CFA9 E74F A4B0"))))
        (channel
         (name 'emacs-master)
         (url "https://github.com/gs-101/emacs-master.git")

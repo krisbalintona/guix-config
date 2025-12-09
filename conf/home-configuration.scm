@@ -30,6 +30,7 @@
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
+  #:use-module (abbe packages rust)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
   #:use-module (krisb packages lieer))
@@ -79,7 +80,7 @@
                "l2md"
                "zotero"
                "python"
-               "gnupg" "pinentry" "sops"
+               "gnupg" "pinentry"
                "mpv"
                ;; Fancy CLI tools
                "atuin-bin" ; Don't forget to log in and sync atuin on first install
@@ -246,7 +247,7 @@
                  (for-home
                   (syncthing-configuration
                    (arguments (list "--no-default-folder"))
-                   (user "krisbalintona") ; My user
+                   (user "krisbalintona")
                    (config-file
                     (syncthing-config-file
                      ;; We use a non-standard port because we are on WSL
