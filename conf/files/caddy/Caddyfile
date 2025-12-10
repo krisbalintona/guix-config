@@ -1,8 +1,10 @@
+# For local development
 localhost {
-    tls internal
-    reverse_proxy localhost:6969
+	tls internal
+	reverse_proxy copyparty-server:6969
 }
 
+# My domains
 party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
-    reverse_proxy localhost:6969
+	reverse_proxy copyparty-server:6969
 }

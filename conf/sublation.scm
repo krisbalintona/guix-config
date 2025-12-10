@@ -40,10 +40,7 @@
    ;; Below is the list of system services.  To search for available
    ;; services, run 'guix system search KEYWORD' in a terminal.
    (services
-    (cons* (service caddy-service-type
-             (caddy-configuration
-	       (caddyfile (local-file "files/caddy/Caddyfile"))))
-           ;; The two services below are for rootless Podman.  See
+    (cons* ;; The two services below are for rootless Podman.  See
            ;; (guix) Miscellaneous Services
            (service iptables-service-type)
            (service rootless-podman-service-type

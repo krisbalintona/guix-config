@@ -20,8 +20,37 @@
      (cons* (service home-oci-service-type
               (for-home
                (oci-configuration
-                (runtime 'podman)
+                (runtime 'podman)       ; Use podman instead of docker
                 (verbose? #t))))
+            (simple-service 'home-oci-caddy
+                home-oci-service-type
+              (oci-extension
+               (networks
+                (list
+                 (oci-network-configuration
+                  (name "contained-network")
+                  (subnet "10.42.0.0/24")
+                  (internal? #t))))
+               (containers
+                (list
+                 (oci-container-configuration
+                   (provision "caddy")
+                   (image "docker.io/caddy:2.10.2")
+                   (network "contained-network")
+                   ;; Some of the settings below were copied from the
+                   ;; template/starter Docker usage described on the
+                   ;; home page of the Docker image used above:
+                   ;; https://hub.docker.com/_/caddy
+                   (ports '(("80" . "80")
+                            ("443" . "443")
+                            ("443" . "443/udp")))
+                   (volumes
+                    `(("caddy_data" . "/data")
+                      (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
+                       . "/config/Caddyfile")))
+                   (command '("caddy" "run" "--config" "/config/Caddyfile"))
+                   (auto-start? #t)
+                   (respawn? #f))))))
             (simple-service 'home-oci-copyparty
                 home-oci-service-type
               (oci-extension
@@ -30,8 +59,7 @@
                  (oci-container-configuration
                    (provision "copyparty-server")
                    (image "docker.io/copyparty/ac:1.19.21")
-                   (network "host")
-                   (ports '(("6969" . "6969")))
+                   (network "contained-network")
                    ;; Have files mounted at /data/ and copyparty config +
                    ;; cache files in /srv/
                    (volumes
