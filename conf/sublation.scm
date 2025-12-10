@@ -40,28 +40,27 @@
    ;; Below is the list of system services.  To search for available
    ;; services, run 'guix system search KEYWORD' in a terminal.
    (services
-    (append (list
-             (service caddy-service-type
-               (caddy-configuration
-	         (caddyfile (local-file "files/caddy/Caddyfile"))))
-             ;; The two services below are for rootless Podman.  See
-             ;; (guix) Miscellaneous Services
-             (service iptables-service-type)
-             (service rootless-podman-service-type
-               (rootless-podman-configuration
-                 (subgids (list (subid-range (name "krisbalintona"))))
-                 (subuids (list (subid-range (name "krisbalintona"))))))
-             (service openssh-service-type)
-             (service network-manager-service-type)
-             (service wpa-supplicant-service-type)
-             (service ntp-service-type)
-             (service elogind-service-type
-               (elogind-configuration
-                 (handle-lid-switch 'ignore)
-                 (handle-lid-switch-docked 'ignore)
-                 (handle-lid-switch-external-power 'ignore)
-                 (lid-switch-ignore-inhibited? #t))))
-            %base-services))
+    (cons* (service caddy-service-type
+             (caddy-configuration
+	       (caddyfile (local-file "files/caddy/Caddyfile"))))
+           ;; The two services below are for rootless Podman.  See
+           ;; (guix) Miscellaneous Services
+           (service iptables-service-type)
+           (service rootless-podman-service-type
+             (rootless-podman-configuration
+               (subgids (list (subid-range (name "krisbalintona"))))
+               (subuids (list (subid-range (name "krisbalintona"))))))
+           (service openssh-service-type)
+           (service network-manager-service-type)
+           (service wpa-supplicant-service-type)
+           (service ntp-service-type)
+           (service elogind-service-type
+             (elogind-configuration
+               (handle-lid-switch 'ignore)
+               (handle-lid-switch-docked 'ignore)
+               (handle-lid-switch-external-power 'ignore)
+               (lid-switch-ignore-inhibited? #t)))
+           %base-services))
    
    (bootloader (bootloader-configuration
                  (bootloader grub-efi-bootloader)
