@@ -5,11 +5,13 @@
   #:use-module (guix gexp)
   #:use-module (gnu system shadow)
   #:use-module (gnu services)
+  #:use-module (gnu services containers)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services ssh)
+  #:use-module (gnu home services containers)
   #:use-module (gnu packages python))
 
 (define home-config
@@ -17,20 +19,30 @@
     (services
      (append
       (list
-       (simple-service 'copyparty-server
-           home-shepherd-service-type
-         (list
-          (shepherd-service
-            (provision '(copyparty-server))
-            (documentation "Start my Copyparty server.")
-            (auto-start? #t)
-            (start #~(make-forkexec-constructor
-                      '(#$(file-append python "/bin/python3")
-                        #$(local-file "files/copyparty/copyparty-sfx.py")
-                        "-c" #$(local-file "files/copyparty/copyparty.conf"))))
-            (stop #~(make-kill-destructor))
-            (respawn? #t)
-            (respawn-delay 2))))
+       (service home-oci-service-type
+         (for-home
+          (oci-configuration
+           (runtime 'podman)
+           (verbose? #t))))
+       (simple-service 'home-oci-copyparty
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (oci-container-configuration
+              (provision "copyparty-server")
+              (image "docker.io/copyparty/ac:1.19.21")
+              (network "host")
+              (ports '(("6969" . "6969")))
+              ;; Have files mounted at /data/ and copyparty config +
+              ;; cache files in /srv/
+              (volumes
+               `(("/home/krisbalintona/copyparty-data" . "/data")
+                 (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
+                  . "/srv/copyparty.conf")))
+              (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
+              (auto-start? #t)
+              (respawn? #f))))))
        (service home-bash-service-type
          (home-bash-configuration
            (bashrc

@@ -1,8 +1,14 @@
 (use-modules (gnu)
+             (gnu system accounts)
              (gnu packages shells)
              (nonguix transformations)
              (rosenthal services web))
-(use-service-modules cups desktop networking ssh xorg)
+(use-service-modules cups
+                     desktop
+                     networking
+                     ssh
+                     xorg
+                     containers)
 
 ((compose (nonguix-transformation-guix)
           (nonguix-transformation-linux))
@@ -21,7 +27,10 @@
                    ;; REVIEW 2025-12-06: Fish shell through tramp has
                    ;; failed despite all my attempts
                    ;; (shell (file-append fish "/bin/fish"))
-                   (supplementary-groups '("wheel" "netdev" "audio" "video")))
+                   (supplementary-groups '("wheel" "netdev"
+                                           "audio" "video"
+                                           ;; For rootless Podman
+                                           "cgroup")))
                  %base-user-accounts))
 
    (packages
@@ -35,6 +44,13 @@
              (service caddy-service-type
                (caddy-configuration
 	         (caddyfile (local-file "files/caddy/Caddyfile"))))
+             ;; The two services below are for rootless Podman.  See
+             ;; (guix) Miscellaneous Services
+             (service iptables-service-type)
+             (service rootless-podman-service-type
+               (rootless-podman-configuration
+                 (subgids (list (subid-range (name "krisbalintona"))))
+                 (subuids (list (subid-range (name "krisbalintona"))))))
              (service openssh-service-type)
              (service network-manager-service-type)
              (service wpa-supplicant-service-type)
@@ -46,6 +62,7 @@
                  (handle-lid-switch-external-power 'ignore)
                  (lid-switch-ignore-inhibited? #t))))
             %base-services))
+   
    (bootloader (bootloader-configuration
                  (bootloader grub-efi-bootloader)
                  (targets (list "/boot/efi"))
