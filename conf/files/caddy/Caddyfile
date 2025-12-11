@@ -7,4 +7,12 @@ localhost {
 # My domains
 party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
 	reverse_proxy copyparty-server:6969
+
+	log {
+		output file /data/logs/copyparty/access.log {
+			roll_size 10MiB
+			roll_keep 10
+		}
+		level INFO
+	}
 }
