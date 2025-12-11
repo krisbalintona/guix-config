@@ -1,3 +1,10 @@
+{
+	# Internal logs
+	log {
+		level INFO
+	}
+}
+
 # For local development
 localhost {
 	tls internal
@@ -7,12 +14,12 @@ localhost {
 # My domains
 party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
 	reverse_proxy copyparty-server:6969
-
+	# Access logs
 	log {
-		output file /data/logs/copyparty/access.log {
+		output file /data/log/caddy/access.log {
 			roll_size 10MiB
 			roll_keep 10
 		}
-		level INFO
+		format console
 	}
 }

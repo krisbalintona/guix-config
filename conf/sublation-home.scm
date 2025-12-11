@@ -46,7 +46,7 @@
                             ("443" . "443/udp")))
                    (volumes
                     `(("caddy_data" . "/data")
-                      ("caddy_logs" . "/data/logs")
+                      ("caddy_log" . "/data/log")
                       (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
                        . "/config/Caddyfile")))
                    (command '("caddy" "run" "--config" "/config/Caddyfile"))

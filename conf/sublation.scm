@@ -8,7 +8,8 @@
                      networking
                      ssh
                      xorg
-                     containers)
+                     containers
+                     security)
 
 ((compose (nonguix-transformation-guix)
           (nonguix-transformation-linux))
@@ -40,7 +41,34 @@
    ;; Below is the list of system services.  To search for available
    ;; services, run 'guix system search KEYWORD' in a terminal.
    (services
-    (cons* ;; The two services below are for rootless Podman.  See
+    (cons* (service fail2ban-service-type
+             (fail2ban-configuration
+               (extra-jails
+                (list
+                 ;; SSH jail
+                 (fail2ban-jail-configuration
+                   (name "sshd")
+                   (enabled? #t)
+                   (max-retry 5)
+                   (find-time "10m")
+                   (ban-time "1h"))
+                 ;; Caddy jail
+                 (fail2ban-jail-configuration
+                   (name "caddy-bots")
+                   (enabled? #t)
+                   (max-retry 3)
+                   (find-time "5m")
+                   (ban-time "1h")
+                   ;; TODO 2025-12-10: Can we shorten this path and
+                   ;; compute it dynamically?  This depends on the
+                   ;; internal volume created by Podman for my Caddy
+                   ;; service
+                   (log-path
+                    '("/home/krisbalintona/.local/share/containers/storage/volumes/caddy_log/_data/caddy/access.log"))
+                   (filter
+                    (fail2ban-jail-filter-configuration
+                      (name "nginx-botsearch"))))))))
+           ;; The two services below are for rootless Podman.  See
            ;; (guix) Miscellaneous Services
            (service iptables-service-type)
            (service rootless-podman-service-type
