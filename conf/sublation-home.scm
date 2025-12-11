@@ -22,7 +22,7 @@
                (oci-configuration
                 (runtime 'podman)       ; Use podman instead of docker
                 (verbose? #t))))
-            (simple-service 'home-oci-caddy
+            (simple-service 'home-oci-services
                 home-oci-service-type
               (oci-extension
                (networks
@@ -50,18 +50,13 @@
                        . "/config/Caddyfile")))
                    (command '("caddy" "run" "--config" "/config/Caddyfile"))
                    (auto-start? #t)
-                   (respawn? #f))))))
-            (simple-service 'home-oci-copyparty
-                home-oci-service-type
-              (oci-extension
-               (containers
-                (list
+                   (respawn? #f))
                  (oci-container-configuration
                    (provision "copyparty-server")
                    (image "docker.io/copyparty/ac:1.19.21")
                    (network "contained-network")
-                   ;; Have files mounted at /data/ and copyparty config +
-                   ;; cache files in /srv/
+                   ;; Have files mounted at /data/ and copyparty
+                   ;; config + cache files in /srv/
                    (volumes
                     `(("/home/krisbalintona/copyparty-data" . "/data")
                       (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
