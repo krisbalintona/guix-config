@@ -4,6 +4,7 @@
 (define-module (guix-home-config)
   #:use-module (guix gexp)
   #:use-module (gnu system shadow)
+  #:use-module (gnu packages)
   #:use-module (gnu services)
   #:use-module (gnu services containers)
   #:use-module (gnu home)
@@ -16,6 +17,17 @@
 
 (define home-config
   (home-environment
+    (packages
+     (specifications->packages
+      (list
+       "vim"
+       "neovim"
+       "ripgrep"
+       "tree"
+       "jujutsu"
+       "parted"
+       "rsync")))
+    
     (services
      (cons* (service home-oci-service-type
               (for-home
