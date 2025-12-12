@@ -48,7 +48,7 @@ notmuch tag +sub +news +brown -- from:herald@browndailyherald.com
 notmuch tag +sub +brown -- from:brown-fund@brown.edu
 notmuch tag +sub +brown -- from:president@brown.edu
 notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
-notmuch tag +sub +brown -- from:alumnisuccess@brown.edu
+notmuch tag +sub +brown -- from:"Brown Alumni Association"
 notmuch tag +sub +news +brown -- from:"News from Brown"
 notmuch tag +sub +brown -- from:brownclubofchicago@mail.brown.edu
 notmuch tag +sub +brown -- from:reunions@brown.edu
