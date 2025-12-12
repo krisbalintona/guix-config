@@ -9,7 +9,8 @@
                      ssh
                      xorg
                      containers
-                     security)
+                     security
+                     sysctl)
 
 ((compose (nonguix-transformation-guix)
           (nonguix-transformation-linux))
@@ -75,6 +76,9 @@
              (rootless-podman-configuration
                (subgids (list (subid-range (name "krisbalintona"))))
                (subuids (list (subid-range (name "krisbalintona"))))))
+           (simple-service 'extend-sysctl
+               sysctl-service-type
+             '(("net.ipv4.ip_unprivileged_port_start" . "80"))) ; For Caddy
            (service openssh-service-type)
            (service network-manager-service-type)
            (service wpa-supplicant-service-type)
