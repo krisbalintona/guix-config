@@ -305,7 +305,14 @@
                                 (identity-file "~/.ssh/id_ed25519"))
                   (openssh-host (name "github.com")
                                 (user "krisbalintona")
-                                (identity-file "~/.ssh/id_ed25519")))))))
+                                (identity-file "~/.ssh/id_ed25519"))
+                  (openssh-host (name "sublation")
+                                ;; Hostname of my remote machine,
+                                ;; resolved via local DNS
+                                (host-name "sublation.home.arpa")
+                                (user "krisbalintona")
+                                (identity-file "~/.ssh/id_ed25519")
+                                (forward-agent? #t)))))))
      ;; Authinfo
      (list
       (simple-service 'krisb-symlink-authinfo
