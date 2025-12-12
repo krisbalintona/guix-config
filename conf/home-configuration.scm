@@ -30,10 +30,10 @@
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
+  #:use-module (abbe packages rust)
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
-  #:use-module (krisb packages lieer)
-  #:use-module (krisb packages emacs))
+  #:use-module (krisb packages lieer))
 
 (define krisb-home-environment
   (home-environment
@@ -80,7 +80,7 @@
                "l2md"
                "zotero"
                "python"
-               "gnupg" "pinentry" "sops"
+               "gnupg" "pinentry"
                "mpv"
                ;; Fancy CLI tools
                "atuin-bin" ; Don't forget to log in and sync atuin on first install
@@ -90,7 +90,7 @@
                ;; Fish shell
                "grc"           ; For oh-my-fish/plugin-grc fish plugin
                ;; Emacs
-               "emacs-master-custom"
+               "emacs-master"
                "emacs-guix"
                "emacs-arei" "guile-next" "guile-ares-rs"
                "jujutsu"
@@ -159,7 +159,7 @@
                                        "*/15 * * * *"
                                        #~("sh" "-c"
                                           #$(string-join '("echo 'Starting l2md fetch...'" "&&"
-                                                           "l2md" "--verbose" "&&"
+                                                           "l2md" "&&"
                                                            "echo 'Done fetching!'" "&&"
                                                            "echo 'Starting notmuch new...'" "&&"
                                                            "notmuch" "new" "&&"
@@ -247,7 +247,7 @@
                  (for-home
                   (syncthing-configuration
                    (arguments (list "--no-default-folder"))
-                   (user "krisbalintona") ; My user
+                   (user "krisbalintona")
                    (config-file
                     (syncthing-config-file
                      ;; We use a non-standard port because we are on WSL
@@ -391,9 +391,10 @@
       (service home-fish-service-type
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
-                (config (list (local-file "files/fish/keychain.fish")
-                              (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
-                              (plain-file "zoxide_init.fish" "zoxide init fish | source")))
+                 (config (list (local-file "files/fish/keychain.fish")
+                               (plain-file "fish_greeting.fish" "set -g fish_greeting")
+                               (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
+                               (plain-file "zoxide_init.fish" "zoxide init fish | source")))
                 (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                     "--style=plain,header-filesize,grid,snip --paging auto"
                                                     "--italic-text=always --nonprintable-notation=caret")))))
@@ -443,22 +444,11 @@
       (simple-service 'krisb-wslg-display-service-type
                       home-environment-variables-service-type
                       '(("DISPLAY" . ":0"))))
-     ;; REVIEW 2025-07-02: Don't remember if all of these are foreign
-     ;; distro-only.
      ;; Guix on a foreign distro
      (list
       (simple-service 'krisb-foreign-distro
                       home-environment-variables-service-type
-                      '(;; GUIX_PROFILE
-                        ("GUIX_PROFILE" . "$HOME/.guix-profile")
-                        ;; Guile stuff
-                        ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
-                        ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
-                        ;; Locales.  Requires the glibc-locales
-                        ;; package
-                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale")
-                        ;; Guix Info manual
-                        ("INFOPATH" . "$HOME/.guix-profile/share/info:$INFOPATH"))))
+                      '(("GUIX_PROFILE" . "$HOME/.guix-profile"))))
      ;; Base services
      %base-home-services))))
 

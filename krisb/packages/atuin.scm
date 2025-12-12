@@ -1,6 +1,3 @@
-;;; Copyright © 2024 Javier Olaechea <pirata@gmail.com>
-;;; SPDX-License-Identifier: GPL-3.0-or-later
-
 ;; Taken from
 ;; https://git.sr.ht/~puercopop/glue/tree/default/item/src/glue/packages/atuin.scm
 

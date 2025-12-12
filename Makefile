@@ -1,5 +1,5 @@
 CHANNELS=./channels
-LOCKFILE=./channels-lock
+LOCKFILE=./channels-lock.scm
 
 pull:
 	guix pull -C ${CHANNELS}
