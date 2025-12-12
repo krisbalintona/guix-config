@@ -10,7 +10,8 @@
                      xorg
                      containers
                      security
-                     sysctl)
+                     sysctl
+                     dns)
 
 ((compose (nonguix-transformation-guix)
           (nonguix-transformation-linux))
@@ -80,6 +81,102 @@
                sysctl-service-type
              '(("net.ipv4.ip_unprivileged_port_start" . "80"))) ; For Caddy
            (service openssh-service-type)
+           (service unbound-service-type
+             (unbound-configuration
+               (server
+                (unbound-server
+                  ;; Listen on all interfaces, IPv4, IPv6, and the
+                  ;; local subnet
+                  (interface '("0.0.0.0" "::0"))
+                  (tls-cert-bundle "/etc/ssl/certs/ca-certificates.crt")
+                  (hide-version #t)
+                  (hide-identity #t)
+                  ;; See
+                  ;; https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html
+                  ;; for a description of all options
+                  (extra-options
+                   '(;; These are already default, but I declare them
+                     ;; explicitly anyway
+                     (do-ip4 . "yes")
+                     (do-udp . "yes")
+                     (do-tcp . "yes")
+                     ;; All paths below are relative to CHROOT, if
+                     ;; set.  Make sure CHROOT has the permissions of
+                     ;; the unbound process.  The default user of the
+                     ;; process is "unbound" (see also the USERNAME
+                     ;; option).  To change permissions, do something
+                     ;; like:
+                     ;;
+                     ;;     sudo chown unbound:unbound CHROOT_PATH
+                     ;;
+                     ;; I do not CHROOT since unbound already runs as
+                     ;; a user without elevated privileges, and that's
+                     ;; good enough for me.
+                     (chroot . "")
+                     ;; Logging.  If LOGFILE is a path, output to
+                     ;; stderr (which sudo herd status shows).
+                     ;; Otherwise, output logs to LOGFILE
+                     (logfile . "")
+                     (use-syslog . "no")
+                     (verbosity . "1")  ; Default
+                     (log-time-ascii . "yes")
+                     (log-destaddr . "yes")
+                     (log-queries . "yes")
+                     (log-servfail . "yes")
+                     ;; (username . "root")
+                     ;; Use DNSSEC.
+                     ;;
+                     ;; NOTE 2025-12-12: On Guix Systems, the root key
+                     ;; has to be created manually, it seems.  Ensure
+                     ;; the parent directory of the file exists then
+                     ;; run:
+                     ;;
+                     ;;     sudo unbound-anchor -a /PATH/TO/KEY/root.key
+                     ;;
+                     ;; Unbound also runs as the "unbound" user, so
+                     ;; for extra security you can change the
+                     ;; permissions of the file, too:
+                     ;;
+                     ;;     sudo chown unbound:unbound /PATH/TO/KEY
+                     ;;
+                     ;; Or, the first command can be ran with "-u
+                     ;; unbound", like so:
+                     ;;
+                     ;;     sudo -u unbound unbound-anchor -a /PATH/TO/KEY/root.key
+                     ;;
+                     (auto-trust-anchor-file . "/var/lib/unbound/root.key")
+                     (harden-glue . "yes")
+                     (harden-dnssec-stripped . "yes")
+                     ;; Performance and security.  An article that
+                     ;; shares a lot of info and tips on the matter:
+                     ;; https://calomel.org/unbound_dns.html
+                     (use-caps-for-id . "yes")
+                     (prefetch . "yes")
+                     (num-threads . "2")))))
+               (remote-control
+                (unbound-remote
+                  (control-enable #t)
+                  ;; Use with:
+                  ;;
+                  ;;     sudo unbound-control -s CONTROL-INTERFACE status
+                  ;;
+                  (control-interface "/run/unbound.sock"))) ; Default value
+               ;; We place the below in EXTRA-CONTENT because we
+               ;; either need to unquote a value entirely in the
+               ;; config or quote portions of them (which can be done
+               ;; if the cdr is a single Guile symbol).  But
+               ;; UNBOUND-SERVER always quotes values, so to deal with
+               ;; edge cases we place certain settings in
+               ;; EXTRA-CONTENT.  (There can be multiple "server:"
+               ;; blocks in the config, it seems.)
+               (extra-content
+                ;; TODO 2025-12-12: Figure out a way to dynamically
+                ;; determine my IP address and subnet
+                "server:
+        access-control: 127.0.0.0/8 allow
+        access-control: 192.168.4.0/22 allow
+        local-zone: \"home.arpa.\" static
+        local-data: \"sublation.home.arpa. IN A 192.168.4.242\"")))
            (service network-manager-service-type)
            (service wpa-supplicant-service-type)
            (service ntp-service-type)
