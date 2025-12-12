@@ -96,10 +96,16 @@
                  (targets (list "/boot/efi"))
                  (keyboard-layout keyboard-layout)))
 
-   ;; The list of file systems that get "mounted".  The unique file
-   ;; system identifiers there ("UUIDs") can be obtained by running
-   ;; 'blkid' in a terminal.
    (file-systems (cons* (file-system
+                          (mount-point "/mnt/backup-hdd")
+                          (flags '(no-atime no-diratime))
+                          (device (uuid
+                                   "7526f253-87d5-47d9-80f9-66c99c70bb8f"
+                                   'ext4))
+                          (type "ext4")
+                          (create-mount-point? #t)
+                          (mount-may-fail? #t))
+                        (file-system
                           (mount-point "/")
                           (device (uuid
                                    "fc895b22-bd9a-4c70-8449-2aed8ed7a116"
@@ -109,4 +115,5 @@
                           (mount-point "/boot/efi")
                           (device (uuid "8D5D-5605"
                                         'fat32))
-                          (type "vfat")) %base-file-systems))))
+                          (type "vfat"))
+                        %base-file-systems))))
