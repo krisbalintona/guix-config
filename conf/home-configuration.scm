@@ -444,22 +444,11 @@
       (simple-service 'krisb-wslg-display-service-type
                       home-environment-variables-service-type
                       '(("DISPLAY" . ":0"))))
-     ;; REVIEW 2025-07-02: Don't remember if all of these are foreign
-     ;; distro-only.
      ;; Guix on a foreign distro
      (list
       (simple-service 'krisb-foreign-distro
                       home-environment-variables-service-type
-                      '(;; GUIX_PROFILE
-                        ("GUIX_PROFILE" . "$HOME/.guix-profile")
-                        ;; Guile stuff
-                        ("GUILE_LOAD_COMPILED_PATH" . "$GUIX_PROFILE/lib/guile/3.0/site-ccache $GUIX_PROFILE/share/guile/site/3.0")
-                        ("GUILE_LOAD_PATH" . "$GUIX_PROFILE/share/guile/site/3.0")
-                        ;; Locales.  Requires the glibc-locales
-                        ;; package
-                        ("GUIX_LOCPATH" . "$GUIX_PROFILE/lib/locale")
-                        ;; Guix Info manual
-                        ("INFOPATH" . "$HOME/.guix-profile/share/info:$INFOPATH"))))
+                      '(("GUIX_PROFILE" . "$HOME/.guix-profile"))))
      ;; Base services
      %base-home-services))))
 
