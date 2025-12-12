@@ -391,9 +391,10 @@
       (service home-fish-service-type
                (home-fish-configuration
                 ;; These are appended to ~/.config/fish/config.fish
-                (config (list (local-file "files/fish/keychain.fish")
-                              (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
-                              (plain-file "zoxide_init.fish" "zoxide init fish | source")))
+                 (config (list (local-file "files/fish/keychain.fish")
+                               (plain-file "fish_greeting.fish" "set -g fish_greeting")
+                               (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
+                               (plain-file "zoxide_init.fish" "zoxide init fish | source")))
                 (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                     "--style=plain,header-filesize,grid,snip --paging auto"
                                                     "--italic-text=always --nonprintable-notation=caret")))))
