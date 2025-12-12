@@ -5,8 +5,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module ((gnu packages base)
-                #:select (glibc))
+  #:use-module ((gnu packages base) #:select (glibc))
   #:use-module ((gnu packages gcc) #:select (gcc))
   #:use-module ((gnu packages sqlite) #:select (sqlite))
   #:use-module ((nonguix build-system binary) #:select (binary-build-system)))
@@ -29,12 +28,12 @@
              ("glibc" ,glibc)))
    (arguments
     `(#:strip-binaries? #f
-      #:install-plan '(("atuin-x86_64-unknown-linux-gnu/atuin" "bin/"))
-      #:patchelf-plan `(("atuin-x86_64-unknown-linux-gnu/atuin" ("glibc" "gcc:lib")))
+      #:install-plan '(("atuin" "bin/"))
+      #:patchelf-plan `(("atuin" ("glibc" "gcc:lib")))
       #:phases (modify-phases %standard-phases
                               (replace 'unpack
                                        (lambda* (#:key inputs source #:allow-other-keys)
-                                         (invoke "tar" "-zxf" source))))))
+                                         (invoke "tar" "--strip-components=1" "-xf" source))))))
    (home-page "https://atuin.sh/")
    (synopsis "Sync, search and backup shell history")
    (description "Atuin lets you sync, search and backup shell history. It stores your shell
