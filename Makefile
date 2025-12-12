@@ -1,22 +1,22 @@
-CHANNELS=./channels
+CHANNELS=./channels.scm
 LOCKFILE=./channels-lock.scm
 
 pull:
 	guix pull -C ${CHANNELS}
 
 lock:
-	guix describe -f channels > ${LOCKFILE}
+	guix describe -f channels.scm > ${LOCKFILE}
 
 upgrade: pull lock
 
 wsl:
-	sudo guix system reconfigure --no-bootloader -L . conf/wsl.scm
+	sudo guix system reconfigure --no-bootloader -L src config/wsl.scm
 
 home:
-	guix home reconfigure -L . conf/home-configuration.scm
+	guix home reconfigure -L src config/home-configuration.scm
 
 build:
-	guix build -L . $(PACKAGE)
+	guix build -L src $(PACKAGE)
 
 shell:
-	guix shell -L . $(PACKAGE)
+	guix shell -L src $(PACKAGE)

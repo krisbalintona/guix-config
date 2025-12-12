@@ -407,7 +407,7 @@
                       home-activation-service-type
                       #~(begin
                           (use-modules (guix build utils))
-                          (let* ((source (canonicalize-path "conf/files/fish/fish_plugins"))
+                          (let* ((source (canonicalize-path "config/files/fish/fish_plugins"))
                                  (target (string-append (getenv "XDG_CONFIG_HOME") "/fish/fish_plugins")))
                             (format #t "Directly symlinking fish_plugins (~a) to ~a~%" source target)
                             (when (false-if-exception (lstat target))

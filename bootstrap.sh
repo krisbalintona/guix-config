@@ -8,7 +8,7 @@ MAIL_ROOT="$(notmuch config list | grep database.mail_root | cut -d'=' -f2-)"
 # ** Notmuch and lieer
 PERSONAL_MAILDIR=$MAIL_ROOT/personal
 UNI_MAILDIR=$MAIL_ROOT/uni
-GMI_CONFIG_FILES=$SCRIPT_DIR/conf/files/gmi
+GMI_CONFIG_FILES=$SCRIPT_DIR/config/files/gmi
 GMI_CREDENTIAL_FILES="/run/user/$(id -u)/secrets/gmi-credentials"
 
 echo "       Bootstrapping notmch"
