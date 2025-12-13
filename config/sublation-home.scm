@@ -91,7 +91,10 @@
                     "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $TERM =~ eat ]]; }; then
     exec fish
 fi")))))
-            (service home-fish-service-type)
+            (service home-fish-service-type
+              (home-fish-configuration
+                (config
+                 (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
             (simple-service 'krisb-symlink-git-config-files-service-type
                 home-xdg-configuration-files-service-type
               `(("git/config"
