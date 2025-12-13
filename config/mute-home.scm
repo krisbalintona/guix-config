@@ -330,19 +330,19 @@
              (sops-secret
                (key '(".authinfo"))
                (file
-                (local-file "files/sops/secrets.yaml"))
+                (local-file "files/sops/mute.yaml"))
                ;; Make file unwritable, and only my user can read the
                ;; file
                (permissions #o400))
              (sops-secret
                (key '("gmi-credentials" "personal"))
                (file
-                (local-file "files/sops/secrets.yaml"))
+                (local-file "files/sops/mute.yaml"))
                (permissions #o400))
              (sops-secret
                (key '("gmi-credentials" "uni"))
                (file
-                (local-file "files/sops/secrets.yaml"))
+                (local-file "files/sops/mute.yaml"))
                (permissions #o400)))))))
       ;; GPG
       (list
