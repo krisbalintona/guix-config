@@ -5,15 +5,21 @@
   #:use-module (guix gexp)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages)
+  #:use-module (gnu packages python)
+  #:use-module (gnu packages gnupg)
   #:use-module (gnu services)
   #:use-module (gnu services containers)
+  #:use-module (gnu services backup)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services containers)
-  #:use-module (gnu packages python))
+  #:use-module (gnu home services backup)
+  #:use-module (gnu home services gnupg)
+  #:use-module (sops secrets)
+  #:use-module (sops home services sops))
 
 (define home-config
   (home-environment
@@ -27,10 +33,35 @@
        "tree"
        "jujutsu"
        "parted"
-       "rsync")))
+       "rsync"
+       "age"
+       "gnupg")))
     
     (services
-     (cons* (service home-oci-service-type
+     (cons* (service home-restic-backup-service-type
+              (restic-backup-configuration
+                (jobs
+                 (list
+                  (restic-backup-job
+                    (name "restic-copyparty-data")
+                    (repository "/mnt/backup-hdd")
+                    (password-file
+                     (string-append "/run/user/" (number->string (getuid)) "/secrets"
+                                    "/restic-backup-password"))
+                    (schedule "0 5 * * *") ; Every day at 5am
+                    (files (list (string-append (getenv "HOME") "/copyparty-data")))
+                    (verbose? #t))))))
+            (service home-sops-secrets-service-type
+              (home-sops-service-configuration
+                (config (local-file "files/sops/sops.yaml" "sops.yaml"))
+                (secrets
+                 (list (sops-secret
+                         (key '("restic-backup-password"))
+                         (file
+                          (local-file "files/sops/sublation.yaml"))
+                         (permissions #o400))))))
+            (service home-gpg-agent-service-type)
+            (service home-oci-service-type
               (for-home
                (oci-configuration
                 (runtime 'podman)       ; Use podman instead of docker

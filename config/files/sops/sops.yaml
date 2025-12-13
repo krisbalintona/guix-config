@@ -1,6 +1,7 @@
 keys:
   - &gpg_root 1C3BBA161AF482A0E0D8929E3CAC1A1C8486F0C1
   - &age_mute age1gg5gdvp3kk5fd8ypuq94xyn9dtsak2exe4gdrp3k2phuffn65yzshkmeg8
+  - &age_sublation age1jrdxqwamp4a38ntl3938ta305rdw3j3gchkh4ycvssuw0wkzsgsskz22hw
 creation_rules:
    # The goal is to have my GPG key decrypt any secrets file, with
    # each file also being able to be decrypted by some other set of
@@ -8,9 +9,15 @@ creation_rules:
    # and should only be checked if the others fail. See the README for
    # a description of key groups:
    # https://github.com/getsops/sops?tab=readme-ov-file#215key-groups
-  - path_regex: ^mute.yaml$
+  - path_regex: ^sublation\.yaml$
     key_groups:
-        - age:
-                - *age_mute
-          pgp:
-                - *gpg_root
+      - age:
+          - *age_sublation
+        pgp:
+          - *gpg_root
+  - path_regex: ^mute\.yaml$
+    key_groups:
+      - age:
+          - *age_mute
+        pgp:
+          - *gpg_root

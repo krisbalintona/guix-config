@@ -1,0 +1,32 @@
+restic-backup-password: ENC[AES256_GCM,data:PyaWlwv2MOBRFbFGhaRkOJQ=,iv:znYtUKDgrIwbKHPErhScq2fZYbmZGflm7Km9b0vwPzo=,tag:RbpN/20rdC3bp9INV8mywQ==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1jrdxqwamp4a38ntl3938ta305rdw3j3gchkh4ycvssuw0wkzsgsskz22hw
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAyYThoYXJpS2dtRnQvODVp
+            WjhhTWU0UDNoTWlCdDgxVGI1eUw4dDltblhzCk5mTVNxYnRDZm56NzFleWxSR1FP
+            WGthSDZnb0ZERk9pVEZ1ZUU1RWszQk0KLS0tIE1ha0xWNmF0emJST09iei9YVHJl
+            VDZ2cGJCQ0NlWVNMTmh0cG5rbHczeWsKzuPPtOvxU+1x7oikpzF7SMAhNoh0ACe7
+            CDs/jsLXqb0NXmZgP+jbKFV3qScObZ4GUROqRAtPQPV2Wpkrkn9uSg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-12-13T17:04:21Z"
+    mac: ENC[AES256_GCM,data:3tB+1E39EmvIy3AKEQDLqBzqOyzkfWQxe1cxHP2EfDsbObPdx8PwbZYPcXB9x+EOfyNjDEzrgHtfZRlrH7fC8gX4SJJUKxV77UHAN1z+CqY6ArG2tni00mRlf8gtNJFK8qbsaar7I8l4lAR+bbyjQve6JvVLBDvsHKe+kmO7uDk=,iv:nFj0/F8f0DHissz1jyiFQudQ+/s3ULnddDMLY8IvDYQ=,tag:cK1vRa3gPZXzeuj2XaiY3A==,type:str]
+    pgp:
+        - created_at: "2025-12-13T17:04:21Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hF4Dv1dimtIMDyMSAQdAvbwxHL27/bC7qT/63ljKMxUNiDQLeRdDefA8LmanhRIw
+            1TdDdDmkJXoZxsmlWD/DRZqgjb07aBERKKZd94cdOtaf429gHGGZNXGCp21JJEkx
+            0lwB3tGremQSUdf661d4Vfa1zsHvtQeJfaqbm5Wbu0NaATeGdFDxmE/5Zp1sDndS
+            HG8/u4sZgzh7nL9Cl4HMKSH3s8tcTRGk8IXvsAhcQmdw3VUsgc3pYd6Kf1yA+w==
+            =iRca
+            -----END PGP MESSAGE-----
+          fp: 1C3BBA161AF482A0E0D8929E3CAC1A1C8486F0C1
+    unencrypted_suffix: _unencrypted
+    version: 3.9.4
