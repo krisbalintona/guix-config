@@ -322,7 +322,7 @@
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
            (config
-            (local-file "files/sops/.sops.yaml"
+            (local-file "files/sops/sops.yaml"
                         ;; Paths in the store cannot start with dots
                         "sops.yaml"))
            (secrets
