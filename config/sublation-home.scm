@@ -20,6 +20,7 @@
     (packages
      (specifications->packages
       (list
+       "glibc-locales"
        "vim"
        "neovim"
        "ripgrep"
@@ -95,6 +96,9 @@ fi")))))
               (home-fish-configuration
                 (config
                  (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+            (simple-service 'guix-locales
+                home-environment-variables-service-type
+              '(("GUIX_LOCPATH" . "$HOME/.guix-profile/lib/locale")))
             (simple-service 'krisb-symlink-git-config-files-service-type
                 home-xdg-configuration-files-service-type
               `(("git/config"
