@@ -12,8 +12,8 @@ upgrade: pull lock
 wsl:
 	sudo guix system reconfigure --no-bootloader -L src config/wsl.scm
 
-home:
-	guix home reconfigure -L src config/home-configuration.scm
+mute-home:
+	guix home reconfigure -L src config/mute-home.scm
 
 build:
 	guix build -L src $(PACKAGE)
