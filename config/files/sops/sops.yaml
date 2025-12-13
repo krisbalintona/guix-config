@@ -1,5 +1,5 @@
 keys:
-  - &gpg_root 1C3BBA161AF482A0E0D8929E3CAC1A1C8486F0C1
+  - &age_root age18spez0z3wvzw05nhhrka9gmjfvcvhyj7decnw9j4a9xn8m0vyexs0he23r
   - &age_mute age1gg5gdvp3kk5fd8ypuq94xyn9dtsak2exe4gdrp3k2phuffn65yzshkmeg8
   - &age_sublation age1jrdxqwamp4a38ntl3938ta305rdw3j3gchkh4ycvssuw0wkzsgsskz22hw
 creation_rules:
@@ -13,11 +13,9 @@ creation_rules:
     key_groups:
       - age:
           - *age_sublation
-        pgp:
-          - *gpg_root
+          - *age_root
   - path_regex: ^mute\.yaml$
     key_groups:
       - age:
           - *age_mute
-        pgp:
-          - *gpg_root
+          - *age_root
