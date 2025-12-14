@@ -14,12 +14,23 @@
         (url "https://codeberg.org/group/guix-modules.git")
         (branch "mainline")
         (commit
-          "719e3aedc39b7c0b61795b8e18069be74536551c")
+          "1069b4bb6fe321a87a41dc918c5f212575ab80ef")
         (introduction
           (make-channel-introduction
             "8c754e3a4b49af7459a8c99de130fa880e5ca86a"
             (openpgp-fingerprint
               "F682 CDCC 39DC 0FEA E116  20B6 C746 CFA9 E74F A4B0"))))
+      (channel
+        (name 'rosenthal)
+        (url "https://codeberg.org/hako/rosenthal.git")
+        (branch "trunk")
+        (commit
+          "f15c27b931bb07cf76d6f8774730860263234676")
+        (introduction
+          (make-channel-introduction
+            "7677db76330121a901604dfbad19077893865f35"
+            (openpgp-fingerprint
+              "13E7 6CD6 E649 C28C 3385  4DF5 5E5A A665 6149 17F7"))))
       (channel
         (name 'emacs-master)
         (url "https://github.com/gs-101/emacs-master.git")
@@ -36,7 +47,7 @@
         (url "https://gitlab.com/nonguix/nonguix")
         (branch "master")
         (commit
-          "d741f41eca0a04694775118eedaa332ffa1a26f8")
+          "53c477b3e0a45b3bd0036647ac805a8f5e8f71d0")
         (introduction
           (make-channel-introduction
             "897c1a470da759236cc11798f4e0a5f7d4d59fbc"
@@ -47,7 +58,7 @@
         (url "https://codeberg.org/guix/guix.git")
         (branch "master")
         (commit
-          "3a068fcbb316fa94dc1bf8f514a42f399ab04850")
+          "f1ad9b5b8265397f534051c2c1843d3f6cbe8dfc")
         (introduction
           (make-channel-introduction
             "9edb3f66fd807b096b48283debdcddccfea34bad"
