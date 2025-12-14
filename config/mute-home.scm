@@ -32,7 +32,7 @@
   #:use-module (gnu home services backup)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
-  #:use-module (abbe packages rust)
+  #:use-module (abbe packages rust)     ; For Jujutsu
   #:use-module (krisb packages fonts)
   #:use-module (krisb packages atuin)
   #:use-module (krisb packages lieer))
@@ -95,8 +95,8 @@
                 "emacs-master"
                 "emacs-guix"
                 "emacs-arei" "guile-next" "guile-ares-rs"
-                "jujutsu"
-                "patch"                  ; Needed for vc-jj
+                "jujutsu"               ; From the Abbe channel
+                "patch"                 ; Needed for vc-jj
                 "emacs-pdf-tools"
                 "enchant" "emacs-jinx"
                 "aspell" "aspell-dict-en"

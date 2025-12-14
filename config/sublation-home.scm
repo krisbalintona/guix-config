@@ -19,7 +19,8 @@
   #:use-module (gnu home services backup)
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
-  #:use-module (sops home services sops))
+  #:use-module (sops home services sops)
+  #:use-module (abbe packages rust))    ; For Jujutsu
 
 (define home-config
   (home-environment
@@ -31,7 +32,7 @@
        "neovim"
        "ripgrep"
        "tree"
-       "jujutsu"
+       "jujutsu"                        ; From Abbe channel
        "parted"
        "rsync"
        "age"
