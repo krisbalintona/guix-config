@@ -21,6 +21,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu services)
   #:use-module (gnu services dict)
+  #:use-module (gnu services backup)
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services syncthing)
@@ -28,6 +29,7 @@
   #:use-module (gnu home services shells)
   #:use-module (gnu home services dict)
   #:use-module (gnu home services gnupg)
+  #:use-module (gnu home services backup)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
   #:use-module (abbe packages rust)
@@ -128,6 +130,31 @@
 
     (services
      (append
+      ;; Restic backups
+      (list
+       (service home-restic-backup-service-type
+         (restic-backup-configuration
+           (jobs
+            (list
+             (restic-backup-job
+               (name "restic-emacs-repos")
+               ;; Make sure the SSH key associated with
+               ;; "sublation-backup" (in ~/.ssh/config) is an
+               ;; authorized key on the remote (i.e., present in
+               ;; ~/.ssh/authorized_keys).  Otherwise SSH attempts
+               ;; will still prompt for a password (and therefore
+               ;; error), even with passwordless SSH keys.
+               (repository "sftp:sublation-backup:/mnt/backup-hdd")
+               (password-file
+                (string-append "/run/user/" (number->string (getuid)) "/secrets"
+                               "/restic-backup-password"))
+               (schedule "0 * * * *")
+               (files (list (string-append (getenv "HOME") "/emacs-repos")))
+               (verbose? #t)
+               ;; TODO 2025-12-13: Broken upstream?
+               ;; (extra-flags (list "--compression=max"
+               ;;                    "--pack-size=64"))
+               ))))))
       ;; Notmuch
       (list
        (simple-service 'krisb-symlink-notmuch-config-files-service-type
@@ -299,11 +326,16 @@
                            (user "krisbalintona")
                            (identity-file "~/.ssh/id_ed25519"))
              (openssh-host (name "sublation")
-                           ;; Hostname of my remote machine,
-                           ;; resolved via local DNS
+                           ;; Hostname of my remote machine, resolved
+                           ;; via local DNS
                            (host-name "sublation.home.arpa")
                            (user "krisbalintona")
                            (identity-file "~/.ssh/id_ed25519")
+                           (forward-agent? #t))
+             (openssh-host (name "sublation-backup")
+                           (host-name "sublation.home.arpa")
+                           (user "krisbalintona")
+                           (identity-file "~/.ssh/id_ed25519-sublation_backups")
                            (forward-agent? #t)))))))
       ;; Authinfo
       (list
@@ -321,29 +353,29 @@
       (list
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
-           (config
-            (local-file "files/sops/sops.yaml"
-                        ;; Paths in the store cannot start with dots
-                        "sops.yaml"))
-           (secrets
-            (list
-             (sops-secret
-               (key '(".authinfo"))
-               (file
-                (local-file "files/sops/mute.yaml"))
-               ;; Make file unwritable, and only my user can read the
-               ;; file
-               (permissions #o400))
-             (sops-secret
-               (key '("gmi-credentials" "personal"))
-               (file
-                (local-file "files/sops/mute.yaml"))
-               (permissions #o400))
-             (sops-secret
-               (key '("gmi-credentials" "uni"))
-               (file
-                (local-file "files/sops/mute.yaml"))
-               (permissions #o400)))))))
+           (config (local-file "files/sops/sops.yaml" "sops.yaml"))
+           (secrets (list (sops-secret
+                            (key '(".authinfo"))
+                            (file
+                             (local-file "files/sops/mute.yaml"))
+                            ;; Make file unwritable, and only my user
+                            ;; can read the file
+                            (permissions #o400))
+                          (sops-secret
+                            (key '("gmi-credentials" "personal"))
+                            (file
+                             (local-file "files/sops/mute.yaml"))
+                            (permissions #o400))
+                          (sops-secret
+                            (key '("gmi-credentials" "uni"))
+                            (file
+                             (local-file "files/sops/mute.yaml"))
+                            (permissions #o400))
+                          (sops-secret
+                            (key '("restic-backup-password"))
+                            (file
+                             (local-file "files/sops/sublation.yaml"))
+                            (permissions #o400)))))))
       ;; GPG
       (list
        (service home-gpg-agent-service-type
