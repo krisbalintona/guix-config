@@ -70,17 +70,13 @@
                    (filter
                     (fail2ban-jail-filter-configuration
                       (name "nginx-botsearch"))))))))
-           ;; The two services below are for rootless Podman.  See
-           ;; (guix) Miscellaneous Services
-           (service iptables-service-type)
+           ;; Rootless podman also needs 'iptables-service-type' or
+           ;; 'nftables-service-type' for its networking.  See (guix)
+           ;; Miscellaneous Services
            (service rootless-podman-service-type
              (rootless-podman-configuration
                (subgids (list (subid-range (name "krisbalintona"))))
                (subuids (list (subid-range (name "krisbalintona"))))))
-           (simple-service 'extend-sysctl
-               sysctl-service-type
-             '(("net.ipv4.ip_unprivileged_port_start" . "80"))) ; For Caddy
-           (service openssh-service-type)
            (service unbound-service-type
              (unbound-configuration
                (server
@@ -177,6 +173,14 @@
         access-control: 192.168.4.0/22 allow
         local-zone: \"home.arpa.\" static
         local-data: \"sublation.home.arpa. IN A 192.168.4.242\"")))
+           (service openssh-service-type)
+           (simple-service 'extend-sysctl
+               sysctl-service-type
+             '(("net.ipv4.ip_unprivileged_port_start" . "80"))) ; For Caddy
+           (service nftables-service-type
+             (nftables-configuration
+               (ruleset
+                (local-file "/files/nftables/sublation.nft"))))
            (service network-manager-service-type)
            (service wpa-supplicant-service-type)
            (service ntp-service-type)
