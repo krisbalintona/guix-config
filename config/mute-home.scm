@@ -133,28 +133,37 @@
       ;; Restic backups
       (list
        (service home-restic-backup-service-type
-         (restic-backup-configuration
-           (jobs
-            (list
-             (restic-backup-job
-               (name "restic-emacs-repos")
-               ;; Make sure the SSH key associated with
+         (let (;; Make sure the SSH key associated with
                ;; "sublation-backup" (in ~/.ssh/config) is an
                ;; authorized key on the remote (i.e., present in
                ;; ~/.ssh/authorized_keys).  Otherwise SSH attempts
                ;; will still prompt for a password (and therefore
                ;; error), even with passwordless SSH keys.
-               (repository "sftp:sublation-backup:/mnt/backup-hdd")
-               (password-file
+               (restic-repository "sftp:sublation-backup:/mnt/backup-hdd")
+               (restic-password-file
                 (string-append "/run/user/" (number->string (getuid)) "/secrets"
-                               "/restic-backup-password"))
-               (schedule "0 * * * *")
-               (files (list (string-append (getenv "HOME") "/emacs-repos")))
-               (verbose? #t)
-               ;; TODO 2025-12-13: Broken upstream?
-               ;; (extra-flags (list "--compression=max"
-               ;;                    "--pack-size=64"))
-               ))))))
+                               "/restic-backup-password")))
+           (restic-backup-configuration
+             (jobs
+              (list
+               (restic-backup-job
+                 (name "restic-emacs-repos")
+                 (repository restic-repository)
+                 (password-file restic-password-file)
+                 (schedule "0 * * * *")
+                 (files (list (string-append (getenv "HOME") "/emacs-repos")))
+                 (verbose? #t)
+                 ;; TODO 2025-12-13: Broken upstream?
+                 ;; (extra-flags (list "--compression=max"
+                 ;;                    "--pack-size=64"))
+                 )
+               (restic-backup-job
+                 (name "restic-emails")
+                 (repository restic-repository)
+                 (password-file restic-password-file)
+                 (schedule "30 2 * * *")
+                 (files (list (string-append (getenv "HOME") "/Documents/emails")))
+                 (verbose? #t))))))))
       ;; Notmuch
       (list
        (simple-service 'krisb-symlink-notmuch-config-files-service-type
