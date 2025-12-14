@@ -205,9 +205,9 @@
                         (file-system
                           (mount-point "/")
                           (device (uuid
-                                   "fc895b22-bd9a-4c70-8449-2aed8ed7a116"
-                                   'btrfs))
-                          (type "btrfs"))
+                                   "849da8e9-c001-4a8b-9948-d996c774fc09"
+                                   'ext4))
+                          (type "ext4"))
                         (file-system
                           (mount-point "/boot/efi")
                           (device (uuid "8D5D-5605"
