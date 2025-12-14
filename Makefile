@@ -12,11 +12,6 @@ MACHINE := $(or \
 	$(filter $(MACHINES),$(MAKECMDGOALS)), \
 	$(HOSTNAME))
 
-# Check that MACHINE is one of my machines
-ifeq ($(filter $(MACHINE),$(MACHINES)),)
-$(error Unknown machine "$(MACHINE)"; expected one of: $(MACHINES))
-endif
-
 # Guard against passing multiple machines
 ifneq ($(filter-out 0 1,$(words $(filter $(MACHINES),$(MAKECMDGOALS)))),)
 $(error Please specify at most one machine: $(MACHINES))
