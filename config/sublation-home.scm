@@ -39,18 +39,27 @@
     
     (services
      (cons* (service home-restic-backup-service-type
-              (restic-backup-configuration
-                (jobs
-                 (list
-                  (restic-backup-job
-                    (name "restic-copyparty-data")
-                    (repository "/mnt/backup-hdd")
-                    (password-file
+              (let ((restic-repository "/mnt/backup-hdd")
+                    (restic-password-file
                      (string-append "/run/user/" (number->string (getuid)) "/secrets"
-                                    "/restic-backup-password"))
-                    (schedule "0 5 * * *") ; Every day at 5am
-                    (files (list (string-append (getenv "HOME") "/copyparty-data")))
-                    (verbose? #t))))))
+                                    "/restic-backup-password")))
+                (restic-backup-configuration
+                  (jobs
+                   (list
+                    (restic-backup-job
+                      (name "restic-copyparty-data")
+                      (repository restic-repository)
+                      (password-file restic-password-file)
+                      (schedule "0 5 * * *")
+                      (files (list (string-append (getenv "HOME") "/copyparty-data")))
+                      (verbose? #t))
+                    (restic-backup-job
+                      (name "restic-vault")
+                      (repository restic-repository)
+                      (password-file restic-password-file)
+                      (schedule "0 7-22/3 * * *")
+                      (files (list (string-append (getenv "HOME") "/vault")))
+                      (verbose? #t)))))))
             (service home-sops-secrets-service-type
               (home-sops-service-configuration
                 (config (local-file "files/sops/sops.yaml" "sops.yaml"))
