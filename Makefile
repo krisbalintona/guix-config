@@ -1,22 +1,136 @@
-CHANNELS=./channels.scm
-LOCKFILE=./channels-lock.scm
+GUIX_LOCKED = guix time-machine --channels=$(LOCKFILE) --
+ENV_DIR = ./env
+CHANNELS = $(ENV_DIR)/channels.scm
 
+# * Machines
+
+MACHINES := mute sublation wsl
+# Host name, stripping domain
+HOSTNAME := $(firstword $(subst ., ,$(shell hostname)))
+# Extract machine from CLI, otherwise fall back to hostname
+MACHINE := $(or \
+	$(filter $(MACHINES),$(MAKECMDGOALS)), \
+	$(HOSTNAME))
+
+# Check that MACHINE is one of my machines
+ifeq ($(filter $(MACHINE),$(MACHINES)),)
+$(error Unknown machine "$(MACHINE)"; expected one of: $(MACHINES))
+endif
+
+# Guard against passing multiple machines
+ifneq ($(filter-out 0 1,$(words $(filter $(MACHINES),$(MAKECMDGOALS)))),)
+$(error Please specify at most one machine: $(MACHINES))
+endif
+
+# Prevent machines from being treated as targets
+$(MACHINES):
+	@:
+
+# * Targets
+
+.DEFAULT_GOAL := doctor
+
+# ** Pull
+
+.PHONY: pull
 pull:
-	guix pull -C ${CHANNELS}
+	guix pull -C $(CHANNELS)
 
-lock:
-	guix describe -f channels.scm > ${LOCKFILE}
-
+.PHONY: upgrade
 upgrade: pull lock
 
-wsl:
-	sudo guix system reconfigure --no-bootloader -L src config/wsl.scm
+# ** Channel lock files
 
-mute-home:
-	guix home reconfigure -L src config/mute-home.scm
+LOCKFILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
 
+# Create a lock target but also make each lock file be their own
+# target (so that other targets can depend on them)
+.PHONY: lock
+lock: $(LOCKFILE)
+$(LOCKFILE): $(CHANNELS)
+	guix describe --format=channels $(CHANNELS) > $@
+	@echo "Created $@"
+
+# ** System
+
+system: SYSTEM_ACTION = reconfigure
+system-build: SYSTEM_ACTION = build
+system system-lock: SYSTEM_EXTRA_FLAGS =
+
+# WSL should not be configured with a bootloader, since Windows does
+# its own things for booting.  (Forgetting this flag will break the
+# Guix WSL install!)
+ifeq ($(MACHINE),wsl)
+system system-lock: SYSTEM_EXTRA_FLAGS += --no-bootloader
+endif
+
+.PHONY: system system-build
+system system-build:
+	sudo guix system $(SYSTEM_ACTION) \
+		-L src \
+		$(SYSTEM_EXTRA_FLAGS) \
+		config/$(MACHINE).scm
+
+.PHONY: system-lock
+system-lock: $(LOCKFILE)
+	sudo $(GUIX_LOCKED) system reconfigure \
+		-L src \
+		$(SYSTEM_EXTRA_FLAGS) \
+		config/$(MACHINE).scm
+
+# ** Home
+
+home: HOME_ACTION = reconfigure
+home-test: HOME_ACTION = build
+
+.PHONY: home home-build
+home home-build:
+ifeq ($(MACHINE),wsl)
+	$(error The wsl has no home config.)
+endif
+	guix home ${HOME_ACTION} \
+		-L src \
+		config/$(MACHINE)-home.scm
+
+.PHONY: home-lock
+home-lock:
+ifeq ($(MACHINE),wsl)
+	$(error The wsl has no home config.)
+endif
+	$(GUIX_LOCKED) home reconfigure \
+		-L src \
+		config/$(MACHINE)-home.scm
+
+# ** Development
+
+# Filter out the build and shell targets as well as any of MACHINES,
+# too
+PACKAGES := $(filter-out build shell $(MACHINES),$(MAKECMDGOALS))
+
+# For the build and shell targets only, guard against zero PACKAGES
+ifneq ($(filter build shell,$(MAKECMDGOALS)),)
+ifeq ($(strip $(PACKAGES)),)
+$(error Please specify at least one package, e.g. `make shell emacs ripgrep`)
+endif
+endif
+
+# Prevent packages names from being treated as targets
+$(PACKAGES):
+	@:
+
+.PHONY: build
 build:
-	guix build -L src $(PACKAGE)
+	guix build -L src $(PACKAGES)
 
+.PHONY: shell
 shell:
-	guix shell -L src $(PACKAGE)
+	guix shell -L src $(PACKAGES)
+
+# ** Other
+
+.PHONY: doctor status
+doctor status:
+	@echo "Machine			: $(MACHINE)"
+	@echo "Hostname		: $(HOSTNAME)"
+	@echo "Lockfile		: $(LOCKFILE)"
+	@echo "Existing lockfiles	: $(shell ls env/channels-lock-*.scm 2>/dev/null | xargs -n1 basename || echo None)"
