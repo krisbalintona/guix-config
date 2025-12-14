@@ -81,7 +81,7 @@ system-lock: $(LOCKFILE)
 # ** Home
 
 home: HOME_ACTION = reconfigure
-home-test: HOME_ACTION = build
+home-build: HOME_ACTION = build
 
 .PHONY: home home-build
 home home-build:
@@ -103,20 +103,21 @@ endif
 
 # ** Development
 
+# For the build and shell targets only:
+ifneq ($(filter build shell,$(MAKECMDGOALS)),)
 # Filter out the build and shell targets as well as any of MACHINES,
 # too
 PACKAGES := $(filter-out build shell $(MACHINES),$(MAKECMDGOALS))
 
-# For the build and shell targets only, guard against zero PACKAGES
-ifneq ($(filter build shell,$(MAKECMDGOALS)),)
+# Guard against zero PACKAGES
 ifeq ($(strip $(PACKAGES)),)
 $(error Please specify at least one package, e.g. `make shell emacs ripgrep`)
-endif
 endif
 
 # Prevent packages names from being treated as targets
 $(PACKAGES):
 	@:
+endif
 
 .PHONY: build
 build:
