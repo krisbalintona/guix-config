@@ -2,8 +2,11 @@
              (gnu system accounts)
              (gnu packages shells)
              (nonguix transformations)
-             (rosenthal services web))
-(use-service-modules cups
+             (rosenthal services web)
+             (krisb packages networking)
+             (ice-9 textual-ports))     ; For 'get-string-all'
+(use-service-modules shepherd
+                     cups
                      desktop
                      networking
                      ssh
@@ -180,7 +183,23 @@
            (service nftables-service-type
              (nftables-configuration
                (ruleset
-                (local-file "/files/nftables/sublation.nft"))))
+                (computed-file
+                    "nftables-ruleset"
+                  #~(call-with-output-file #$output
+                      (lambda (port)
+                        (format port
+                                #$(call-with-input-file
+                                      (string-append (dirname (current-filename))
+                                                     "/files/nftables/sublation.nft")
+                                    get-string-all)
+                                ;; Contains all country
+                                ;; definitions/alias, e.g., $US resolves
+                                ;; to a particular number ID
+                                (string-append #$nftables-geoip "/etc/nftables/geoip-def-all.nft")
+                                ;; Map from IPv4 to country
+                                (string-append #$nftables-geoip "/etc/nftables/geoip-ipv4.nft")
+                                ;; Map from IPv6 to country
+                                (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
            (service network-manager-service-type)
            (service wpa-supplicant-service-type)
            (service ntp-service-type)
