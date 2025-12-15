@@ -133,7 +133,8 @@
       ;; Restic backups
       (list
        (service home-restic-backup-service-type
-         (let (;; Make sure the SSH key associated with
+         (let ((abbe-restic (@ (abbe packages golang) restic))
+               ;; Make sure the SSH key associated with
                ;; "sublation-backup" (in ~/.ssh/config) is an
                ;; authorized key on the remote (i.e., present in
                ;; ~/.ssh/authorized_keys).  Otherwise SSH attempts
@@ -147,22 +148,24 @@
              (jobs
               (list
                (restic-backup-job
+                 (restic abbe-restic)
                  (name "restic-emacs-repos")
                  (repository restic-repository)
                  (password-file restic-password-file)
                  (schedule "0 * * * *")
                  (files (list (string-append (getenv "HOME") "/emacs-repos")))
-                 (verbose? #t)
-                 ;; TODO 2025-12-13: Broken upstream?
-                 ;; (extra-flags (list "--compression=max"
-                 ;;                    "--pack-size=64"))
-                 )
+                 (extra-flags (list "--compression=max"
+                                    "--pack-size=64"))
+                 (verbose? #t))
                (restic-backup-job
+                 (restic abbe-restic)
                  (name "restic-emails")
                  (repository restic-repository)
                  (password-file restic-password-file)
                  (schedule "30 2 * * *")
                  (files (list (string-append (getenv "HOME") "/Documents/emails")))
+                 (extra-flags (list "--compression=max"
+                                    "--pack-size=64"))
                  (verbose? #t))))))))
       ;; Notmuch
       (list
