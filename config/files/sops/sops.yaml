@@ -1,7 +1,7 @@
 keys:
   - &age_root age18spez0z3wvzw05nhhrka9gmjfvcvhyj7decnw9j4a9xn8m0vyexs0he23r
   - &age_mute age1gg5gdvp3kk5fd8ypuq94xyn9dtsak2exe4gdrp3k2phuffn65yzshkmeg8
-  - &age_sublation age1jrdxqwamp4a38ntl3938ta305rdw3j3gchkh4ycvssuw0wkzsgsskz22hw
+  - &age_sublation age1wz326af7tgfnqpq0l6vk2p78uwp0qn9f5v5exu754rj3t8w0myvqzp4c8e
 creation_rules:
    # The goal is to have my GPG key decrypt any secrets file, with
    # each file also being able to be decrypted by some other set of
