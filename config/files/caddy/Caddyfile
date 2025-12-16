@@ -16,7 +16,7 @@ localhost {
 }
 
 # My domains
-party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
+party.kristofferbalintona.me {
 	reverse_proxy copyparty-server:6969
 	# Access logs
 	log {
@@ -25,5 +25,28 @@ party.kristofferbalintona.me, krisbalintona.top, www.krisbalintona.top {
 			roll_keep 10
 		}
 		format console
+	}
+	# DNS-01 ACME verification.  See
+	# https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148
+	# for Caddy-specific instructions.
+	#
+	# NOTE: For this to work, I need a build of Caddy that has the
+	# DNS module corresponding to my DNS provider.
+	#
+	# I use this method of certificate verification because I've
+	# configured my firewall to geo-block non-US IPs, so automatic
+	# the typical automatic means of verification fail.
+	#
+	# This domain is registered under Namecheap but I've directed
+	# Namecheap to use Netlify's DNS servers (since I host the
+	# domain on Netlify), so see the Netlify DNS challenge module
+	# for Caddy: https://github.com/caddy-dns/netlify.
+	#
+	# For Netlify, a personal API token should be used as the
+	# personal access token
+	tls {
+		# Bind mint the access token file and reference the
+		# path
+		dns netlify {file./run/secrets/netlify-access-token}
 	}
 }

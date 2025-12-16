@@ -69,6 +69,11 @@
                          (key '("restic-backup-password"))
                          (file
                           (local-file "files/sops/sublation.yaml"))
+                         (permissions #o400))
+                       (sops-secret
+                         (key '("netlify-access-token"))
+                         (file
+                          (local-file "files/sops/sublation.yaml"))
                          (permissions #o400))))))
             (service home-gpg-agent-service-type)
             (service home-oci-service-type
@@ -98,9 +103,9 @@
                        ;; [repository] of an OCI image location; it
                        ;; can be whatever we want since this image is
                        ;; created locally (in the Guix store)
-                       (repository "caddy")
+                       (repository "caddy-netlify")
                        (tag "2.10.2")
-                       (value (specifications->manifest '("caddy")))
+                       (value (specifications->manifest '("caddy-netlify")))
                        (pack-options '(#:symlinks (("/bin" -> "bin"))))))
                    ;; These environment variables are set in the
                    ;; Docker image Caddy distributes (shown by
@@ -118,7 +123,14 @@
                     `(("caddy_data" . "/data")
                       ("caddy_log" . "/data/log")
                       (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
-                       . "/config/Caddyfile")))
+                       . "/config/Caddyfile")
+                      ;; Netlify access token
+                      (,(string-append "/run/user/" (number->string (getuid)) "/secrets"
+                                       "/netlify-access-token")
+                       ;; Reference this with a file placeholder in my
+                       ;; Caddyfile; see
+                       ;; https://caddyserver.com/docs/conventions#placeholders
+                       . "/run/secrets/netlify-access-token")))
                    (command '("caddy" "run" "--config" "/config/Caddyfile"))
                    (auto-start? #t)
                    (respawn? #f))
