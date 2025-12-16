@@ -24,8 +24,18 @@ party.kristofferbalintona.me {
 			roll_size 10MiB
 			roll_keep 10
 		}
+		# More human-readable format
 		format console
 	}
+	log {
+		output file /data/log/caddy/access-json.log {
+			roll_size 30MiB
+			roll_keep 10
+		}
+		# For usage with external log parsers
+		format json
+	}
+
 	# DNS-01 ACME verification.  See
 	# https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148
 	# for Caddy-specific instructions.
