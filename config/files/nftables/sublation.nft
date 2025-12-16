@@ -67,7 +67,7 @@ table inet filter {
         # Drop everything unless we accept it with one of the rules
         # below
         type filter hook input priority 0; policy drop;
-        
+
         # Early drop of invalid connections
         ct state invalid drop
 
@@ -81,9 +81,23 @@ table inet filter {
         # originating from us; e.g., Podman networks)
         ct state { established, related } accept
 
+        # Accept anything from my LAN
+        ip saddr 192.168.4.0/22 accept
+
         # Geo-block every web packet (incoming on port 80 or 443;
         # these are the ports I have Caddy listen to) that isn't from
         # within the US
+        #
+        # For debugging web packets specifically, do something like
+        # this:
+        #
+        #     sudo nft insert rule inet filter input tcp dport { 80, 443 } meta nftrace set 1
+        #
+        # then this to trace the packet's entire path through the
+        # firewall:
+        #
+        #     sudo nft monitor trace
+        #
         tcp dport { 80, 443 } meta mark != @accept_countries drop
 
         # Allow incoming web packets through web ports (necessary for
