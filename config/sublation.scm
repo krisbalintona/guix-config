@@ -179,7 +179,9 @@
         access-control: 127.0.0.0/8 allow
         access-control: 192.168.4.0/22 allow
         local-zone: \"home.arpa.\" static
-        local-data: \"sublation.home.arpa. IN A 192.168.4.242\"")))
+        local-data: \"sublation.home.arpa. IN A 192.168.4.242\"
+        local-data: \"party.home.arpa. IN A 192.168.4.242\"
+        local-data: \"goaccess.home.arpa. IN A 192.168.4.242\"")))
            (service openssh-service-type)
            (simple-service 'extend-sysctl
                sysctl-service-type

@@ -1,3 +1,4 @@
+# Global settings
 {
 	# Use ACME staging certificate while testing to not reach
 	# certificate issuance attempt rate limit
@@ -9,13 +10,13 @@
 	}
 }
 
-# For local development
-localhost {
+# * Copyparty file server
+
+party.localhost, party.home.arpa {
 	tls internal
 	reverse_proxy copyparty-server:6969
 }
 
-# My domains
 party.kristofferbalintona.me {
 	reverse_proxy copyparty-server:6969
 	# Access logs
@@ -59,4 +60,13 @@ party.kristofferbalintona.me {
 		# path
 		dns netlify {file./run/secrets/netlify-access-token}
 	}
+}
+
+# * Goaccess web access log analyzer
+
+goaccess.home.arpa {
+	tls internal
+	root * /var/www/goaccess
+	file_server
+	reverse_proxy /ws goaccess:7890
 }
