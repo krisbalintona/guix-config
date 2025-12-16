@@ -30,14 +30,14 @@
 # (https://wiki.nftables.org/wiki-nftables/index.php/Sets)
 #
 # OTHER USEFUL LINKS
-# 
+#
 # - https://wiki.nftables.org/wiki-nftables/index.php/Simple_rule_management
 # - https://wiki.nftables.org/wiki-nftables/index.php/Sets
 # - https://wiki.nftables.org/wiki-nftables/index.php/Building_rules_through_expressions
 # - https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/7/html/security_guide/sec-using_nftables_to_limit_the_amount_of_connections
 
 table inet filter {
-    
+
     # Includes can go anywhere before something that references its
     # content.  In this (original) file, these are placeholders, so
     # that later I may use Guix's 'format' procedure to expand them to
@@ -62,26 +62,36 @@ table inet filter {
         meta mark set ip saddr map @geoip4 counter
         meta mark set ip6 saddr map @geoip6 counter
     }
-    
+
     chain input {
+        # Drop everything unless we accept it with one of the rules
+        # below
         type filter hook input priority 0; policy drop;
+        
+        # Early drop of invalid connections
+        ct state invalid drop
 
         # Counters for packet source location
         meta mark $US counter
         meta mark ne $US counter
-
-        # Geo-block every web packet (incoming on port 80 or 443;
-        # these are the ports Caddy listens on) that isn't from within
-        # the US
-        tcp dport { 80, 443 } meta mark != @accept_countries drop
-
-        # Early drop of invalid connections
-        ct state invalid drop
-
-        # Allow established/related connections, such as for Podman
-        # networks
+        
+        # Allow packets from already already established connections
+        # (i.e. subsequent packets on a connection whose first packet
+        # was accepted) and "related" connections (i.e., packets
+        # originating from us; e.g., Podman networks)
         ct state { established, related } accept
 
+        # Geo-block every web packet (incoming on port 80 or 443;
+        # these are the ports I have Caddy listen to) that isn't from
+        # within the US
+        tcp dport { 80, 443 } meta mark != @accept_countries drop
+
+        # Allow incoming web packets through web ports (necessary for
+        # Caddy, since not accepting the web requests means Caddy
+        # doesn't know to send data)
+        tcp dport { 80, 443 } accept
+        udp dport 443 accept
+        
         # Allow from loopback
         iif lo accept
         # Drop connections to lo not coming from lo
@@ -102,11 +112,11 @@ table inet filter {
         # Reject everything else
         reject with icmpx type port-unreachable
     }
-    
+
     chain forward {
         type filter hook forward priority 0; policy drop;
     }
-    
+
     chain output {
         type filter hook output priority 0; policy accept;
     }
