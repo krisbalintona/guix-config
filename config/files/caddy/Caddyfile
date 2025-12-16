@@ -1,7 +1,8 @@
 {
 	# Internal logs
 	log {
-		level INFO
+		# level INFO
+		level DEBUG
 	}
 }
 
