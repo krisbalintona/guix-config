@@ -89,12 +89,29 @@
                 (list
                  (oci-container-configuration
                    (provision "caddy")
-                   (image "docker.io/caddy:2.10.2")
+                   (image
+                     (oci-image
+                       ;; OCI images locations follow a
+                       ;; [registry]/[repository]:[tag] format.  Since
+                       ;; we are local, we only need to specify a
+                       ;; repository and optionally a tag.  The
+                       ;; REPOSITORY field below corresponds to the
+                       ;; [repository] of an OCI image location; it
+                       ;; can be whatever we want since this image is
+                       ;; created locally (in the Guix store)
+                       (repository "caddy")
+                       (tag "2.10.2")
+                       (value (specifications->manifest '("caddy")))
+                       (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+                   ;; These environment variables are set in the
+                   ;; Docker image Caddy distributes (shown by
+                   ;; e.g. "podman image inspect
+                   ;; docker.io/caddy:2.10.2").  My tests show that
+                   ;; they need to be set for some reason
+                   (environment '("CADDY_VERSION=v2.10.2"
+                                  "XDG_CONFIG_HOME=/config"
+                                  "XDG_DATA_HOME=/data"))
                    (network "contained-network")
-                   ;; Some of the settings below were copied from the
-                   ;; template/starter Docker usage described on the
-                   ;; home page of the Docker image used above:
-                   ;; https://hub.docker.com/_/caddy
                    (ports '(("80" . "80")
                             ("443" . "443")
                             ("443" . "443/udp")))
