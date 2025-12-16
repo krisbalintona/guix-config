@@ -9,7 +9,9 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-web)
-  #:export (nftables-geoip))
+  #:use-module (abbe packages caddy)
+  #:export (nftables-geoip
+            caddy-netlify))
 
 (define geoip-address-csv
   (package
@@ -44,7 +46,7 @@
     (description "DB-IP GeoIP country CSV")
     (license license:cc-by-sa4.0)))
 
-(define-public nftables-geoip
+(define nftables-geoip
   (package
     (name "nftables-geoip")
     (version "0")                       ; Upstream has no releases
@@ -85,3 +87,13 @@
     (description
      "Generate nftables GeoIP rulesets from public IP geolocation data.")
     (license license:gpl2)))
+
+(define caddy-netlify
+  (let ((pkg (caddy-custom   ; From the Abbe channel; very convenient!
+              "2.10.2"
+              '("github.com/caddy-dns/netlify")
+              "12a58yrwirvvzjr8ap9jx2v1afqnyfzikmi4kzbnncnir7a7rz0l"
+              "1mfzxnlnw4sh0wn44mkmaz2dwhgb4rkwn0iz4nhhxprwn9krp51v")))
+    (package/inherit pkg
+      (name "caddy-netlify")
+      (synopsis "Caddy with Netlify DNS support"))))
