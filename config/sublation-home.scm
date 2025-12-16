@@ -83,8 +83,7 @@
                 (list
                  (oci-network-configuration
                   (name "contained-network")
-                  (subnet "10.42.0.0/24")
-                  (internal? #t))))
+                  (subnet "10.42.0.0/24"))))
                (containers
                 (list
                  (oci-container-configuration

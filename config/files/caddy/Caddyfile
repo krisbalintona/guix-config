@@ -1,7 +1,10 @@
 {
+	# Use ACME staging certificate while testing to not reach
+	# certificate issuance attempt rate limit
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+
 	# Internal logs
 	log {
-		# level INFO
 		level DEBUG
 	}
 }
