@@ -73,9 +73,13 @@
                    (filter
                     (fail2ban-jail-filter-configuration
                       (name "nginx-botsearch"))))))))
-           ;; Rootless podman also needs 'iptables-service-type' or
-           ;; 'nftables-service-type' for its networking.  See (guix)
-           ;; Miscellaneous Services
+           ;; Rootless podman also needs 'iptables-service-type'
+           ;; specifically for its (non-internal) networks;
+           ;; 'nftables-service-type' will not suffice.  See (guix)
+           ;; Miscellaneous Services.  We may have both, though, since
+           ;; the default ruleset for iptables is to accept
+           ;; everything.
+           (service iptables-service-type)
            (service rootless-podman-service-type
              (rootless-podman-configuration
                (subgids (list (subid-range (name "krisbalintona"))))
