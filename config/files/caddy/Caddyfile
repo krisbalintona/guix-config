@@ -21,7 +21,7 @@ party.kristofferbalintona.me {
 	reverse_proxy copyparty-server:6969
 	# Access logs
 	log {
-		output file /data/log/caddy/access.log {
+		output file /data/log/copyparty.log {
 			roll_size 10MiB
 			roll_keep 10
 		}
@@ -29,7 +29,7 @@ party.kristofferbalintona.me {
 		format console
 	}
 	log {
-		output file /data/log/caddy/access-json.log {
+		output file /data/log/copyparty-json.log {
 			roll_size 30MiB
 			roll_keep 10
 		}

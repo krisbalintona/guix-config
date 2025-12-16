@@ -145,7 +145,7 @@
                        (value (specifications->manifest '("goaccess")))
                        (pack-options '(#:symlinks (("/bin" -> "bin"))))))
                    (network "contained-network")
-                   (volumes `(("caddy_log" . "/data")
+                   (volumes `(("caddy_log" . "/var/log")
                               ("goaccess_web" . "/var/www/goaccess")))
                    ;; Command taken from here:
                    ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
@@ -173,7 +173,7 @@
                    ;; container.  Caddy then knows to just serve these
                    ;; files via the "file_server" setting.
                    (command '("goaccess"
-                              "/data/caddy/access-json.log"
+                              "/var/log/copyparty-json.log"
                               "--log-format=CADDY"
                               "-o" "/var/www/goaccess/index.html"
                               "--real-time-html"
