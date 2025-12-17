@@ -126,7 +126,11 @@
                      (log-destaddr . "yes")
                      (log-queries . "yes")
                      (log-servfail . "yes")
-                     ;; (username . "root")
+                     ;; TODO 2025-12-16: Write a service to do this
+                     ;; automatically.  But first check if there truly
+                     ;; is no currently existing way to do it
+                     ;; automatically.
+                     ;;
                      ;; Use DNSSEC.
                      ;;
                      ;; NOTE 2025-12-12: On Guix Systems, the root key
