@@ -154,6 +154,10 @@
                      (auto-trust-anchor-file . "/var/lib/unbound/root.key")
                      (harden-glue . "yes")
                      (harden-dnssec-stripped . "yes")
+                     ;; Give minimal domain name information in
+                     ;; queries to DNS servers.  See also the
+                     ;; 'qname-minimisation-strict' setting.
+                     (qname-minimisation . "yes")
                      ;; Performance and security.  An article that
                      ;; shares a lot of info and tips on the matter:
                      ;; https://calomel.org/unbound_dns.html
