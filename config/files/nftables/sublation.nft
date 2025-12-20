@@ -98,7 +98,7 @@ table inet filter {
         #
         #     sudo nft monitor trace
         #
-        tcp dport { 80, 443 } meta mark != @accept_countries drop
+        tcp dport { 80, 443 } meta mark != @accept_countries counter drop
 
         # Allow incoming web packets through web ports (necessary for
         # Caddy, since not accepting the web requests means Caddy
