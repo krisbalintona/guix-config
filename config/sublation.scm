@@ -88,9 +88,10 @@
              (unbound-configuration
                (server
                 (unbound-server
-                  ;; Listen on all interfaces, IPv4, IPv6, and the
-                  ;; local subnet
-                  (interface '("0.0.0.0" "::0"))
+                  ;; Let only my machine query Unbound (Pihole
+                  ;; forwards DNS queries to Unbound)
+                  (interface '("127.0.0.1" ; IPv4 local host
+                               "::1"))     ; IPv6 local
                   (tls-cert-bundle "/etc/ssl/certs/ca-certificates.crt")
                   (hide-version #t)
                   (hide-identity #t)
@@ -98,7 +99,8 @@
                   ;; https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html
                   ;; for a description of all options
                   (extra-options
-                   '(;; These are already default, but I declare them
+                   '((port . 5335) ; Pihole forwards DNS queries to this port
+                     ;; These are already default, but I declare them
                      ;; explicitly anyway
                      (do-ip4 . "yes")
                      (do-udp . "yes")
@@ -186,14 +188,12 @@
                 "server:
         access-control: 127.0.0.0/8 allow
         access-control: 192.168.4.0/22 allow
-        local-zone: \"home.arpa.\" static
-        local-data: \"sublation.home.arpa. IN A 192.168.4.242\"
-        local-data: \"party.home.arpa. IN A 192.168.4.242\"
-        local-data: \"goaccess.home.arpa. IN A 192.168.4.242\"")))
+        access-control: 10.42.0.0/24 allow")))
            (service openssh-service-type)
            (simple-service 'extend-sysctl
                sysctl-service-type
-             '(("net.ipv4.ip_unprivileged_port_start" . "80"))) ; For Caddy
+             ;; For rootless podman services (Caddy and Pihole)
+             '(("net.ipv4.ip_unprivileged_port_start" . "53")))
            (service nftables-service-type
              (nftables-configuration
                (ruleset

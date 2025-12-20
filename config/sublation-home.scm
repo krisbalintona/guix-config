@@ -74,6 +74,11 @@
                          (key '("netlify-access-token"))
                          (file
                           (local-file "files/sops/sublation.yaml"))
+                         (permissions #o400))
+                       (sops-secret
+                         (key '("pihole-webserver-password"))
+                         (file
+                          (local-file "files/sops/sublation.yaml"))
                          (permissions #o400))))))
             (service home-gpg-agent-service-type)
             (service home-oci-service-type
@@ -91,6 +96,42 @@
                   (subnet "10.42.0.0/24"))))
                (containers
                 (list
+                 (let* ((pihole-password-filename "pihole-webserver-password")
+                        (pihole-password-sops-file
+                         (string-append "/run/user/" (number->string (getuid)) "/secrets"
+                                        "/" pihole-password-filename))
+                        (pihole-password-file
+                         (string-append "/run/secrets/" pihole-password-filename)))
+                   (oci-container-configuration
+                     (provision "pihole")
+                     (image "docker.io/pihole/pihole:latest")
+                     (environment `("TZ=America/Chicago"
+                                    "FTLCONF_dns_port=53" ; Default port
+                                    ;; Webserver settings
+                                    "FTLCONF_webserver_port=8080"
+                                    ,(cons "WEBPASSWORD_FILE" pihole-password-file)
+                                    ;; If using the 'bridge' network
+                                    ;; setting (default), the DNS
+                                    ;; listening mode should be set to
+                                    ;; 'ALL'
+                                    "FTLCONF_dns_listeningMode=ALL"
+                                    ;; Forward queries to Unbound DNS
+                                    ;; (whose port is 5335 on the
+                                    ;; host; we're using the host
+                                    ;; network in this container so
+                                    ;; its IP is 127.0.0.1)
+                                    "FTLCONF_dns_upstreams=127.0.0.1#5335"
+                                    ;; Pihole as NTP server for other
+                                    ;; devices?
+                                    "FTLCONF_ntp_ipv4_active=false"
+                                    "FTLCONF_ntp_ipv6_active=false"
+                                    ;; Pihole as NTP server for host?
+                                    "FTLCONF_ntp_sync_active=false"))
+                     (network "host")
+                     (volumes `(("pihole-etc" . "/etc/pihole")
+                                ,(cons pihole-password-sops-file pihole-password-file)))
+                     (auto-start? #t)
+                     (respawn? #f)))
                  (oci-container-configuration
                    (provision "caddy")
                    (image
