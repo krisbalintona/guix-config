@@ -84,6 +84,10 @@
              (rootless-podman-configuration
                (subgids (list (subid-range (name "krisbalintona"))))
                (subuids (list (subid-range (name "krisbalintona"))))))
+           ;; I use Unbound with Pihole.  For an explanation of why
+           ;; (and a guide on how to do so) I pair Unbound with the
+           ;; latter, see
+           ;; https://docs.pi-hole.net/guides/dns/unbound/
            (service unbound-service-type
              (unbound-configuration
                (server
@@ -105,6 +109,10 @@
                      (do-ip4 . "yes")
                      (do-udp . "yes")
                      (do-tcp . "yes")
+                     ;; The following can be set to "yes" if my WAN
+                     ;; supports IPv6.  I can check by going to
+                     ;; test-ipv6.com
+                     (do-ip6 . "no")
                      ;; All paths below are relative to CHROOT, if
                      ;; set.  Make sure CHROOT has the permissions of
                      ;; the unbound process.  The default user of the
@@ -118,12 +126,15 @@
                      ;; a user without elevated privileges, and that's
                      ;; good enough for me.
                      (chroot . "")
-                     ;; Logging.  If LOGFILE is a path, output to
-                     ;; stderr (which sudo herd status shows).
-                     ;; Otherwise, output logs to LOGFILE
-                     (logfile . "")
-                     (use-syslog . "no")
+                     ;; Logging.  If LOGFILE is a path, then ensure
+                     ;; its parent directory is created and that
+                     ;; LOGFILE or its directory is owned by "unbound"
+                     ;; (the default value of the USERNAME option).
+                     ;; If LOGFILE is not set or is set to an empty
+                     ;; string, then log output to "sudo herd status
+                     ;; unbound" instead
                      (verbosity . "1")  ; Default
+                     (logfile . "")
                      (log-time-ascii . "yes")
                      (log-destaddr . "yes")
                      (log-queries . "yes")
@@ -160,12 +171,14 @@
                      ;; queries to DNS servers.  See also the
                      ;; 'qname-minimisation-strict' setting.
                      (qname-minimisation . "yes")
-                     ;; Performance and security.  An article that
-                     ;; shares a lot of info and tips on the matter:
-                     ;; https://calomel.org/unbound_dns.html
-                     (use-caps-for-id . "yes")
-                     (prefetch . "yes")
-                     (num-threads . "2")))))
+                     ;; See
+                     ;; https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+                     ;; for an explanation of these values
+                     (edns-buffer-size . "1232")
+                     (so-rcvbuf . "1m")
+                     (use-caps-for-id . "no")
+                     (num-threads . "1")
+                     (prefetch . "yes")))))
                (remote-control
                 (unbound-remote
                   (control-enable #t)
@@ -183,12 +196,26 @@
                ;; EXTRA-CONTENT.  (There can be multiple "server:"
                ;; blocks in the config, it seems.)
                (extra-content
-                ;; TODO 2025-12-12: Figure out a way to dynamically
-                ;; determine my IP address and subnet
                 "server:
         access-control: 127.0.0.0/8 allow
-        access-control: 192.168.4.0/22 allow
-        access-control: 10.42.0.0/24 allow")))
+
+        # Ensure privacy of local IP ranges.  Taken from
+        # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+        private-address: 192.168.0.0/16
+        private-address: 169.254.0.0/16
+        private-address: 172.16.0.0/12
+        private-address: 10.0.0.0/8
+        private-address: fd00::/8
+        private-address: fe80::/10
+
+        # Ensure no reverse queries to non-public IP ranges (RFC6303
+        # 4.2).  Taken from
+        # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+        private-address: 192.0.2.0/24
+        private-address: 198.51.100.0/24
+        private-address: 203.0.113.0/24
+        private-address: 255.255.255.255/32
+        private-address: 2001:db8::/32")))
            (service openssh-service-type)
            (simple-service 'extend-sysctl
                sysctl-service-type
