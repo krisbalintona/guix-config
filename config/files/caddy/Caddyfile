@@ -23,11 +23,11 @@ pihole.home.arpa {
 
 party.localhost, party.home.arpa {
 	tls internal
-	reverse_proxy copyparty-server:6969
+	reverse_proxy copyparty:6969
 }
 
 party.kristofferbalintona.me {
-	reverse_proxy copyparty-server:6969
+	reverse_proxy copyparty:6969
 	# Access logs
 	log {
 		output file /data/log/copyparty.log {

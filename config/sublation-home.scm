@@ -224,7 +224,7 @@
                    (auto-start? #t)
                    (respawn? #f))
                  (oci-container-configuration
-                   (provision "copyparty-server")
+                   (provision "copyparty")
                    (image "docker.io/copyparty/ac:1.19.21")
                    (network "contained-network")
                    ;; Have files mounted at /data/ and copyparty
