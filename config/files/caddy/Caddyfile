@@ -13,7 +13,6 @@
 # * Pihole
 
 pihole.home.arpa {
-	tls internal
 	# In Podman containers, "host.containers.internal" resolves to
 	# the host
 	reverse_proxy host.containers.internal:8080
@@ -22,7 +21,6 @@ pihole.home.arpa {
 # * Copyparty file server
 
 party.localhost, party.home.arpa {
-	tls internal
 	reverse_proxy copyparty:6969
 }
 
@@ -70,10 +68,10 @@ party.kristofferbalintona.me {
 		dns netlify {file./run/secrets/netlify-access-token}
 	}
 }
+
 # * Goaccess web access log analyzer
 
 goaccess.home.arpa {
-	tls internal
 	root * /var/www/goaccess
 	file_server
 	reverse_proxy /ws goaccess:7890
