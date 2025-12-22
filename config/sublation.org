@@ -500,7 +500,9 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
              ;; https://caddyserver.com/docs/conventions#placeholders
              . "/run/secrets/netlify-access-token")
             ;; Goaccess real-time web page
-            ("goaccess_web" . "/var/www/goaccess")))
+            ("goaccess_web" . "/var/www/goaccess")
+            ,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
+                   "/run/copyparty")))
          (command '("caddy" "run" "--config" "/config/Caddyfile"))
          (auto-start? #t)
          (respawn? #f))))))
@@ -657,28 +659,39 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
+  (gnu home services shepherd)
   (gnu home services containers)
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-copyparty-socket
+      home-shepherd-service-type
+    (list
+     (shepherd-service
+       (provision '(home-oci-copyparty-socket))
+       (one-shot? #t)
+       (start
+        #~(lambda ()
+            (let ((dir (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")))
+              (mkdir-p dir)
+              (format #t "Socket directory exists at: ~a~%" dir)
+              #t)))
+       (documentation "Create parent directory for Copyparty socket."))))
   (simple-service 'home-oci-copyparty
       home-oci-service-type
     (oci-extension
-     (networks
-      (list
-       (oci-network-configuration
-        (name "copyparty-network"))))
      (containers
       (list
        (oci-container-configuration
          (provision "copyparty")
+         (requirement '(home-oci-copyparty-socket))
          (image "docker.io/copyparty/ac:1.19.21")
-         (network "copyparty-network")
-         (ports '("127.0.0.1:6969:6969"))
          ;; Have files mounted at /data and copyparty config + cache
          ;; files in /srv
          (volumes
-          `(("/home/krisbalintona/services/copyparty/data" . "/data")
+          `(,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
+                   "/run/copyparty")
+            ("/home/krisbalintona/services/copyparty/data" . "/data")
             (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
              . "/srv/copyparty.conf")))
          (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))

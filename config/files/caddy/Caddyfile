@@ -19,11 +19,12 @@ pihole.home.arpa {
 # * Copyparty file server
 
 party.home.arpa {
-	reverse_proxy 127.0.0.1:6969
+	reverse_proxy unix//run/copyparty/party.sock
 }
 
 party.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:6969
+	reverse_proxy unix//run/copyparty/party.sock
+	
 	# Access logs
 	log {
 		output file /data/log/copyparty.log {
