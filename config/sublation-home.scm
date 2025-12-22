@@ -22,6 +22,32 @@
              (gnu services backup)
              (gnu home services backup))
 
+(define* (restic-job/defaults
+          #:key
+          name
+          (repository "/mnt/backup-hdd")
+          (password-file
+           ;; FIXME 2025-12-22: This is evaluated at Guix evaluation
+           ;; time, not at runtime.  If sops-guix ever changes its
+           ;; secret path, this could drift.  This is currently the
+           ;; most idiomatic solution without service-level
+           ;; integration with sops-guix.
+           (string-append "/run/user/"
+                          (number->string (getuid))
+                          "/secrets/restic-backup-password"))
+          files
+          schedule
+          (extra-flags '())
+          (verbose? #t))
+  (restic-backup-job
+    (name name)
+    (files files)
+    (schedule schedule)
+    (repository repository)
+    (password-file password-file)
+    (extra-flags extra-flags)
+    (verbose? verbose?)))
+
 (home-environment
   (packages
    (specifications->packages
@@ -268,28 +294,21 @@
            (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
            (auto-start? #t)
            (respawn? #f))))))
-    (service home-restic-backup-service-type
-      (let ((restic-repository "/mnt/backup-hdd")
-            (restic-password-file
-             (string-append "/run/user/" (number->string (getuid)) "/secrets"
-                            "/restic-backup-password")))
-        (restic-backup-configuration
-          (jobs
-           (list
-            (restic-backup-job
-              (name "restic-vault")
-              (repository restic-repository)
-              (password-file restic-password-file)
-              (schedule "0 7-22/3 * * *")
-              (files (list (string-append (getenv "HOME") "/vault")))
-              (verbose? #t))
-            (restic-backup-job
-              (name "restic-copyparty-data")
-              (repository restic-repository)
-              (password-file restic-password-file)
-              (schedule "0 5 * * *")
-              (files (list (string-append (getenv "HOME") "/copyparty-data")))
-              (verbose? #t)))))))
+    (service home-restic-backup-service-type)
+    (simple-service 'home-restic-vault
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-vault"
+        #:schedule "0 7-22/3 * * *"
+        #:files (list (string-append (getenv "HOME") "/vault")))))
+    (simple-service 'home-restic-copyparty
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-copyparty"
+        #:schedule "0 5 * * *"
+        #:files (list (string-append (getenv "HOME") "/copyparty-data")))))
     
     (simple-service 'guix-locales
         home-environment-variables-service-type

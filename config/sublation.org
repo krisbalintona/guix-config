@@ -672,13 +672,13 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
 #+end_src
 
 #+begin_src scheme :noweb-ref home-restic-backup-jobs
-  (restic-backup-job
-    (name "restic-copyparty-data")
-    (repository restic-repository)
-    (password-file restic-password-file)
-    (schedule "0 5 * * *")
-    (files (list (string-append (getenv "HOME") "/copyparty-data")))
-    (verbose? #t))
+  (simple-service 'home-restic-copyparty
+      home-restic-backup-service-type
+    (list
+     (restic-job/defaults
+      #:name "restic-copyparty"
+      #:schedule "0 5 * * *"
+      #:files (list (string-append (getenv "HOME") "/copyparty-data")))))
 #+end_src
 
 * Backups
@@ -690,27 +690,48 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
   (gnu home services backup)
 #+end_src
 
+#+begin_src scheme :noweb-ref home-helpers
+  (define* (restic-job/defaults
+            #:key
+            name
+            (repository "/mnt/backup-hdd")
+            (password-file
+             ;; FIXME 2025-12-22: This is evaluated at Guix evaluation
+             ;; time, not at runtime.  If sops-guix ever changes its
+             ;; secret path, this could drift.  This is currently the
+             ;; most idiomatic solution without service-level
+             ;; integration with sops-guix.
+             (string-append "/run/user/"
+                            (number->string (getuid))
+                            "/secrets/restic-backup-password"))
+            files
+            schedule
+            (extra-flags '())
+            (verbose? #t))
+    (restic-backup-job
+      (name name)
+      (files files)
+      (schedule schedule)
+      (repository repository)
+      (password-file password-file)
+      (extra-flags extra-flags)
+      (verbose? verbose?)))
+#+end_src
+
 #+begin_src scheme :noweb-ref home-packages
   "restic"
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services
-  (service home-restic-backup-service-type
-    (let ((restic-repository "/mnt/backup-hdd")
-          (restic-password-file
-           (string-append "/run/user/" (number->string (getuid)) "/secrets"
-                          "/restic-backup-password")))
-      (restic-backup-configuration
-        (jobs
-         (list
-          (restic-backup-job
-            (name "restic-vault")
-            (repository restic-repository)
-            (password-file restic-password-file)
-            (schedule "0 7-22/3 * * *")
-            (files (list (string-append (getenv "HOME") "/vault")))
-            (verbose? #t))
-          <<home-restic-backup-jobs>>)))))
+  (service home-restic-backup-service-type)
+  (simple-service 'home-restic-vault
+      home-restic-backup-service-type
+    (list
+     (restic-job/defaults
+      #:name "restic-vault"
+      #:schedule "0 7-22/3 * * *"
+      #:files (list (string-append (getenv "HOME") "/vault")))))
+  <<home-restic-backup-jobs>>
 #+end_src
 
 #+begin_src scheme :noweb-ref home-sops-secrets
@@ -729,6 +750,8 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
                (gnu home services)
                (gnu home services shepherd)
                <<home-modules>>)
+
+  <<home-helpers>>
 
   (home-environment
     (packages
