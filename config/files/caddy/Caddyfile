@@ -10,7 +10,7 @@
 	}
 }
 
-# * Pihole
+# * Pihole web UI
 
 pihole.home.arpa {
 	# In Podman containers, "host.containers.internal" resolves to
@@ -20,7 +20,7 @@ pihole.home.arpa {
 
 # * Copyparty file server
 
-party.localhost, party.home.arpa {
+party.home.arpa {
 	reverse_proxy copyparty:6969
 }
 
