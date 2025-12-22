@@ -665,4 +665,5 @@
    (eval . (put 'zabbix-server-configuration 'scheme-indent-function 0))
    (eval . (put 'zone-entry 'scheme-indent-function 0))
    (eval . (put 'zone-file 'scheme-indent-function 0))
-   (eval . (put 'zram-device-configuration 'scheme-indent-function 0)))))
+   (eval . (put 'zram-device-configuration 'scheme-indent-function 0))))
+ (nil . ((sops-extra-encrypt-args . ("--config" "sops.yaml")))))
