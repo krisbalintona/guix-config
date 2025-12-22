@@ -128,8 +128,9 @@
                         "FTLCONF_webserver_port=8080"
                         ,(cons "WEBPASSWORD_FILE" pihole-password-file)))
                      (network "host")
-                     (volumes `(("pihole-etc" . "/etc/pihole")
-                                ,(cons pihole-password-sops-file pihole-password-file)))
+                     (volumes
+                      `(("/home/krisbalintona/services/pihole/data" . "/etc/pihole")
+                        ,(cons pihole-password-sops-file pihole-password-file)))
                      (auto-start? #t)
                      (respawn? #f)))
                  (oci-container-configuration
@@ -165,8 +166,8 @@
                    ;; longer an intermediary
                    (network "host")
                    (volumes
-                    `(("caddy_data" . "/data")
-                      ("caddy_log" . "/data/log")
+                    `(("/home/krisbalintona/services/caddy/data" . "/data") ; Path of XDG_DATA_HOME
+                      ("/home/krisbalintona/services/caddy/log" . "/data/log") ; Where Caddy prints logs
                       (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
                        . "/config/Caddyfile")
                       ;; Netlify access token
@@ -191,8 +192,9 @@
                        (pack-options '(#:symlinks (("/bin" -> "bin"))))))
                    (network "goaccess-network")
                    (ports '("127.0.0.1:7890:7890"))
-                   (volumes `(("caddy_log" . "/var/log")
-                              ("goaccess_web" . "/var/www/goaccess")))
+                   (volumes
+                    `(("/home/krisbalintona/services/caddy/log" . "/var/log")
+                      ("goaccess_web" . "/var/www/goaccess")))
                    ;; Command taken from here:
                    ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
                    ;;
@@ -236,7 +238,7 @@
                    ;; Have files mounted at /data/ and copyparty
                    ;; config + cache files in /srv/
                    (volumes
-                    `(("/home/krisbalintona/copyparty-data" . "/data")
+                    `(("/home/krisbalintona/services/copyparty/data" . "/data")
                       (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
                        . "/srv/copyparty.conf")))
                    (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
