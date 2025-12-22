@@ -1,0 +1,827 @@
+#+TITLE: Sublation
+#+PROPERTY: header-args :noweb yes
+
+* Shells
+
+** Bash
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu home services shells)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-bash-service-type
+    (home-bash-configuration
+      (bashrc
+       (list
+        ;; 2025-12-06: My default shell is bash because I haven't gotten
+        ;; Tramp to work with Fish shell yet.  (I've deduced that the
+        ;; prompt is not the problem.)  So, instead, I keep bash as my
+        ;; shell and dispatch to fish if the current process wasn't
+        ;; started by tramp
+        (plain-file "to-fish.bash"
+          "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $TERM =~ eat ]]; }; then
+      exec fish
+  fi")))))
+#+end_src
+
+** Fish
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu home services shells)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-fish-service-type
+    (home-fish-configuration
+      (config
+       (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+#+end_src
+
+* Tooling
+
+** Jujutsu
+
+#+begin_src scheme :noweb-ref home-modules
+  (abbe packages rust)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "jujutsu"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'krisb-symlink-jj-config-files-service-type
+        home-xdg-configuration-files-service-type
+      `(("jj/config.toml"
+         ,(local-file "files/jujutsu/config.toml"))))
+#+end_src
+
+* Authentication
+
+** GnuPG
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu packages gnupg)
+  (gnu home services gnupg)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "gnupg"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-gpg-agent-service-type)
+#+end_src
+
+** SOPS: Secrets management
+
+#+begin_src scheme :noweb-ref home-modules
+  (sops secrets)
+  (sops home services sops)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "age"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-sops-secrets-service-type
+    (home-sops-service-configuration
+      (config (local-file "files/sops/sops.yaml" "sops.yaml"))
+      (secrets
+       (list
+        <<home-sops-secrets>>))))
+#+end_src
+
+* Podman
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services containers)
+  (gnu services sysctl)
+#+end_src
+
+#+begin_src scheme :noweb-ref supplementary-groups
+  "cgroup"
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  ;; Rootless podman also needs 'iptables-service-type' specifically for
+  ;; its (non-internal) networks; 'nftables-service-type' will not
+  ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
+  ;; though, since the default ruleset for iptables is to accept
+  ;; everything.
+  (service iptables-service-type)
+  (service rootless-podman-service-type
+    (rootless-podman-configuration
+      (subgids (list (subid-range (name "krisbalintona"))))
+      (subuids (list (subid-range (name "krisbalintona"))))))
+  ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid this.
+  ;; For rootless podman services (Caddy and Pihole)
+  (simple-service 'sysctl-podman
+      sysctl-service-type
+    '(("net.ipv4.ip_unprivileged_port_start" . "53")))
+#+end_src
+
+Use Podman by default for ~home-oci-service-type~.
+#+begin_src scheme :noweb-ref home-services
+  (service home-oci-service-type
+    (for-home
+     (oci-configuration
+      (runtime 'podman)                   ; Use podman instead of docker
+      (verbose? #t))))
+#+end_src
+
+* OpenSSH
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services ssh)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (service openssh-service-type)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu home services ssh)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-openssh-service-type
+      (home-openssh-configuration
+        (hosts
+         (list
+          (openssh-host (name "WindowsG14")
+                        (host-name "192.168.4.138")
+                        (user "krisbalintona")
+                        (forward-x11? #t)
+                        (forward-x11-trusted? #t))))))
+#+end_src
+
+* Self-hosting
+
+** Security
+
+*** Firewall: Nftables
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu packages linux)
+  (gnu services networking)
+  (ice-9 textual-ports)                   ; For 'get-string-all'
+  (krisb packages networking)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (service nftables-service-type
+    (nftables-configuration
+      (ruleset
+       (computed-file
+           "nftables-ruleset"
+         #~(call-with-output-file #$output
+             (lambda (port)
+               (format port
+                       #$(call-with-input-file
+                             (string-append (dirname (current-filename))
+                                            "/files/nftables/sublation.nft")
+                           get-string-all)
+                       ;; Contains all country definitions/alias, e.g.,
+                       ;; $US resolves to a particular number ID
+                       (string-append #$nftables-geoip "/etc/nftables/geoip-def-all.nft")
+                       ;; Map from IPv4 to country
+                       (string-append #$nftables-geoip "/etc/nftables/geoip-ipv4.nft")
+                       ;; Map from IPv6 to country
+                       (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
+#+end_src
+
+*** Fail2ban
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services security)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (service fail2ban-service-type
+    (fail2ban-configuration
+      (extra-jails
+       (list
+        ;; SSH jail
+        (fail2ban-jail-configuration
+          (name "sshd")
+          (enabled? #t)
+          (max-retry 5)
+          (find-time "10m")
+          (ban-time "1h"))
+        ;; Caddy jail
+        (fail2ban-jail-configuration
+          (name "caddy-bots")
+          (enabled? #t)
+          (max-retry 3)
+          (find-time "5m")
+          (ban-time "1h")
+          ;; TODO 2025-12-10: Can we shorten this path and compute it
+          ;; dynamically?  This depends on the internal volume created
+          ;; by Podman for my Caddy service
+          (log-path
+           '("/home/krisbalintona/.local/share/containers/storage/volumes/caddy_log/_data/caddy/access.log"))
+          (filter
+           (fail2ban-jail-filter-configuration
+             (name "nginx-botsearch"))))))))
+#+end_src
+
+** Networking
+
+*** DNS
+
+**** Unbound
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services dns)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  ;; I use Unbound with Pihole.  For an explanation of why (and a guide
+  ;; on how to do so) I pair Unbound with the latter, see
+  ;; https://docs.pi-hole.net/guides/dns/unbound/
+  (service unbound-service-type
+    (unbound-configuration
+      (server
+       (unbound-server
+         ;; Let only my machine query Unbound (Pihole forwards DNS
+         ;; queries to Unbound)
+         (interface '("127.0.0.1" ; IPv4 local host
+                      "::1"))     ; IPv6 local
+         (tls-cert-bundle "/etc/ssl/certs/ca-certificates.crt")
+         (hide-version #t)
+         (hide-identity #t)
+         ;; See
+         ;; https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html
+         ;; for a description of all options
+         (extra-options
+          '((port . 5335) ; Pihole forwards DNS queries to this port
+            ;; These are already default, but I declare them explicitly
+            ;; anyway
+            (do-ip4 . "yes")
+            (do-udp . "yes")
+            (do-tcp . "yes")
+            ;; The following can be set to "yes" if my WAN supports
+            ;; IPv6.  I can check by going to test-ipv6.com
+            (do-ip6 . "no")
+            ;; All paths below are relative to CHROOT, if set.  Make
+            ;; sure CHROOT has the permissions of the unbound process.
+            ;; The default user of the process is "unbound" (see also
+            ;; the USERNAME option).  To change permissions, do
+            ;; something like:
+            ;;
+            ;;     sudo chown unbound:unbound CHROOT_PATH
+            ;;
+            ;; I do not CHROOT since unbound already runs as a user
+            ;; without elevated privileges, and that's good enough for
+            ;; me.
+            (chroot . "")
+            ;; Logging.  If LOGFILE is a path, then ensure its parent
+            ;; directory is created and that LOGFILE or its directory is
+            ;; owned by "unbound" (the default value of the USERNAME
+            ;; option).  If LOGFILE is not set or is set to an empty
+            ;; string, then log output to "sudo herd status unbound"
+            ;; instead
+            (verbosity . "1")  ; Default
+            (logfile . "")
+            (log-time-ascii . "yes")
+            (log-destaddr . "yes")
+            (log-queries . "yes")
+            (log-servfail . "yes")
+            ;; TODO 2025-12-16: Write a service to do this
+            ;; automatically.  But first check if there truly is no
+            ;; currently existing way to do it automatically.
+            ;;
+            ;; Use DNSSEC.
+            ;;
+            ;; NOTE 2025-12-12: On Guix Systems, the root key has to be
+            ;; created manually, it seems.  Ensure the parent directory
+            ;; of the file exists then run:
+            ;;
+            ;;     sudo unbound-anchor -a /PATH/TO/KEY/root.key
+            ;;
+            ;; Unbound also runs as the "unbound" user, so for extra
+            ;; security you can change the permissions of the file, too:
+            ;;
+            ;;     sudo chown unbound:unbound /PATH/TO/KEY
+            ;;
+            ;; Or, the first command can be ran with "-u unbound", like
+            ;; so:
+            ;;
+            ;;     sudo -u unbound unbound-anchor -a /PATH/TO/KEY/root.key
+            ;;
+            (auto-trust-anchor-file . "/var/lib/unbound/root.key")
+            (harden-glue . "yes")
+            (harden-dnssec-stripped . "yes")
+            ;; Give minimal domain name information in queries to DNS
+            ;; servers.  See also the 'qname-minimisation-strict'
+            ;; setting.
+            (qname-minimisation . "yes")
+            ;; See
+            ;; https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+            ;; for an explanation of these values
+            (edns-buffer-size . "1232")
+            (so-rcvbuf . "1m")
+            (use-caps-for-id . "no")
+            (num-threads . "1")
+            (prefetch . "yes")))))
+      (remote-control
+       (unbound-remote
+         (control-enable #t)
+         ;; Use with:
+         ;;
+         ;;     sudo unbound-control -s CONTROL-INTERFACE status
+         ;;
+         (control-interface "/run/unbound.sock"))) ; Default value
+      ;; We place the below in EXTRA-CONTENT because we either need to
+      ;; unquote a value entirely in the config or quote portions of
+      ;; them (which can be done if the cdr is a single Guile symbol).
+      ;; But UNBOUND-SERVER always quotes values, so to deal with edge
+      ;; cases we place certain settings in EXTRA-CONTENT.  (There can
+      ;; be multiple "server:" blocks in the config, it seems.)
+      (extra-content
+       "server:
+          access-control: 127.0.0.0/8 allow
+
+          # Ensure privacy of local IP ranges.  Taken from
+          # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+          private-address: 192.168.0.0/16
+          private-address: 169.254.0.0/16
+          private-address: 172.16.0.0/12
+          private-address: 10.0.0.0/8
+          private-address: fd00::/8
+          private-address: fe80::/10
+
+          # Ensure no reverse queries to non-public IP ranges (RFC6303
+          # 4.2).  Taken from
+          # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+          private-address: 192.0.2.0/24
+          private-address: 198.51.100.0/24
+          private-address: 203.0.113.0/24
+          private-address: 255.255.255.255/32
+          private-address: 2001:db8::/32")))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "unbound"
+#+end_src
+
+**** Pihole
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-pihole
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let* ((pihole-password-filename "pihole-webserver-password")
+              (pihole-password-sops-file
+               (string-append "/run/user/" (number->string (getuid)) "/secrets"
+                              "/" pihole-password-filename))
+              (pihole-password-file
+               (string-append "/run/secrets/" pihole-password-filename)))
+         (oci-container-configuration
+           (provision "pihole")
+           (image "docker.io/pihole/pihole:latest")
+           (environment
+            `("TZ=America/Chicago"
+              "FTLCONF_dns_port=53" ; Default port
+              ;; Listen for queries on all interfaces and from all
+              ;; origins
+              "FTLCONF_dns_listeningMode=ALL"
+              ;; Forward queries to Unbound DNS (whose port is 5335 on
+              ;; the host; we're using the host network in this
+              ;; container so its IP is 127.0.0.1)
+              "FTLCONF_dns_upstreams=127.0.0.1#5335"
+              ;; Pihole as NTP server for other devices?
+              "FTLCONF_ntp_ipv4_active=false"
+              "FTLCONF_ntp_ipv6_active=false"
+              ;; Pihole as NTP server for host?
+              "FTLCONF_ntp_sync_active=false"
+              ;; Webserver settings
+              "FTLCONF_webserver_port=8080"
+              ,(cons "WEBPASSWORD_FILE" pihole-password-file)))
+           (network "host")
+           (volumes
+            `(("/home/krisbalintona/services/pihole/data" . "/etc/pihole")
+              ,(cons pihole-password-sops-file pihole-password-file)))
+           (auto-start? #t)
+           (respawn? #f)))))))
+#+end_src
+
+*** Web traffic
+
+**** Caddy: Reverse proxy
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("netlify-access-token"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-caddy
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "caddy")
+         (image
+           (oci-image
+             ;; OCI images locations follow a
+             ;; [registry]/[repository]:[tag] format.  Since we are
+             ;; local, we only need to specify a repository and
+             ;; optionally a tag.  The REPOSITORY field below
+             ;; corresponds to the [repository] of an OCI image
+             ;; location; it can be whatever we want since this image is
+             ;; created locally (in the Guix store)
+             (repository "caddy-netlify")
+             (tag "2.10.2")
+             (value (specifications->manifest '("caddy-netlify")))
+             (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+         ;; These environment variables are set in the Docker image
+         ;; Caddy distributes (shown by e.g. "podman image inspect
+         ;; docker.io/caddy:2.10.2").  My tests show that they need to
+         ;; be set for some reason
+         (environment '("CADDY_VERSION=v2.10.2"
+                        "XDG_CONFIG_HOME=/config"
+                        "XDG_DATA_HOME=/data"))
+         ;; Use the host network, then for services expose to the host
+         ;; only the required ports and have Caddy direct traffic to
+         ;; those ports.  An added benefit to using the host network is
+         ;; that it permits Caddy to log the real IP of clients, since
+         ;; the NAT of the Podman bridge network is no longer an
+         ;; intermediary
+         (network "host")
+         (volumes
+          `(("/home/krisbalintona/services/caddy/data" . "/data") ; Path of XDG_DATA_HOME
+            ("/home/krisbalintona/services/caddy/log" . "/data/log") ; Where Caddy prints logs
+            (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
+             . "/config/Caddyfile")
+            ;; Netlify access token
+            (,(string-append "/run/user/" (number->string (getuid)) "/secrets"
+                             "/netlify-access-token")
+             ;; Reference this with a file placeholder in my Caddyfile;
+             ;; see
+             ;; https://caddyserver.com/docs/conventions#placeholders
+             . "/run/secrets/netlify-access-token")
+            ;; Goaccess real-time web page
+            ("goaccess_web" . "/var/www/goaccess")))
+         (command '("caddy" "run" "--config" "/config/Caddyfile"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Goaccess: Web log access analytics
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-goaccess
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "goaccess-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "goaccess")
+         (image
+           (oci-image
+             (repository "goaccess")
+             (tag "1.9.3")
+             (value (specifications->manifest '("goaccess")))
+             (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+         (network "goaccess-network")
+         (ports '("127.0.0.1:7890:7890"))
+         (volumes
+          `(("/home/krisbalintona/services/caddy/log" . "/var/log")
+            ("goaccess_web" . "/var/www/goaccess")))
+         ;; Command taken from here:
+         ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
+         ;;
+         ;; Goaccess uses websockets for real-time updates.  We can
+         ;; confirm that the goaccess page we see is receiving real-time
+         ;; updates from the green dot on the top left of the page
+         ;; (beside the burger menu icon).
+         ;;
+         ;; Caddy directs requests to our nselected domain to the HTTPS
+         ;; port (443) of goaccess's network (i.e., the container
+         ;; network).  As such, Caddy expects the goaccess's websocket
+         ;; to be at wss://DOMAIN:443/ws.
+         ;; 
+         ;; (And we don't have to worry about passing SSL information to
+         ;; the goaccess invocation certificates with the "tls internal"
+         ;; Caddy setting.)
+         ;;
+         ;; Caddy just listens to the websocket to know when to update
+         ;; the files it serves, but the actual file it serves is at a
+         ;; path accessible in its container.  Caddy then knows to just
+         ;; serve these files via the "file_server" setting.
+         (command '("goaccess"
+                    "/var/log/copyparty-json.log"
+                    "--log-format=CADDY"
+                    "-o" "/var/www/goaccess/index.html"
+                    "--real-time-html"
+                    "--ws-url=wss://goaccess.home.arpa:443/ws"
+                    "--port=7890"
+                    "--tz='America/Chicago'"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Wireguard: VPN
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services vpn)
+  (gnu services sysctl)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (service wireguard-service-type
+    (wireguard-configuration
+      (addresses '("10.0.0.1/24"))
+      ;; TODO 2025-12-21: Avoid hardcoding this
+      (private-key "/run/user/1000/secrets/wireguard-private-key")
+      (bootstrap-private-key? #f)
+      ;; Network rules
+      (pre-up
+       (list
+        ;; IPv4 and IPv6 table for address translation (rewriting packet
+        ;; addresses)
+        #~(string-append #$(file-append nftables "/sbin/nft")
+                         " add table inet wg-nat")
+        #~(string-append #$(file-append nftables "/sbin/nft")
+                         " add chain inet wg-nat postrouting '{ type nat hook postrouting priority -100; }'")
+        ;; Rewrite source IP of Wireguard outgoing packets (from
+        ;; OnePlus) leaving via wifi to be the host's IP
+        #~(string-append #$(file-append nftables "/sbin/nft")
+                         " add rule inet wg-nat postrouting oifname 'wlp108s0'"
+                         " ip saddr 10.0.0.0/24 masquerade")))
+      (post-down
+       (list
+        #~(string-append #$(file-append nftables "/sbin/nft")
+                         " delete table inet wg-nat")))
+      (peers
+       (list
+        (wireguard-peer
+          (name "OnePlus")
+          (public-key "Mgj/EOTOJv96q6NSN8CC7DEXB7ic6WV78H1ukHm7fyY=")
+          (allowed-ips '("10.0.0.2/32")))))))
+  ;; For Wireguard IP forwarding
+  (simple-service 'sysctl-wireguard
+      sysctl-service-type
+    '(("net.ipv4.ip_forward" . "1")))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("wireguard-private-key"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
+** Services
+
+*** Copyparty
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-copyparty
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "copyparty-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "copyparty")
+         (image "docker.io/copyparty/ac:1.19.21")
+         (network "copyparty-network")
+         (ports '("127.0.0.1:6969:6969"))
+         ;; Have files mounted at /data and copyparty config + cache
+         ;; files in /srv
+         (volumes
+          `(("/home/krisbalintona/services/copyparty/data" . "/data")
+            (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
+             . "/srv/copyparty.conf")))
+         (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-restic-backup-jobs
+  (restic-backup-job
+    (name "restic-copyparty-data")
+    (repository restic-repository)
+    (password-file restic-password-file)
+    (schedule "0 5 * * *")
+    (files (list (string-append (getenv "HOME") "/copyparty-data")))
+    (verbose? #t))
+#+end_src
+
+*** Pi-hole
+
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("pihole-webserver-password"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
+* Backups
+
+** Restic
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services backup)
+  (gnu home services backup)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "restic"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-restic-backup-service-type
+    (let ((restic-repository "/mnt/backup-hdd")
+          (restic-password-file
+           (string-append "/run/user/" (number->string (getuid)) "/secrets"
+                          "/restic-backup-password")))
+      (restic-backup-configuration
+        (jobs
+         (list
+          (restic-backup-job
+            (name "restic-vault")
+            (repository restic-repository)
+            (password-file restic-password-file)
+            (schedule "0 7-22/3 * * *")
+            (files (list (string-append (getenv "HOME") "/vault")))
+            (verbose? #t))
+          <<home-restic-backup-jobs>>)))))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("restic-backup-password"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
+* Home
+
+#+begin_src scheme :tangle sublation-home.scm
+  (use-modules (guix gexp)
+               (gnu packages)
+               (gnu system shadow)        ; For user-group 
+               (gnu home services)
+               (gnu home services shepherd)
+               <<home-modules>>)
+
+  (home-environment
+    (packages
+     (specifications->packages
+      (list
+       "glibc-locales"
+       "git"
+       "make"
+       "vim"
+       "neovim"
+       "tree"
+       "ripgrep"
+       "parted"
+       "emacs"
+       <<home-packages>>)))
+    
+    (services
+     (cons*
+      <<home-services>>
+      
+      (simple-service 'guix-locales
+          home-environment-variables-service-type
+        '(("GUIX_LOCPATH" . "$HOME/.guix-profile/lib/locale")))
+      (simple-service 'krisb-symlink-git-config-files-service-type
+          home-xdg-configuration-files-service-type
+        `(("git/config"
+           ,(local-file "files/git/config"))))
+      
+      (service home-files-service-type
+        `((".guile" ,%default-dotguile)
+          (".Xdefaults" ,%default-xdefaults)))
+
+      (service home-xdg-configuration-files-service-type
+        `(("gdb/gdbinit" ,%default-gdbinit)
+          ("nano/nanorc" ,%default-nanorc)))
+
+      %base-home-services)))
+#+end_src
+
+* System
+
+#+begin_src scheme :tangle sublation.scm
+  (use-modules (gnu)
+               (gnu system accounts)
+               (gnu packages shells)
+               (gnu services shepherd)
+               (gnu services desktop)
+               (gnu services xorg)
+               (nonguix transformations)
+               <<system-modules>>)
+
+  ((compose (nonguix-transformation-guix)
+            (nonguix-transformation-linux))
+   (operating-system
+     (locale "en_US.utf8")
+     (timezone "America/Chicago")
+     (keyboard-layout (keyboard-layout "us"))
+     (host-name "sublation")
+
+     ;; The list of user accounts ('root' is implicit).
+     (users (cons* (user-account
+                     (name "krisbalintona")
+                     (comment "Kristoffer Balintona")
+                     (group "users")
+                     (home-directory "/home/krisbalintona")
+                     ;; REVIEW 2025-12-06: Fish shell through tramp has
+                     ;; failed despite all my attempts
+                     ;; (shell (file-append fish "/bin/fish"))
+                     (supplementary-groups '("wheel" "netdev"
+                                             "audio" "video"
+                                             <<supplementary-groups>>)))
+                   %base-user-accounts))
+
+     (packages
+      (cons*
+       <<system-packages>>
+       glibc-locales
+       %base-packages))
+
+     ;; Below is the list of system services.  To search for available
+     ;; services, run 'guix system search KEYWORD' in a terminal.
+     (services
+      (cons*
+       <<system-services>>
+       (service network-manager-service-type)
+       (service wpa-supplicant-service-type)
+       (service ntp-service-type)
+       (service elogind-service-type
+         (elogind-configuration
+           ;; Inhibit laptop sleeping and hibernation on lid close
+           (handle-lid-switch 'ignore)
+           (handle-lid-switch-docked 'ignore)
+           (handle-lid-switch-external-power 'ignore)
+           (lid-switch-ignore-inhibited? #t)))
+       %base-services))
+     
+     (bootloader (bootloader-configuration
+                   (bootloader grub-efi-bootloader)
+                   (targets (list "/boot/efi"))
+                   (keyboard-layout keyboard-layout)))
+
+     (file-systems (cons* (file-system
+                            (mount-point "/mnt/backup-hdd")
+                            (flags '(no-atime no-diratime))
+                            (device (uuid
+                                     "7526f253-87d5-47d9-80f9-66c99c70bb8f"
+                                     'ext4))
+                            (type "ext4")
+                            (create-mount-point? #t)
+                            (mount-may-fail? #t))
+                          (file-system
+                            (mount-point "/")
+                            (device (uuid
+                                     "849da8e9-c001-4a8b-9948-d996c774fc09"
+                                     'ext4))
+                            (type "ext4"))
+                          (file-system
+                            (mount-point "/boot/efi")
+                            (device (uuid "8D5D-5605"
+                                          'fat32))
+                            (type "vfat"))
+                          %base-file-systems))))
+#+end_src
