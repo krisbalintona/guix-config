@@ -376,7 +376,7 @@ Some useful tooling:
 
 **** Pi-hole: Block domains
 
-Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI for Pihole
+Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI for Pihole. And logs can be viewed in the CLI via ~podman exec -it pihole pihole tail~ (or just regular ~tail -F~ on any log file).
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
