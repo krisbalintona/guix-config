@@ -84,27 +84,30 @@
                           (string-append #$nftables-geoip "/etc/nftables/geoip-ipv4.nft")
                           ;; Map from IPv6 to country
                           (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
-     (service fail2ban-service-type
-       (fail2ban-configuration
-         (extra-jails
-          (list
-           (fail2ban-jail-configuration
-             (name "sshd")
-             (enabled? #t)
-             (max-retry 5)
-             (find-time "10m")
-             (ban-time "1h"))
-           (fail2ban-jail-configuration
-             (name "caddy-bots")
-             (enabled? #t)
-             (max-retry 3)
-             (find-time "5m")
-             (ban-time "1h")
-             (log-path
-              '("/home/krisbalintona/services/caddy/log/copyparty.log"))
-             (filter
-              (fail2ban-jail-filter-configuration
-                (name "nginx-botsearch"))))))))
+     (service fail2ban-service-type)
+     (simple-service 'fail2ban-openssh
+         fail2ban-service-type
+       (list
+        (fail2ban-jail-configuration
+          (name "sshd")
+          (enabled? #t)
+          (max-retry 5)
+          (find-time "10m")
+          (ban-time "1h"))))
+     (simple-service 'fail2ban-caddy
+         fail2ban-service-type
+       (list 
+        (fail2ban-jail-configuration
+          (name "caddy-bots")
+          (enabled? #t)
+          (max-retry 3)
+          (find-time "5m")
+          (ban-time "1h")
+          (log-path
+           '("/home/krisbalintona/services/caddy/log/copyparty.log"))
+          (filter
+           (fail2ban-jail-filter-configuration
+             (name "nginx-botsearch"))))))
      ;; I use Unbound with Pihole.  For an explanation of why (and a guide
      ;; on how to do so) I pair Unbound with the latter, see
      ;; https://docs.pi-hole.net/guides/dns/unbound/

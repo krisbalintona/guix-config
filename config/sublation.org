@@ -169,12 +169,15 @@ Use Podman by default for ~home-oci-service-type~.
 #+end_src
 
 #+begin_src scheme :noweb-ref system-fail2ban-jails
-  (fail2ban-jail-configuration
-    (name "sshd")
-    (enabled? #t)
-    (max-retry 5)
-    (find-time "10m")
-    (ban-time "1h"))
+  (simple-service 'fail2ban-openssh
+      fail2ban-service-type
+    (list
+     (fail2ban-jail-configuration
+       (name "sshd")
+       (enabled? #t)
+       (max-retry 5)
+       (find-time "10m")
+       (ban-time "1h"))))
 #+end_src
 
 * Self-hosting
@@ -220,13 +223,10 @@ Doing something like ~sudo fail2ban-client status --all~ shows the ban activity 
   (gnu services security)
 #+end_src
 
-Several of my services integrate with ~fail2ban-service-type~:
+Several of my services integrate with ~fail2ban-service-type~.
 #+begin_src scheme :noweb-ref system-services
-  (service fail2ban-service-type
-    (fail2ban-configuration
-      (extra-jails
-       (list
-        <<system-fail2ban-jails>>))))
+  (service fail2ban-service-type)
+  <<system-fail2ban-jails>>
 #+end_src
 
 ** Networking
@@ -502,17 +502,20 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
 #+end_src
 
 #+begin_src scheme :noweb-ref system-fail2ban-jails
-  (fail2ban-jail-configuration
-    (name "caddy-bots")
-    (enabled? #t)
-    (max-retry 3)
-    (find-time "5m")
-    (ban-time "1h")
-    (log-path
-     '("/home/krisbalintona/services/caddy/log/copyparty.log"))
-    (filter
-     (fail2ban-jail-filter-configuration
-       (name "nginx-botsearch"))))
+  (simple-service 'fail2ban-caddy
+      fail2ban-service-type
+    (list 
+     (fail2ban-jail-configuration
+       (name "caddy-bots")
+       (enabled? #t)
+       (max-retry 3)
+       (find-time "5m")
+       (ban-time "1h")
+       (log-path
+        '("/home/krisbalintona/services/caddy/log/copyparty.log"))
+       (filter
+        (fail2ban-jail-filter-configuration
+          (name "nginx-botsearch"))))))
 #+end_src
 
 **** Goaccess: Web log access analytics
