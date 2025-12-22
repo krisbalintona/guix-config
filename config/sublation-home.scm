@@ -94,8 +94,9 @@
                (networks
                 (list
                  (oci-network-configuration
-                  (name "contained-network")
-                  (subnet "10.42.0.0/24"))))
+                  (name "goaccess-network"))
+                 (oci-network-configuration
+                  (name "copyparty-network"))))
                (containers
                 (list
                  (let* ((pihole-password-filename "pihole-webserver-password")
@@ -155,10 +156,21 @@
                    (environment '("CADDY_VERSION=v2.10.2"
                                   "XDG_CONFIG_HOME=/config"
                                   "XDG_DATA_HOME=/data"))
-                   (network "contained-network")
-                   (ports '(("80" . "80")
-                            ("443" . "443")
-                            ("443" . "443/udp")))
+                   ;; Use the host network but expose only the
+                   ;; required ports.  Then give each set of services
+                   ;; their own container network and connect to each
+                   ;; of those networks individually.  This maximizes
+                   ;; network isolation
+                   (ports '("80:80"
+                            "443:443"
+                            "443:443/udp"))
+                   ;; TODO 2025-12-22: Create upstream issue about
+                   ;; this?  Currently only one --network can be
+                   ;; passed via the NETWORK record.  Ideally, it
+                   ;; accepts a list of networks
+                   (extra-arguments
+                      '("--network" "goaccess-network"
+                        "--network" "copyparty-network"))
                    (volumes
                     `(("caddy_data" . "/data")
                       ("caddy_log" . "/data/log")
@@ -184,7 +196,7 @@
                        (tag "1.9.3")
                        (value (specifications->manifest '("goaccess")))
                        (pack-options '(#:symlinks (("/bin" -> "bin"))))))
-                   (network "contained-network")
+                   (network "goaccess-network")
                    (volumes `(("caddy_log" . "/var/log")
                               ("goaccess_web" . "/var/www/goaccess")))
                    ;; Command taken from here:
@@ -225,7 +237,7 @@
                  (oci-container-configuration
                    (provision "copyparty")
                    (image "docker.io/copyparty/ac:1.19.21")
-                   (network "contained-network")
+                   (network "copyparty-network")
                    ;; Have files mounted at /data/ and copyparty
                    ;; config + cache files in /srv/
                    (volumes
