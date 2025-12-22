@@ -42,7 +42,7 @@
 
 * Tooling
 
-** Jujutsu
+** Jujutsu: Distributed VCS
 
 #+begin_src scheme :noweb-ref home-modules
   (abbe packages rust)
@@ -104,7 +104,7 @@ See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
         <<home-sops-secrets>>))))
 #+end_src
 
-* Podman
+* Podman: Containers
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu services containers)
@@ -212,7 +212,7 @@ Use Podman by default for ~home-oci-service-type~.
                        (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
 #+end_src
 
-*** Fail2ban
+*** Fail2ban: Scan logs and ban malicious actors 
 
 Doing something like ~sudo fail2ban-client status --all~ shows the ban activity for all fail2ban jails.
 
@@ -238,7 +238,7 @@ Some useful tooling:
 
 *** DNS
 
-**** Unbound
+**** Unbound: Privacy-centered DNS resolver
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu services dns)
@@ -374,7 +374,7 @@ Some useful tooling:
   "unbound"
 #+end_src
 
-**** Pi-hole
+**** Pi-hole: Block domains
 
 Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI for Pihole
 
