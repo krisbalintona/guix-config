@@ -1,10 +1,11 @@
 (use-modules (gnu)
              (gnu system accounts)
              (gnu packages shells)
+             (gnu packages linux)       ; For nftables package
+             (ice-9 textual-ports)      ; For 'get-string-all'
              (nonguix transformations)
              (rosenthal services web)
-             (krisb packages networking)
-             (ice-9 textual-ports))     ; For 'get-string-all'
+             (krisb packages networking))
 (use-service-modules shepherd
                      cups
                      desktop
@@ -14,7 +15,8 @@
                      containers
                      security
                      sysctl
-                     dns)
+                     dns
+                     vpn)
 
 ((compose (nonguix-transformation-guix)
           (nonguix-transformation-linux))
@@ -46,7 +48,38 @@
    ;; Below is the list of system services.  To search for available
    ;; services, run 'guix system search KEYWORD' in a terminal.
    (services
-    (cons* (service fail2ban-service-type
+    (cons* (service wireguard-service-type
+             (wireguard-configuration
+               (addresses '("10.0.0.1/24"))
+               ;; TODO 2025-12-21: Avoid hardcoding this
+               (private-key "/run/user/1000/secrets/wireguard-private-key")
+               (bootstrap-private-key? #f)
+               ;; Network rules
+               (pre-up
+                (list
+                 ;; IPv4 and IPv6 table for address translation
+                 ;; (rewriting packet addresses)
+                 #~(string-append #$(file-append nftables "/sbin/nft")
+                                  " add table inet wg-nat")
+                 #~(string-append #$(file-append nftables "/sbin/nft")
+                                  " add chain inet wg-nat postrouting '{ type nat hook postrouting priority -100; }'")
+                 ;; Rewrite source IP of Wireguard outgoing packets
+                 ;; (from OnePlus) leaving via wifi to be the host's
+                 ;; IP
+                 #~(string-append #$(file-append nftables "/sbin/nft")
+                                  " add rule inet wg-nat postrouting oifname 'wlp108s0'"
+                                  " ip saddr 10.0.0.0/24 masquerade")))
+               (post-down
+                (list
+                 #~(string-append #$(file-append nftables "/sbin/nft")
+                                  " delete table inet wg-nat")))
+               (peers
+                (list
+                 (wireguard-peer
+                   (name "OnePlus")
+                   (public-key "Mgj/EOTOJv96q6NSN8CC7DEXB7ic6WV78H1ukHm7fyY=")
+                   (allowed-ips '("10.0.0.2/32")))))))
+           (service fail2ban-service-type
              (fail2ban-configuration
                (extra-jails
                 (list
@@ -219,8 +252,10 @@
            (service openssh-service-type)
            (simple-service 'extend-sysctl
                sysctl-service-type
-             ;; For rootless podman services (Caddy and Pihole)
-             '(("net.ipv4.ip_unprivileged_port_start" . "53")))
+             '(;; For rootless podman services (Caddy and Pihole)
+               ("net.ipv4.ip_unprivileged_port_start" . "53")
+               ;; For Wireguard
+               ("net.ipv4.ip_forward" . "1")))
            (service nftables-service-type
              (nftables-configuration
                (ruleset

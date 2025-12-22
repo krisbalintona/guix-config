@@ -65,21 +65,23 @@
               (home-sops-service-configuration
                 (config (local-file "files/sops/sops.yaml" "sops.yaml"))
                 (secrets
-                 (list (sops-secret
-                         (key '("restic-backup-password"))
-                         (file
-                          (local-file "files/sops/sublation.yaml"))
-                         (permissions #o400))
-                       (sops-secret
-                         (key '("netlify-access-token"))
-                         (file
-                          (local-file "files/sops/sublation.yaml"))
-                         (permissions #o400))
-                       (sops-secret
-                         (key '("pihole-webserver-password"))
-                         (file
-                          (local-file "files/sops/sublation.yaml"))
-                         (permissions #o400))))))
+                 (list
+                  (sops-secret
+                    (key '("restic-backup-password"))
+                    (file (local-file "files/sops/sublation.yaml"))
+                    (permissions #o400))
+                  (sops-secret
+                    (key '("netlify-access-token"))
+                    (file (local-file "files/sops/sublation.yaml"))
+                    (permissions #o400))
+                  (sops-secret
+                    (key '("pihole-webserver-password"))
+                    (file (local-file "files/sops/sublation.yaml"))
+                    (permissions #o400))
+                  (sops-secret
+                    (key '("wireguard-private-key"))
+                    (file (local-file "files/sops/sublation.yaml"))
+                    (permissions #o400))))))
             (service home-gpg-agent-service-type)
             (service home-oci-service-type
               (for-home
