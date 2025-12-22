@@ -235,6 +235,7 @@
              private-address: 2001:db8::/32")))
      (service wireguard-service-type
        (wireguard-configuration
+         (shepherd-requirement '(nftables))
          (addresses '("10.0.0.1/24"))
          ;; TODO 2025-12-21: Avoid hardcoding this
          (private-key "/run/user/1000/secrets/wireguard-private-key")
