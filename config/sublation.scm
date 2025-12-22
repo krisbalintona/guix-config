@@ -88,25 +88,20 @@
        (fail2ban-configuration
          (extra-jails
           (list
-           ;; SSH jail
            (fail2ban-jail-configuration
              (name "sshd")
              (enabled? #t)
              (max-retry 5)
              (find-time "10m")
              (ban-time "1h"))
-           ;; Caddy jail
            (fail2ban-jail-configuration
              (name "caddy-bots")
              (enabled? #t)
              (max-retry 3)
              (find-time "5m")
              (ban-time "1h")
-             ;; TODO 2025-12-10: Can we shorten this path and compute it
-             ;; dynamically?  This depends on the internal volume created
-             ;; by Podman for my Caddy service
              (log-path
-              '("/home/krisbalintona/.local/share/containers/storage/volumes/caddy_log/_data/caddy/access.log"))
+              '("/home/krisbalintona/services/caddy/log/copyparty.log"))
              (filter
               (fail2ban-jail-filter-configuration
                 (name "nginx-botsearch"))))))))

@@ -168,6 +168,15 @@ Use Podman by default for ~home-oci-service-type~.
                         (forward-x11-trusted? #t))))))
 #+end_src
 
+#+begin_src scheme :noweb-ref system-fail2ban-jails
+  (fail2ban-jail-configuration
+    (name "sshd")
+    (enabled? #t)
+    (max-retry 5)
+    (find-time "10m")
+    (ban-time "1h"))
+#+end_src
+
 * Self-hosting
 
 ** Security
@@ -205,37 +214,19 @@ Use Podman by default for ~home-oci-service-type~.
 
 *** Fail2ban
 
+Doing something like ~sudo fail2ban-client status --all~ shows the ban activity for all fail2ban jails.
+
 #+begin_src scheme :noweb-ref system-modules
   (gnu services security)
 #+end_src
 
+Several of my services integrate with ~fail2ban-service-type~:
 #+begin_src scheme :noweb-ref system-services
   (service fail2ban-service-type
     (fail2ban-configuration
       (extra-jails
        (list
-        ;; SSH jail
-        (fail2ban-jail-configuration
-          (name "sshd")
-          (enabled? #t)
-          (max-retry 5)
-          (find-time "10m")
-          (ban-time "1h"))
-        ;; Caddy jail
-        (fail2ban-jail-configuration
-          (name "caddy-bots")
-          (enabled? #t)
-          (max-retry 3)
-          (find-time "5m")
-          (ban-time "1h")
-          ;; TODO 2025-12-10: Can we shorten this path and compute it
-          ;; dynamically?  This depends on the internal volume created
-          ;; by Podman for my Caddy service
-          (log-path
-           '("/home/krisbalintona/.local/share/containers/storage/volumes/caddy_log/_data/caddy/access.log"))
-          (filter
-           (fail2ban-jail-filter-configuration
-             (name "nginx-botsearch"))))))))
+        <<system-fail2ban-jails>>))))
 #+end_src
 
 ** Networking
@@ -508,6 +499,20 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
          (command '("caddy" "run" "--config" "/config/Caddyfile"))
          (auto-start? #t)
          (respawn? #f))))))
+#+end_src
+
+#+begin_src scheme :noweb-ref system-fail2ban-jails
+  (fail2ban-jail-configuration
+    (name "caddy-bots")
+    (enabled? #t)
+    (max-retry 3)
+    (find-time "5m")
+    (ban-time "1h")
+    (log-path
+     '("/home/krisbalintona/services/caddy/log/copyparty.log"))
+    (filter
+     (fail2ban-jail-filter-configuration
+       (name "nginx-botsearch"))))
 #+end_src
 
 **** Goaccess: Web log access analytics
