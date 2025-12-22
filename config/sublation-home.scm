@@ -71,15 +71,15 @@
         (secrets
          (list
           (sops-secret
+            (key '("pihole-webserver-password"))
+            (file (local-file "files/sops/sublation.yaml"))
+            (permissions #o400))
+          (sops-secret
             (key '("netlify-access-token"))
             (file (local-file "files/sops/sublation.yaml"))
             (permissions #o400))
           (sops-secret
             (key '("wireguard-private-key"))
-            (file (local-file "files/sops/sublation.yaml"))
-            (permissions #o400))
-          (sops-secret
-            (key '("pihole-webserver-password"))
             (file (local-file "files/sops/sublation.yaml"))
             (permissions #o400))
           (sops-secret

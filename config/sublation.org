@@ -1,6 +1,8 @@
 #+TITLE: Sublation
 #+PROPERTY: header-args :noweb yes
 
+#  LocalWords:  CLI
+
 * Shells
 
 ** Bash
@@ -368,11 +370,20 @@ Use Podman by default for ~home-oci-service-type~.
   "unbound"
 #+end_src
 
-**** Pihole
+**** Pi-hole
+
+Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI for Pihole
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("pihole-webserver-password"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services
@@ -643,15 +654,6 @@ Use Podman by default for ~home-oci-service-type~.
     (schedule "0 5 * * *")
     (files (list (string-append (getenv "HOME") "/copyparty-data")))
     (verbose? #t))
-#+end_src
-
-*** Pi-hole
-
-#+begin_src scheme :noweb-ref home-sops-secrets
-  (sops-secret
-    (key '("pihole-webserver-password"))
-    (file (local-file "files/sops/sublation.yaml"))
-    (permissions #o400))
 #+end_src
 
 * Backups
