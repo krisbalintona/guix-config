@@ -35,9 +35,12 @@
      "ripgrep"
      "parted"
      "emacs"
+     "brightnessctl"
      "jujutsu"
+     "btop"
      "gnupg"
      "age"
+     "bind:utils"
      "unbound"
      "restic")))
   
