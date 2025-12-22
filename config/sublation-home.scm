@@ -304,6 +304,13 @@
         #:name "restic-vault"
         #:schedule "0 7-22/3 * * *"
         #:files (list (string-append (getenv "HOME") "/vault")))))
+    (simple-service 'home-restic-caddy
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-caddy"
+        #:schedule "0 0 */2 * *"
+        #:files (list (string-append services-dir "/caddy")))))
     (simple-service 'home-restic-copyparty
         home-restic-backup-service-type
       (list
