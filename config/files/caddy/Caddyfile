@@ -13,19 +13,17 @@
 # * Pihole web UI
 
 pihole.home.arpa {
-	# In Podman containers, "host.containers.internal" resolves to
-	# the host
-	reverse_proxy host.containers.internal:8080
+	reverse_proxy 127.0.0.1:8080
 }
 
 # * Copyparty file server
 
 party.home.arpa {
-	reverse_proxy copyparty:6969
+	reverse_proxy 127.0.0.1:6969
 }
 
 party.kristofferbalintona.me {
-	reverse_proxy copyparty:6969
+	reverse_proxy 127.0.0.1:6969
 	# Access logs
 	log {
 		output file /data/log/copyparty.log {
@@ -74,5 +72,5 @@ party.kristofferbalintona.me {
 goaccess.home.arpa {
 	root * /var/www/goaccess
 	file_server
-	reverse_proxy /ws goaccess:7890
+	reverse_proxy /ws 127.0.0.1:7890
 }

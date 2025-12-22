@@ -156,21 +156,14 @@
                    (environment '("CADDY_VERSION=v2.10.2"
                                   "XDG_CONFIG_HOME=/config"
                                   "XDG_DATA_HOME=/data"))
-                   ;; Use the host network but expose only the
-                   ;; required ports.  Then give each set of services
-                   ;; their own container network and connect to each
-                   ;; of those networks individually.  This maximizes
-                   ;; network isolation
-                   (ports '("80:80"
-                            "443:443"
-                            "443:443/udp"))
-                   ;; TODO 2025-12-22: Create upstream issue about
-                   ;; this?  Currently only one --network can be
-                   ;; passed via the NETWORK record.  Ideally, it
-                   ;; accepts a list of networks
-                   (extra-arguments
-                      '("--network" "goaccess-network"
-                        "--network" "copyparty-network"))
+                   ;; Use the host network, then for services expose
+                   ;; to the host only the required ports and have
+                   ;; Caddy direct traffic to those ports.  An added
+                   ;; benefit to using the host network is that it
+                   ;; permits Caddy to log the real IP of clients,
+                   ;; since the NAT of the Podman bridge network is no
+                   ;; longer an intermediary
+                   (network "host")
                    (volumes
                     `(("caddy_data" . "/data")
                       ("caddy_log" . "/data/log")
@@ -197,6 +190,7 @@
                        (value (specifications->manifest '("goaccess")))
                        (pack-options '(#:symlinks (("/bin" -> "bin"))))))
                    (network "goaccess-network")
+                   (ports '("127.0.0.1:7890:7890"))
                    (volumes `(("caddy_log" . "/var/log")
                               ("goaccess_web" . "/var/www/goaccess")))
                    ;; Command taken from here:
@@ -238,6 +232,7 @@
                    (provision "copyparty")
                    (image "docker.io/copyparty/ac:1.19.21")
                    (network "copyparty-network")
+                   (ports '("127.0.0.1:6969:6969"))
                    ;; Have files mounted at /data/ and copyparty
                    ;; config + cache files in /srv/
                    (volumes
