@@ -182,6 +182,11 @@ Use Podman by default for ~home-oci-service-type~.
 
 * Self-hosting
 
+#+begin_src scheme :noweb-ref home-helpers
+  (define services-dir
+    (string-append (getenv "HOME") "/services"))
+#+end_src
+
 ** Security
 
 *** Firewall: Nftables
@@ -677,8 +682,8 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
     (list
      (restic-job/defaults
       #:name "restic-copyparty"
-      #:schedule "0 5 * * *"
-      #:files (list (string-append (getenv "HOME") "/copyparty-data")))))
+      #:schedule "0 12 * * *"
+      #:files (list (string-append services-dir "/copyparty")))))
 #+end_src
 
 * Backups

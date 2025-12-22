@@ -22,6 +22,8 @@
              (gnu services backup)
              (gnu home services backup))
 
+(define services-dir
+  (string-append (getenv "HOME") "/services"))
 (define* (restic-job/defaults
           #:key
           name
@@ -307,8 +309,8 @@
       (list
        (restic-job/defaults
         #:name "restic-copyparty"
-        #:schedule "0 5 * * *"
-        #:files (list (string-append (getenv "HOME") "/copyparty-data")))))
+        #:schedule "0 12 * * *"
+        #:files (list (string-append services-dir "/copyparty")))))
     
     (simple-service 'guix-locales
         home-environment-variables-service-type
