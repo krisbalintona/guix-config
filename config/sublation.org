@@ -189,6 +189,26 @@ Use Podman by default for ~home-oci-service-type~.
 
 ** Security
 
+*** Principles and guidelines
+
+Guiding rules:
+1. Set up a firewall.
+2. Use a reverse proxy.
+3. Each service gets their own container.
+4. Use rootless containers.
+5. Instead of =--network host=, each container has its own separate container network, preferably an internal one.
+6. If publishing ports, don't publish to all interfaces, only to specific interfaces. That is, do =127.0.0.1:80:80= instead of =80:80=. We prefer the former to the latter since the latter permits listening to the ports from outside the host. (This is especially dangerous on some distros that bypass the firewall when publishing ports on e.g. Docker: port 80 ends up visible to the outside.)
+7. When possible, prefer Unix Domain Sockets (UDS) (on shared container volumes) over publishing ports. Avoids having to have a network and published port(s) for containers.
+8. If possible, use a non-root user for containers (even rootless ones).
+
+Helpful tips for self-hosting:
++ [[https://www.reddit.com/r/selfhosted/comments/1ag9q88/comment/koftjss/?context=3][This Reddit comment]][fn:1]
+
+Informative articles on security principles:
++ [[https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/][Zero Trust security | What is a Zero Trust network?]]
+
+[fn:1] See also [[https://www.reddit.com/r/selfhosted/comments/1cv2l3q/security_psa_for_anyone_using_docker_on_a/][this relevant Reddit post]].
+   
 *** Firewall: Nftables
 
 #+begin_src scheme :noweb-ref system-modules
