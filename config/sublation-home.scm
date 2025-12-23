@@ -229,7 +229,8 @@
        (networks
         (list
          (oci-network-configuration
-          (name "goaccess-network"))))
+          (name "goaccess-network")
+          (internal? #t))))
        (containers
         (list
          (oci-container-configuration
