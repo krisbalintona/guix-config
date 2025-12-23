@@ -8,6 +8,52 @@
 	log {
 		level DEBUG
 	}
+
+	# Work well with requests traveling through proxies.
+	# Recommended from
+	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
+	servers {
+		# Accept forwarded IPs that originate from a private
+		# IP (e.g., loopback, LAN, Podman bridge)
+		trusted_proxies static private_ranges
+		# When a request comes from a trusted proxy, determine
+		# the client IP by reading these headers, in this
+		# order
+		client_ip_headers X-Forwarded-For X-Real-IP
+	}
+}
+
+# Useful for accurate IP logging
+(proxy_headers) {
+	header_up X-Real-IP {remote_host}
+	header_up X-Forwarded-For {remote_host}
+	header_up X-Forwarded-Proto {scheme}
+}
+
+# DNS-01 ACME verification.  See
+# https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148
+# for Caddy-specific instructions.
+#
+# NOTE: For this to work, I need a build of Caddy that has the DNS
+# module corresponding to my DNS provider.
+#
+# I use this method of certificate verification because I've
+# configured my firewall to geo-block non-US IPs, so automatic the
+# typical automatic means of verification fail.
+#
+# This domain is registered under Namecheap but I've directed
+# Namecheap to use Netlify's DNS servers (since I host the domain on
+# Netlify), so see the Netlify DNS challenge module for Caddy:
+# https://github.com/caddy-dns/netlify.
+#
+# For Netlify, a personal API token should be used as the personal
+# access token
+(netlify_dns_tls) {
+	tls {
+		# Bind mint the access token file and reference the
+		# path
+		dns netlify {file./run/secrets/netlify-access-token}
+	}
 }
 
 # * Pihole web UI
@@ -24,6 +70,8 @@ party.home.arpa {
 
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
+	
+	import netlify_dns_tls
 	
 	# Access logs
 	log {
@@ -42,30 +90,6 @@ party.kristofferbalintona.me {
 		# For usage with external log parsers
 		format json
 	}
-
-	# DNS-01 ACME verification.  See
-	# https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148
-	# for Caddy-specific instructions.
-	#
-	# NOTE: For this to work, I need a build of Caddy that has the
-	# DNS module corresponding to my DNS provider.
-	#
-	# I use this method of certificate verification because I've
-	# configured my firewall to geo-block non-US IPs, so automatic
-	# the typical automatic means of verification fail.
-	#
-	# This domain is registered under Namecheap but I've directed
-	# Namecheap to use Netlify's DNS servers (since I host the
-	# domain on Netlify), so see the Netlify DNS challenge module
-	# for Caddy: https://github.com/caddy-dns/netlify.
-	#
-	# For Netlify, a personal API token should be used as the
-	# personal access token
-	tls {
-		# Bind mint the access token file and reference the
-		# path
-		dns netlify {file./run/secrets/netlify-access-token}
-	}
 }
 
 # * Goaccess web access log analyzer
@@ -74,4 +98,56 @@ goaccess.home.arpa {
 	root * /var/www/goaccess
 	file_server
 	reverse_proxy /ws 127.0.0.1:7890
+}
+
+# * Vaultwarden
+# See also
+# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples for
+# using Vaultwarden specifically with Caddy
+
+
+# Only access admin UI in local networks
+(vaultwarden_admin_redis) {
+	@admin {
+		path /admin*
+		not remote_ip private_ranges
+	}
+	redir @admin /
+}
+
+vault.home.arpa {
+	reverse_proxy 127.0.0.1:7000 {
+		import proxy_headers
+	}
+
+	import vaultwarden_admin_redis
+}
+
+vault.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:7000 {
+		import proxy_headers
+	}
+	
+	import netlify_dns_tls
+
+	# Hardening settings taken from
+	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
+	# Assumes that clients reach Vaultwarden over HTTPS and that
+	# TLS works reliably
+	header {
+		# Make HTTPS mandatory over HTTP.  (Note: Will get in
+		# the way if TLS isn't working during testing)
+		Strict-Transport-Security "max-age=31536000"
+		# Disallow sniffing of X-Content-Type-Options
+		X-Content-Type-Options "nosniff"
+		# Prevent search engines from indexing
+		X-Robots-Tag "noindex, nofollow"
+		# Server name removing
+		-Server
+		# Remove X-Powered-By though this shouldn't be an
+		# issue, but better safe than sorry
+		-X-Powered-By
+	}
+	
+	import vaultwarden_admin_redis
 }

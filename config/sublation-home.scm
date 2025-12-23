@@ -20,9 +20,30 @@
              (gnu services containers)
              (gnu home services shepherd)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
+(define sops-sublation-secrets-file
+  (string-append (current-filename) "/files/sops/sublation.yaml"))
+
+;; Get secrets as strings.  Taken from
+;; https://github.com/fishinthecalculator/sops-guix/issues/2
+(use-modules ((ice-9 popen) #:select (open-input-pipe close-pipe))
+             ((rnrs io ports) #:select (get-string-all))
+             ((sops secrets) #:select (sanitize-sops-key)))
+
+(define* (get-sops-secret key #:key file (number? #f))
+  (let* ((cmd (format #f "sops --decrypt --extract '~a' '~a'"
+                      (sanitize-sops-key key)
+                      file))
+         (port (open-input-pipe cmd))
+         (secret (get-string-all port)))
+    (close-pipe port)
+    (if number?
+        (string->number secret)
+        secret)))
 (define services-dir
   (string-append (getenv "HOME") "/services"))
 (define* (restic-job/defaults
@@ -112,6 +133,14 @@
             (permissions #o400))
           (sops-secret
             (key '("wireguard-private-key"))
+            (file (local-file "files/sops/sublation.yaml"))
+            (permissions #o400))
+          (sops-secret
+            (key '("vaultwarden" "push-installation-id"))
+            (file (local-file "files/sops/sublation.yaml"))
+            (permissions #o400))
+          (sops-secret
+            (key '("vaultwarden" "push-installation-key"))
             (file (local-file "files/sops/sublation.yaml"))
             (permissions #o400))
           (sops-secret
@@ -308,6 +337,42 @@
               (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
                . "/srv/copyparty.conf")))
            (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-vaultwarden
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "vaultwarden-network")
+          (internal? #t))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "vaultwarden")
+           (image "vaultwarden/server:latest")
+           (environment
+            `("ADMIN_TOKEN='$argon2id$v=19$m=65540,t=3,p=4$T4YVDSINU+4alWZ22logYyqgUbQn4J4o2DAW/deZF3o$zKnbtTREy8wxrCDEAne1F58/CXBHRiKkII9NqsoGVJA'"
+              "DOMAIN=https://vault.kristofferbalintona.me"
+              ;; Push notification support.  Also requires the
+              ;; "firebaseinstallations.googleapis.com" domain not to be
+              ;; blocked.  See
+              ;; https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification
+              "PUSH_ENABLED=true"
+              ,(cons "PUSH_INSTALLATION_ID"
+                     (get-sops-secret '("vaultwarden" "push-installation-id")
+                                      #:file sops-sublation-secrets-file))
+              ,(cons "PUSH_INSTALLATION_KEY"
+                     (get-sops-secret '("vaultwarden" "push-installation-key")
+                                      #:file sops-sublation-secrets-file))
+              ;; Settings relevant for security.  See also
+              ;; https://github.com/dani-garcia/vaultwarden/wiki/Hardening-Guide
+              "SHOW_PASSWORD_HINT=false"
+              "SIGNUPS_ALLOWED=false"))
+           (network "vaultwarden-network")
+           (ports '("127.0.0.1:7000:80"))
+           (volumes '(("/home/krisbalintona/services/vaultwarden/data" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (service home-restic-backup-service-type)
