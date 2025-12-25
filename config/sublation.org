@@ -796,6 +796,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
           `("DOMAIN=https://vault.kristofferbalintona.me"
             ,(cons "ADMIN_TOKEN"
                    "$argon2id$v=19$m=19456,t=2,p=1$gbzi7DRoZ+SnGVSkAuZ482w7fkXTHrdRcHUJMG24CfI$vs2Xu3ikIopqOJYf319nGEtyz08NBuXE4I9gWVRjUew")
+            ;; TODO 2025-12-25: Add logrotate configuration?
             ;; Logging
             "LOG_FILE=/var/log/vaultwarden/vaultwarden.log"
             "LOG_LEVEL=debug"
