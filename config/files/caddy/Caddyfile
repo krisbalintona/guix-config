@@ -150,4 +150,21 @@ vault.kristofferbalintona.me {
 		# issue, but better safe than sorry
 		-X-Powered-By
 	}
+
+	log {
+		output file /data/log/vaultwarden.log {
+			roll_size 10MiB
+			roll_keep 10
+		}
+		# More human-readable format
+		format console
+	}
+	log {
+		output file /data/log/vaultwarden-json.log {
+			roll_size 30MiB
+			roll_keep 10
+		}
+		# For usage with external log parsers
+		format json
+	}
 }

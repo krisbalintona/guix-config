@@ -235,7 +235,7 @@
            (network "host")
            (volumes
             `(("/home/krisbalintona/services/caddy/data" . "/data") ; Path of XDG_DATA_HOME
-              ("/home/krisbalintona/services/caddy/log" . "/data/log") ; Where Caddy prints logs
+              ("/home/krisbalintona/services/caddy/log" . "/data/log")
               (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
                . "/config/Caddyfile")
               ;; Netlify access token
@@ -273,7 +273,7 @@
            (network "goaccess-network")
            (ports '("127.0.0.1:7890:7890"))
            (volumes
-            `(("/home/krisbalintona/services/caddy/log" . "/var/log")
+            `(("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")
               ("goaccess_web" . "/var/www/goaccess")))
            ;; Command taken from here:
            ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
@@ -297,7 +297,8 @@
            ;; path accessible in its container.  Caddy then knows to just
            ;; serve these files via the "file_server" setting.
            (command '("goaccess"
-                      "/var/log/copyparty-json.log"
+                      "/var/log/caddy/copyparty-json.log"
+                      "/var/log/caddy/vaultwarden-json.log"
                       "--log-format=CADDY"
                       "-o" "/var/www/goaccess/index.html"
                       "--real-time-html"
@@ -377,7 +378,9 @@
               "SIGNUPS_ALLOWED=false"))
            (network "vaultwarden-network")
            (ports '("127.0.0.1:7000:80"))
-           (volumes '(("/home/krisbalintona/services/vaultwarden/data" . "/data")))
+           (volumes
+            '(("/home/krisbalintona/services/vaultwarden/data" . "/data")
+              ("/home/krisbalintona/services/vaultwarden/log" . "/var/log/vaultwarden")))
            (auto-start? #t)
            (respawn? #f))))))
     (service home-restic-backup-service-type)
