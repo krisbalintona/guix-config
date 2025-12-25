@@ -1,0 +1,64 @@
+web:
+  port: 7090
+
+ui:
+  default-sort-by: group
+  dashboard-subheading: Monitor the health of my services
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+# * Endpoints
+
+profiles:
+  http: &http
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+
+  internal: &internal
+    client:
+      insecure: true
+
+endpoints:
+  - name: Copyparty (public)
+    url: "https://party.kristofferbalintona.me"
+    group: services
+    <<: *http
+  - name: Copyparty (local)
+    url: "https://party.home.arpa"
+    group: services
+    <<: [*http, *internal]
+
+  - name: Pihole (webserver)
+    url: "https://pihole.home.arpa/admin"
+    group: network
+    <<: [*http, *internal]
+  - name: Pihole (DNS server)
+    url: "192.168.4.242"
+    group: network
+    interval: 30s
+    dns:
+      query-name: pihole.home.arpa
+      query-type: A
+    conditions:
+      - "[BODY] == [IP]"
+      - "[DNS_RCODE] == NOERROR"
+
+  - name: Vaultwarden (public)
+    url: "https://vault.kristofferbalintona.me"
+    group: services
+    <<: *http
+    interval: 15m
+  - name: Vaultwarden (local)
+    url: "https://vault.home.arpa"
+    group: services
+    <<: [*http, *internal]
+    interval: 15m
+
+  - name: Goaccess (local)
+    url: "https://goaccess.home.arpa"
+    group: network
+    <<: [*http, *internal]
+    interval: 5m

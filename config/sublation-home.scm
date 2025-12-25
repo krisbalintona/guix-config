@@ -22,6 +22,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -393,6 +395,21 @@
            (volumes
             '(("/home/krisbalintona/services/vaultwarden/data" . "/data")
               ("/home/krisbalintona/services/vaultwarden/log" . "/var/log/vaultwarden")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-gatus
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "gatus")
+           (image "twinproduction/gatus:stable")
+           (network "host")
+           (volumes
+            `(,(cons (string-append (dirname (current-filename)) "/files/gatus/config.yaml")
+                     "/config/config.yaml")
+              "/home/krisbalintona/services/gatus/data:/data"))
            (auto-start? #t)
            (respawn? #f))))))
     (service home-restic-backup-service-type)

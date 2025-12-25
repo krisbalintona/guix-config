@@ -838,6 +838,33 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
     (permissions #o400))
 #+end_src
 
+*** Gatus: Services monitor
+
+A lightweight, simpler alternative to Uptime Kuma.
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-gatus
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "gatus")
+         (image "twinproduction/gatus:stable")
+         (network "host")
+         (volumes
+          `(,(cons (string-append (dirname (current-filename)) "/files/gatus/config.yaml")
+                   "/config/config.yaml")
+            "/home/krisbalintona/services/gatus/data:/data"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 * Backups
 
 ** Restic
