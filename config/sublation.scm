@@ -115,10 +115,15 @@
        (unbound-configuration
          (server
           (unbound-server
-            ;; Let only my machine query Unbound (Pihole forwards DNS
+            ;; Let only these interfaces query Unbound (Pihole forwards DNS
             ;; queries to Unbound)
-            (interface '("127.0.0.1" ; IPv4 local host
-                         "::1"))     ; IPv6 local
+            (interface '("127.0.0.1"         ; IPv4 local host
+                         "::1"               ; IPv6 local
+                         ;; Pihole sets "host.containers.internal" as the
+                         ;; upstream DNS, so allow queries from this
+                         ;; device's interface.  (See also the
+                         ;; "access-control" setting.)
+                         "192.168.4.242"))
             (tls-cert-bundle "/etc/ssl/certs/ca-certificates.crt")
             (hide-version #t)
             (hide-identity #t)
@@ -213,6 +218,10 @@
          (extra-content
           "server:
              access-control: 127.0.0.0/8 allow
+             # Pihole sets \"host.containers.internal\" as the upstream #
+             # DNS, so allow queries from this device's IP.  (See also the
+             # \"interface\" setting.)
+             access-control: 192.168.4.0/22 allow
      
              # Ensure privacy of local IP ranges.  Taken from
              # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound

@@ -164,6 +164,10 @@
     (simple-service 'home-oci-pihole
         home-oci-service-type
       (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "pihole-network"))))
        (containers
         (list
          (let* ((pihole-password-filename "pihole-webserver-password")
@@ -182,9 +186,8 @@
                 ;; origins
                 "FTLCONF_dns_listeningMode=ALL"
                 ;; Forward queries to Unbound DNS (whose port is 5335 on
-                ;; the host; we're using the host network in this
-                ;; container so its IP is 127.0.0.1)
-                "FTLCONF_dns_upstreams=127.0.0.1#5335"
+                ;; the host)
+                "FTLCONF_dns_upstreams=host.containers.internal#5335"
                 ;; Pihole as NTP server for other devices?
                 "FTLCONF_ntp_ipv4_active=false"
                 "FTLCONF_ntp_ipv6_active=false"
@@ -193,7 +196,12 @@
                 ;; Webserver settings
                 "FTLCONF_webserver_port=8080"
                 ,(cons "WEBPASSWORD_FILE" pihole-password-file)))
-             (network "host")
+             (network "pihole-network")
+             (ports '(;; DNS queries
+                      "53:53/tcp"
+                      "53:53/udp"
+                      ;; Webserver
+                      "127.0.0.1:8080:8080"))
              (volumes
               `(("/home/krisbalintona/services/pihole/data" . "/etc/pihole")
                 ,(cons pihole-password-sops-file pihole-password-file)))
