@@ -26,7 +26,7 @@
              (gnu home services backup))
 
 (define sops-sublation-secrets-file
-  (string-append (current-filename) "/files/sops/sublation.yaml"))
+  (string-append (dirname (current-filename)) "/files/sops/sublation.yaml"))
 
 ;; Get secrets as strings.  Taken from
 ;; https://github.com/fishinthecalculator/sops-guix/issues/2
