@@ -217,7 +217,8 @@
                ;; created locally (in the Guix store)
                (repository "caddy-netlify")
                (tag "2.10.2")
-               (value (specifications->manifest '("caddy-netlify")))
+               (value (specifications->manifest '("coreutils"
+                                                  "caddy-netlify")))
                (pack-options '(#:symlinks (("/bin" -> "bin"))))))
            ;; These environment variables are set in the Docker image
            ;; Caddy distributes (shown by e.g. "podman image inspect
@@ -268,7 +269,8 @@
              (oci-image
                (repository "goaccess")
                (tag "1.9.3")
-               (value (specifications->manifest '("goaccess")))
+               (value (specifications->manifest '("coreutils"
+                                                  "goaccess")))
                (pack-options '(#:symlinks (("/bin" -> "bin"))))))
            (network "goaccess-network")
            (ports '("127.0.0.1:7890:7890"))
