@@ -345,8 +345,7 @@
        (networks
         (list
          (oci-network-configuration
-          (name "vaultwarden-network")
-          (internal? #t))))
+          (name "vaultwarden-network"))))
        (containers
         (list
          (oci-container-configuration
@@ -355,9 +354,15 @@
            (environment
             `("ADMIN_TOKEN='$argon2id$v=19$m=65540,t=3,p=4$T4YVDSINU+4alWZ22logYyqgUbQn4J4o2DAW/deZF3o$zKnbtTREy8wxrCDEAne1F58/CXBHRiKkII9NqsoGVJA'"
               "DOMAIN=https://vault.kristofferbalintona.me"
-              ;; Push notification support.  Also requires the
+              ;; Logging
+              "LOG_FILE=/var/log/vaultwarden/vaultwarden.log"
+              "LOG_LEVEL=debug"
+              "EXTENDED_LOGGING=true"
+              ;; Push notification support.  Also requires (i) the
               ;; "firebaseinstallations.googleapis.com" domain not to be
-              ;; blocked.  See
+              ;; blocked and (ii) be able to make outbound HTTPS
+              ;; connections (e.g., requires an "external" container
+              ;; network).  See
               ;; https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification
               "PUSH_ENABLED=true"
               ,(cons "PUSH_INSTALLATION_ID"

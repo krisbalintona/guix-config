@@ -130,6 +130,8 @@ vault.kristofferbalintona.me {
 	
 	import netlify_dns_tls
 
+	import vaultwarden_admin_redis
+
 	# Hardening settings taken from
 	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
 	# Assumes that clients reach Vaultwarden over HTTPS and that
@@ -148,6 +150,4 @@ vault.kristofferbalintona.me {
 		# issue, but better safe than sorry
 		-X-Powered-By
 	}
-	
-	import vaultwarden_admin_redis
 }
