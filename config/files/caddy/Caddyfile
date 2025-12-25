@@ -26,8 +26,10 @@
 # Useful for accurate IP logging
 (proxy_headers) {
 	header_up X-Real-IP {remote_host}
-	header_up X-Forwarded-For {remote_host}
-	header_up X-Forwarded-Proto {scheme}
+
+	# Caddy by default already handles the X-Forwarded-For,
+	# X-Forwarded-Host, and X-Forwarded-Proto headers
+	# appropriately
 }
 
 # DNS-01 ACME verification.  See
@@ -70,9 +72,9 @@ party.home.arpa {
 
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-	
+
 	import netlify_dns_tls
-	
+
 	# Access logs
 	log {
 		output file /data/log/copyparty.log {
@@ -127,7 +129,7 @@ vault.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7000 {
 		import proxy_headers
 	}
-	
+
 	import netlify_dns_tls
 
 	import vaultwarden_admin_redis
