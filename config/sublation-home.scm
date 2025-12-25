@@ -363,8 +363,9 @@
            (provision "vaultwarden")
            (image "vaultwarden/server:latest")
            (environment
-            `("ADMIN_TOKEN='$argon2id$v=19$m=65540,t=3,p=4$T4YVDSINU+4alWZ22logYyqgUbQn4J4o2DAW/deZF3o$zKnbtTREy8wxrCDEAne1F58/CXBHRiKkII9NqsoGVJA'"
-              "DOMAIN=https://vault.kristofferbalintona.me"
+            `("DOMAIN=https://vault.kristofferbalintona.me"
+              ,(cons "ADMIN_TOKEN"
+                     "$argon2id$v=19$m=19456,t=2,p=1$gbzi7DRoZ+SnGVSkAuZ482w7fkXTHrdRcHUJMG24CfI$vs2Xu3ikIopqOJYf319nGEtyz08NBuXE4I9gWVRjUew")
               ;; Logging
               "LOG_FILE=/var/log/vaultwarden/vaultwarden.log"
               "LOG_LEVEL=debug"
