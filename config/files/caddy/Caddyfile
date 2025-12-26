@@ -60,19 +60,20 @@
 
 # * Pihole web UI
 
-pihole.home.arpa {
+pihole.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8080
+	import netlify_dns_tls
 }
 
 # * Copyparty file server
 
-party.home.arpa {
+party.home.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
+	import netlify_dns_tls
 }
 
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-
 	import netlify_dns_tls
 
 	# Access logs
@@ -96,10 +97,11 @@ party.kristofferbalintona.me {
 
 # * Goaccess web access log analyzer
 
-goaccess.home.arpa {
+goaccess.home.kristofferbalintona.me {
 	root * /var/www/goaccess
 	file_server
 	reverse_proxy /ws 127.0.0.1:7890
+	import netlify_dns_tls
 }
 
 # * Vaultwarden
@@ -107,31 +109,18 @@ goaccess.home.arpa {
 # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples for
 # using Vaultwarden specifically with Caddy
 
-# Only access admin UI in local networks
-(vaultwarden_admin_redis) {
+vault.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:7000 {
+		import proxy_headers
+	}
+	import netlify_dns_tls
+
+	# Only access admin UI in local networks
 	@admin {
 		path /admin*
 		not remote_ip private_ranges
 	}
 	redir @admin /
-}
-
-vault.home.arpa {
-	reverse_proxy 127.0.0.1:7000 {
-		import proxy_headers
-	}
-
-	import vaultwarden_admin_redis
-}
-
-vault.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:7000 {
-		import proxy_headers
-	}
-
-	import netlify_dns_tls
-
-	import vaultwarden_admin_redis
 
 	# Hardening settings taken from
 	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
@@ -172,6 +161,7 @@ vault.home.kristofferbalintona.me {
 
 # * Gatus
 
-gatus.home.arpa {
+gatus.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7090
+	import netlify_dns_tls
 }

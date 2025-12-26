@@ -27,12 +27,12 @@ endpoints:
     group: services
     <<: *http
   - name: Copyparty (local)
-    url: "https://party.home.arpa"
+    url: "https://party.home.kristofferbalintona.me"
     group: services
     <<: [*http, *internal]
 
   - name: Pihole (webserver)
-    url: "https://pihole.home.arpa/admin"
+    url: "https://pihole.home.kristofferbalintona.me/admin"
     group: network
     <<: [*http, *internal]
   - name: Pihole (DNS server)
@@ -40,7 +40,7 @@ endpoints:
     group: network
     interval: 30s
     dns:
-      query-name: pihole.home.arpa
+      query-name: pihole.home.kristofferbalintona.me
       query-type: A
     conditions:
       - "[BODY] == [IP]"
@@ -52,13 +52,13 @@ endpoints:
     <<: *http
     interval: 15m
   - name: Vaultwarden (local)
-    url: "https://vault.home.arpa"
+    url: "https://vault.home.kristofferbalintona.me"
     group: services
     <<: [*http, *internal]
     interval: 15m
 
   - name: Goaccess (local)
-    url: "https://goaccess.home.arpa"
+    url: "https://goaccess.home.kristofferbalintona.me"
     group: network
     <<: [*http, *internal]
     interval: 5m

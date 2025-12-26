@@ -314,7 +314,7 @@
                       "--log-format=CADDY"
                       "-o" "/var/www/goaccess/index.html"
                       "--real-time-html"
-                      "--ws-url=wss://goaccess.home.arpa:443/ws"
+                      "--ws-url=wss://goaccess.home.kristofferbalintona.me:443/ws"
                       "--port=7890"
                       "--tz='America/Chicago'"))
            (auto-start? #t)
