@@ -107,7 +107,6 @@ goaccess.home.arpa {
 # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples for
 # using Vaultwarden specifically with Caddy
 
-
 # Only access admin UI in local networks
 (vaultwarden_admin_redis) {
 	@admin {
@@ -125,7 +124,7 @@ vault.home.arpa {
 	import vaultwarden_admin_redis
 }
 
-vault.kristofferbalintona.me {
+vault.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7000 {
 		import proxy_headers
 	}

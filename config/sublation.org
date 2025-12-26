@@ -778,7 +778,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
       #:files (list (string-append services-dir "/copyparty")))))
 #+end_src
 
-*** Vaultwarden
+*** Vaultwarden: Self-hosted password manager
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -799,7 +799,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
          (provision "vaultwarden")
          (image "vaultwarden/server:latest")
          (environment
-          `("DOMAIN=https://vault.kristofferbalintona.me"
+          `("DOMAIN=https://vault.home.kristofferbalintona.me"
             ,(cons "ADMIN_TOKEN"
                    "$argon2id$v=19$m=19456,t=2,p=1$gbzi7DRoZ+SnGVSkAuZ482w7fkXTHrdRcHUJMG24CfI$vs2Xu3ikIopqOJYf319nGEtyz08NBuXE4I9gWVRjUew")
             ;; TODO 2025-12-25: Add logrotate configuration?

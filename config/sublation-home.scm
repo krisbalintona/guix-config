@@ -365,7 +365,7 @@
            (provision "vaultwarden")
            (image "vaultwarden/server:latest")
            (environment
-            `("DOMAIN=https://vault.kristofferbalintona.me"
+            `("DOMAIN=https://vault.home.kristofferbalintona.me"
               ,(cons "ADMIN_TOKEN"
                      "$argon2id$v=19$m=19456,t=2,p=1$gbzi7DRoZ+SnGVSkAuZ482w7fkXTHrdRcHUJMG24CfI$vs2Xu3ikIopqOJYf319nGEtyz08NBuXE4I9gWVRjUew")
               ;; TODO 2025-12-25: Add logrotate configuration?
