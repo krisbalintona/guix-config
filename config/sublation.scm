@@ -244,20 +244,26 @@
        (wireguard-configuration
          (shepherd-requirement '(nftables))
          (addresses '("10.0.0.1/24"))
+         (port "53020")
          ;; TODO 2025-12-21: Avoid hardcoding this
          (private-key "/run/user/1000/secrets/wireguard-private-key")
          (bootstrap-private-key? #f)
          ;; Network rules
          (pre-up
           (list
-           ;; IPv4 and IPv6 table for address translation (rewriting packet
-           ;; addresses)
+           ;; Create IPv4 and IPv6 table for address translation (rewriting
+           ;; packet addresses)
            #~(string-append #$(file-append nftables "/sbin/nft")
                             " add table inet wg-nat")
            #~(string-append #$(file-append nftables "/sbin/nft")
                             " add chain inet wg-nat postrouting '{ type nat hook postrouting priority -100; }'")
-           ;; Rewrite source IP of Wireguard outgoing packets (from
-           ;; OnePlus) leaving via wifi to be the host's IP
+           ;; Allow Wireguard traffic to occur as if from the host (this
+           ;; peer).  Do this by rewriting source IP of Wireguard outgoing
+           ;; packets (packets from peers having a source IP from
+           ;; 10.0.0.0/24, that is, from within my Wireguard subnet (which
+           ;; are IPs from 10.0.0.0 to 10.0.0.255)) leaving via wifi
+           ;; (interface wlp108s0) to have a source IP of the host's IP on
+           ;; the wifi network (wlp108s0).
            #~(string-append #$(file-append nftables "/sbin/nft")
                             " add rule inet wg-nat postrouting oifname 'wlp108s0'"
                             " ip saddr 10.0.0.0/24 masquerade")))

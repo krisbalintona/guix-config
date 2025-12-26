@@ -89,10 +89,10 @@ table inet filter {
         ip saddr 192.168.4.0/22 accept
 
         # Wireguard
-        udp dport 51820 accept  # Initial connection
+        udp dport 53020 accept  # Initial connection
         iifname "wg0" accept    # Subsequent traffic
-        # Wireguard DNS queries (redundant: already covered by a rule
-        # below though)
+        # Wireguard DNS queries (redundant: already covered by the DNS
+        # server rules below though)
         iifname "wg0" udp dport 53 accept
         iifname "wg0" tcp dport 53 accept
 
