@@ -16,9 +16,9 @@
              (gnu services containers)
              (gnu home services containers)
              (gnu services containers)
+             (gnu home services shepherd)
              (gnu home services containers)
              (gnu services containers)
-             (gnu home services shepherd)
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -263,62 +263,6 @@
            (command '("caddy" "run" "--config" "/config/Caddyfile"))
            (auto-start? #t)
            (respawn? #f))))))
-    (simple-service 'home-oci-goaccess
-        home-oci-service-type
-      (oci-extension
-       (networks
-        (list
-         (oci-network-configuration
-          (name "goaccess-network")
-          (internal? #t))))
-       (containers
-        (list
-         (oci-container-configuration
-           (provision "goaccess")
-           (image
-             (oci-image
-               (repository "goaccess")
-               (tag "1.9.3")
-               (value (specifications->manifest '("coreutils"
-                                                  "goaccess")))
-               (pack-options '(#:symlinks (("/bin" -> "bin"))))))
-           (network "goaccess-network")
-           (ports '("127.0.0.1:7890:7890"))
-           (volumes
-            `(("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")
-              ("goaccess_web" . "/var/www/goaccess")))
-           ;; Command taken from here:
-           ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
-           ;;
-           ;; Goaccess uses websockets for real-time updates.  We can
-           ;; confirm that the goaccess page we see is receiving real-time
-           ;; updates from the green dot on the top left of the page
-           ;; (beside the burger menu icon).
-           ;;
-           ;; Caddy directs requests to our nselected domain to the HTTPS
-           ;; port (443) of goaccess's network (i.e., the container
-           ;; network).  As such, Caddy expects the goaccess's websocket
-           ;; to be at wss://DOMAIN:443/ws.
-           ;; 
-           ;; (And we don't have to worry about passing SSL information to
-           ;; the goaccess invocation certificates with the "tls internal"
-           ;; Caddy setting.)
-           ;;
-           ;; Caddy just listens to the websocket to know when to update
-           ;; the files it serves, but the actual file it serves is at a
-           ;; path accessible in its container.  Caddy then knows to just
-           ;; serve these files via the "file_server" setting.
-           (command '("goaccess"
-                      "/var/log/caddy/copyparty-json.log"
-                      "/var/log/caddy/vaultwarden-json.log"
-                      "--log-format=CADDY"
-                      "-o" "/var/www/goaccess/index.html"
-                      "--real-time-html"
-                      "--ws-url=wss://goaccess.home.kristofferbalintona.me:443/ws"
-                      "--port=7890"
-                      "--tz='America/Chicago'"))
-           (auto-start? #t)
-           (respawn? #f))))))
     (simple-service 'home-oci-copyparty-socket
         home-shepherd-service-type
       (list
@@ -395,6 +339,62 @@
            (volumes
             '(("/home/krisbalintona/services/vaultwarden/data" . "/data")
               ("/home/krisbalintona/services/vaultwarden/log" . "/var/log/vaultwarden")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-goaccess
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "goaccess-network")
+          (internal? #t))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "goaccess")
+           (image
+             (oci-image
+               (repository "goaccess")
+               (tag "1.9.3")
+               (value (specifications->manifest '("coreutils"
+                                                  "goaccess")))
+               (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+           (network "goaccess-network")
+           (ports '("127.0.0.1:7890:7890"))
+           (volumes
+            `(("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")
+              ("goaccess_web" . "/var/www/goaccess")))
+           ;; Command taken from here:
+           ;; https://dev.to/emrancu/setup-goaccess-in-ubuntulinux-with-docker-and-real-cad-access-over-domainsub-domain-226n
+           ;;
+           ;; Goaccess uses websockets for real-time updates.  We can
+           ;; confirm that the goaccess page we see is receiving real-time
+           ;; updates from the green dot on the top left of the page
+           ;; (beside the burger menu icon).
+           ;;
+           ;; Caddy directs requests to our nselected domain to the HTTPS
+           ;; port (443) of goaccess's network (i.e., the container
+           ;; network).  As such, Caddy expects the goaccess's websocket
+           ;; to be at wss://DOMAIN:443/ws.
+           ;; 
+           ;; (And we don't have to worry about passing SSL information to
+           ;; the goaccess invocation certificates with the "tls internal"
+           ;; Caddy setting.)
+           ;;
+           ;; Caddy just listens to the websocket to know when to update
+           ;; the files it serves, but the actual file it serves is at a
+           ;; path accessible in its container.  Caddy then knows to just
+           ;; serve these files via the "file_server" setting.
+           (command '("goaccess"
+                      "/var/log/caddy/copyparty-json.log"
+                      "/var/log/caddy/vaultwarden-json.log"
+                      "--log-format=CADDY"
+                      "-o" "/var/www/goaccess/index.html"
+                      "--real-time-html"
+                      "--ws-url=wss://goaccess.home.kristofferbalintona.me:443/ws"
+                      "--port=7890"
+                      "--tz='America/Chicago'"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-gatus
