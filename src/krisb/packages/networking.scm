@@ -11,7 +11,8 @@
   #:use-module (gnu packages python-web)
   #:use-module (abbe packages caddy)
   #:export (nftables-geoip
-            caddy-netlify))
+            caddy-netlify
+            caddy-netlify-coraza))
 
 (define geoip-address-csv
   (package
@@ -88,6 +89,12 @@
      "Generate nftables GeoIP rulesets from public IP geolocation data.")
     (license license:gpl2)))
 
+;; NOTE 2025-12-27: The Caddy module path URLs are Go module paths.
+;; This means, for instance, paths must have major version suffixes; I
+;; learned this from
+;; https://github.com/corazawaf/coraza-caddy/issues/214.  See
+;; https://go.dev/ref/mod#major-version-suffixes for more information
+
 (define caddy-netlify
   (let ((pkg (caddy-custom   ; From the Abbe channel; very convenient!
               "2.10.2"
@@ -97,3 +104,14 @@
     (package/inherit pkg
       (name "caddy-netlify")
       (synopsis "Caddy with Netlify DNS support"))))
+
+(define caddy-netlify-coraza
+  (let ((pkg (caddy-custom   ; From the Abbe channel; very convenient!
+              "2.10.2"
+              '("github.com/caddy-dns/netlify"
+                "github.com/corazawaf/coraza-caddy/v2")
+              "038n6y9izd4r0vk6bxkgkqc3kzkx6xisyb6f53w8kg205jc0wycd"
+              "1qxg0cx5si8wndh36vxg13kp382k06zljm8j2q5sam2bfhbckmg3")))
+    (package/inherit pkg
+      (name "caddy-netlify-coraza")
+      (synopsis "Caddy with Netlify DNS and Coraza WAF support"))))
