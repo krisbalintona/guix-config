@@ -238,7 +238,7 @@ Informative articles on security principles:
 
 I minimize the number of ports I have open and I route all internet traffic through my reverse proxy. (See also [[#h:20251227T085128.494786][Principles and guidelines]].)
 
-I also geo-block/fence all internet traffic outside the country I reside in.
+I also use nftables firewall rules to geo-block/fence all internet traffic outside the country I reside in. An less manual alternative would be [[https://github.com/friendly-bits/geoip-shell][geoip-shell]].
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu packages linux)
