@@ -33,7 +33,7 @@
 
 # Useful for accurate IP logging.  Use for domains behind a proxy,
 # e.g. a VPN like Wireguard
-(headers_proxy) {
+(headers_wireguard) {
 	header_up X-Real-IP {remote_host}
 
 	# Caddy by default already handles the X-Forwarded-For,
@@ -110,6 +110,10 @@ pihole.home.kristofferbalintona.me {
 
 	import headers_security_global
 	import headers_security_private
+
+	# Only access in local networks
+	@external not remote_ip private_ranges
+	respond @external 403
 }
 
 # ** Copyparty file server
@@ -167,7 +171,7 @@ goaccess.home.kristofferbalintona.me {
 
 vault.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7000 {
-		import headers_proxy
+		import headers_wireguard
 	}
 	import tls_dns_netlify
 
