@@ -1,4 +1,5 @@
-# Global settings
+# * Global
+# ** Settings
 {
 	# Use ACME staging certificate while testing to not reach
 	# certificate issuance attempt rate limit
@@ -23,14 +24,55 @@
 	}
 }
 
-# Useful for accurate IP logging
-(proxy_headers) {
+# ** Snippets
+
+# *** HTTP headers
+# Many of these are for the sake of hardening.  Most of such settings
+# were taken from
+# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
+
+# Useful for accurate IP logging.  Use for domains behind a proxy,
+# e.g. a VPN like Wireguard
+(headers_proxy) {
 	header_up X-Real-IP {remote_host}
 
 	# Caddy by default already handles the X-Forwarded-For,
 	# X-Forwarded-Host, and X-Forwarded-Proto headers
 	# appropriately
 }
+
+(headers_security_global) {
+	header {
+		# Disallow sniffing of X-Content-Type-Options
+		X-Content-Type-Options "nosniff"
+		# Don't show full URLs when referred to another side
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Server name removing
+		-Server
+		# Remove X-Powered-By though this shouldn't be an
+		# issue, but better safe than sorry
+		-X-Powered-By
+	}
+}
+
+(headers_security_public) {
+	header {
+		# Make HTTPS mandatory over HTTP.  (Note: Assumes that
+		# HTTPS and TLS is working properly.  Will get in the
+		# way if TLS isn't working, e.g., during testing)
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+(headers_security_private) {
+	header {
+		# Prevent search engines from indexing.  Should be
+		# used for private domains that should not be indexed
+		X-Robots-Tag "noindex, nofollow"
+	}
+}
+
+# *** TLS
 
 # DNS-01 ACME verification.  See
 # https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148
@@ -50,7 +92,7 @@
 #
 # For Netlify, a personal API token should be used as the personal
 # access token
-(netlify_dns_tls) {
+(tls_dns_netlify) {
 	tls {
 		# Bind mint the access token file and reference the
 		# path
@@ -58,23 +100,34 @@
 	}
 }
 
-# * Pihole web UI
+# * Domains
+
+# ** Pihole web UI
 
 pihole.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8080
-	import netlify_dns_tls
+	import tls_dns_netlify
+
+	import headers_security_global
+	import headers_security_private
 }
 
-# * Copyparty file server
+# ** Copyparty file server
 
 party.home.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-	import netlify_dns_tls
+	import tls_dns_netlify
+
+	import headers_security_global
+	import headers_security_private
 }
 
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-	import netlify_dns_tls
+	import tls_dns_netlify
+
+	import headers_security_global
+	import headers_security_public
 
 	# Access logs
 	log {
@@ -95,51 +148,38 @@ party.kristofferbalintona.me {
 	}
 }
 
-# * Goaccess web access log analyzer
+# ** Goaccess web access log analyzer
 
 goaccess.home.kristofferbalintona.me {
 	root * /var/www/goaccess
 	file_server
 	reverse_proxy /ws 127.0.0.1:7890
-	import netlify_dns_tls
+	import tls_dns_netlify
+
+	import headers_security_global
+	import headers_security_private
 }
 
-# * Vaultwarden
+# ** Vaultwarden
 # See also
 # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples for
 # using Vaultwarden specifically with Caddy
 
 vault.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7000 {
-		import proxy_headers
+		import headers_proxy
 	}
-	import netlify_dns_tls
+	import tls_dns_netlify
 
-	# Only access admin UI in local networks
+	# Only access admin page in local networks
 	@admin {
 		path /admin*
 		not remote_ip private_ranges
 	}
-	redir @admin /
+	respond @admin 403
 
-	# Hardening settings taken from
-	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
-	# Assumes that clients reach Vaultwarden over HTTPS and that
-	# TLS works reliably
-	header {
-		# Make HTTPS mandatory over HTTP.  (Note: Will get in
-		# the way if TLS isn't working during testing)
-		Strict-Transport-Security "max-age=31536000"
-		# Disallow sniffing of X-Content-Type-Options
-		X-Content-Type-Options "nosniff"
-		# Prevent search engines from indexing
-		X-Robots-Tag "noindex, nofollow"
-		# Server name removing
-		-Server
-		# Remove X-Powered-By though this shouldn't be an
-		# issue, but better safe than sorry
-		-X-Powered-By
-	}
+	import headers_security_global
+	import headers_security_private
 
 	log {
 		output file /data/log/vaultwarden.log {
@@ -159,9 +199,12 @@ vault.home.kristofferbalintona.me {
 	}
 }
 
-# * Gatus
+# ** Gatus
 
 gatus.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7090
-	import netlify_dns_tls
+	import tls_dns_netlify
+
+	import headers_security_global
+	import headers_security_private
 }
