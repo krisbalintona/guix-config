@@ -13,6 +13,7 @@
              (gnu home services ssh)
              (gnu services containers)
              (gnu home services containers)
+             (krisb packages networking)
              (gnu services containers)
              (gnu home services containers)
              (gnu services containers)
@@ -94,6 +95,7 @@
      "age"
      "bind:utils"
      "unbound"
+     "caddy-netlify-coraza-maxmind"
      "restic")))
   
   (services
@@ -225,11 +227,13 @@
                ;; corresponds to the [repository] of an OCI image
                ;; location; it can be whatever we want since this image is
                ;; created locally (in the Guix store)
-               (repository "caddy-netlify")
+               (repository "caddy-netlify-coraza-maxmind")
                (tag "2.10.2")
                (value (specifications->manifest '("coreutils"
-                                                  "caddy-netlify")))
-               (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+                                                  "caddy-netlify-coraza-maxmind")))
+               (pack-options '(#:symlinks (("/bin" -> "bin")
+                                           ;; MaxMind database files
+                                           ("/var/lib/geoip" -> "/var/lib/geoip"))))))
            ;; These environment variables are set in the Docker image
            ;; Caddy distributes (shown by e.g. "podman image inspect
            ;; docker.io/caddy:2.10.2").  My tests show that they need to
@@ -258,6 +262,7 @@
                . "/run/secrets/netlify-access-token")
               ;; Goaccess real-time web page
               ("goaccess_web" . "/var/www/goaccess")
+              ;; Copyparty unix socket
               ,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
                      "/run/copyparty")))
            (command '("caddy" "run" "--config" "/config/Caddyfile"))

@@ -1,6 +1,7 @@
 (define-module (krisb packages networking)
   #:use-module (guix packages)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (guix git-download)
   #:use-module (guix download)
   #:use-module ((guix licenses) #:prefix license:)
@@ -12,7 +13,10 @@
   #:use-module (abbe packages caddy)
   #:export (nftables-geoip
             caddy-netlify
-            caddy-netlify-coraza))
+            caddy-netlify-coraza
+            geolite2-country-mmdb
+            geolite2-city-mmdb
+            caddy-netlify-coraza-maxmind))
 
 (define geoip-address-csv
   (package
@@ -106,7 +110,7 @@
       (synopsis "Caddy with Netlify DNS support"))))
 
 (define caddy-netlify-coraza
-  (let ((pkg (caddy-custom   ; From the Abbe channel; very convenient!
+  (let ((pkg (caddy-custom
               "2.10.2"
               '("github.com/caddy-dns/netlify"
                 "github.com/corazawaf/coraza-caddy/v2")
@@ -114,4 +118,111 @@
               "1qxg0cx5si8wndh36vxg13kp382k06zljm8j2q5sam2bfhbckmg3")))
     (package/inherit pkg
       (name "caddy-netlify-coraza")
-      (synopsis "Caddy with Netlify DNS and Coraza WAF support"))))
+      (synopsis "Caddy with Netlify DNS and Coraza WAF"))))
+
+(define-public geolite2-country-mmdb
+  (package
+    (name "geolite2-country-mmdb")
+    (version "e5f3a09776ddb0b215d20afefc31272e9b98d357")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/wp-statistics/GeoLite2-Country")
+          (commit version)))
+       (sha256
+        (base32 "0yrd8s5x3cmsla9d3c79i1nv46nx5pzbr8mi5jn9ikab0yg7ph22"))))
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder #~(begin
+                    (use-modules (guix build utils))
+                    (let* ((dir (string-append %output "/var/lib/geoip"))
+                           (gz (string-append dir "/GeoLite2-Country.mmdb.gz")))
+                      (mkdir-p dir)
+                      (copy-file
+                       (string-append #$source "/GeoLite2-Country.mmdb.gz")
+                       gz)
+                      ;; MaxMind database file at
+                      ;; %output/var/lib/geoip/GeoLite2-Country.mmdb
+                      (invoke (string-append #$gzip "/bin/gunzip") gz))
+                    #t)))
+    (native-inputs (list gzip))
+    (synopsis "GeoLite2 Country MMDB (WP-Statistics redistribution)")
+    (description
+     "MaxMind-compatible GeoLite2 Country MMDB database redistributed
+by WP-Statistics. Built from a pinned git commit.")
+    (home-page "https://github.com/wp-statistics/GeoLite2-Country")
+    (license license:cc-by-sa4.0)))
+
+(define-public geolite2-city-mmdb
+  (package
+    (name "geolite2-city-mmdb")
+    (version "b87c4ead4437c6593f6fd694afaffc7bad7085be")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+          (url "https://github.com/wp-statistics/GeoLite2-City.git")
+          (commit version)))
+       (sha256
+        (base32 "11zzhx94b59r44y05c9zkmbdgjviwz9wcd5r25nm4d7qjmhmh64h"))))
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder #~(begin
+                    (use-modules (guix build utils))
+                    (let* ((dir (string-append %output "/var/lib/geoip"))
+                           (gz (string-append dir "/GeoLite2-City.mmdb.gz")))
+                      (mkdir-p dir)
+                      (copy-file
+                       (string-append #$source "/GeoLite2-City.mmdb.gz")
+                       gz)
+                      (invoke (string-append #$gzip "/bin/gunzip") gz))
+                    #t)))
+    (native-inputs (list gzip))
+    (synopsis "GeoLite2 City MMDB (WP-Statistics redistribution)")
+    (description
+     "MaxMind-compatible GeoLite2 City MMDB database redistributed
+by WP-Statistics. Built from a pinned git commit.")
+    (home-page "https://github.com/wp-statistics/GeoLite2-City")
+    (license license:cc-by-sa4.0)))
+
+(define caddy-netlify-coraza-maxmind
+  (let ((pkg (caddy-custom
+              "2.10.2"
+              '("github.com/caddy-dns/netlify"
+                "github.com/corazawaf/coraza-caddy/v2"
+                "github.com/porech/caddy-maxmind-geolocation")
+              "14smvz10kagxcs2mqi72pkfgi9aa6fva787fqid7x2xpydq5874b"
+              "0zkncg08zjlaj0zcc4p8q0apmbczq4jym9plhlgk5mdlhmh203nr")))
+    (package/inherit pkg
+      (name "caddy-netlify-coraza-maxmind")
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'install 'link-geolite-dbs
+                ;; The city database is a superset of the country
+                ;; database, but we bundle both: users may choose
+                ;; which database to use
+                (lambda* (#:key inputs outputs #:allow-other-keys)
+                  (let* ((out (assoc-ref outputs "out"))
+                         (geoip-country (assoc-ref inputs "geolite2-country-mmdb"))
+                         (geoip-city (assoc-ref inputs "geolite2-city-mmdb"))
+                         (target (string-append out "/var/lib/geoip")))
+                    (mkdir-p target)
+                    (symlink
+                     (string-append geoip-country "/var/lib/geoip/GeoLite2-Country.mmdb")
+                     (string-append target "/GeoLite2-Country.mmdb"))
+                    (symlink
+                     (string-append geoip-city "/var/lib/geoip/GeoLite2-City.mmdb")
+                     (string-append target "/GeoLite2-City.mmdb")))))))))
+      (inputs
+       (modify-inputs (package-inputs pkg)
+         (append geolite2-country-mmdb geolite2-city-mmdb)))
+      (synopsis "Caddy with Netlify DNS, Coraza WAF, and MaxMind geoblocking"))))

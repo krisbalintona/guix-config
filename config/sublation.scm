@@ -68,22 +68,7 @@
      (service nftables-service-type
        (nftables-configuration
          (ruleset
-          (computed-file
-              "nftables-ruleset"
-            #~(call-with-output-file #$output
-                (lambda (port)
-                  (format port
-                          #$(call-with-input-file
-                                (string-append (dirname (current-filename))
-                                               "/files/nftables/sublation.nft")
-                              get-string-all)
-                          ;; Contains all country definitions/alias, e.g.,
-                          ;; $US resolves to a particular number ID
-                          (string-append #$nftables-geoip "/etc/nftables/geoip-def-all.nft")
-                          ;; Map from IPv4 to country
-                          (string-append #$nftables-geoip "/etc/nftables/geoip-ipv4.nft")
-                          ;; Map from IPv6 to country
-                          (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
+          (local-file "files/nftables/sublation.nft"))))
      (service fail2ban-service-type)
      (simple-service 'fail2ban-openssh
          fail2ban-service-type

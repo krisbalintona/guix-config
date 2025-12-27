@@ -223,22 +223,32 @@ Guiding rules:
 4. Use rootless containers.
 5. Instead of =--network host=, each container has its own separate container network, preferably an internal one.
 6. If publishing ports, don't publish to all interfaces, only to specific interfaces. That is, do =127.0.0.1:80:80= instead of =80:80=. We prefer the former to the latter since the latter permits listening to the ports from outside the host. (This is especially dangerous on some distros that bypass the firewall when publishing ports on e.g. Docker: port 80 ends up visible to the outside.)
-7. When possible, prefer Unix Domain Sockets (UDS) (on shared container volumes) over publishing ports. Avoids having to have a network and published port(s) for containers.
-8. If possible, use a non-root user for containers (even rootless ones).
+7. Geo-block/fence. Several ways to do so[fn:1]:
+   * Firewall (e.g., nftables)
+   * [[https://github.com/friendly-bits/geoip-shell][geoip-shell]]
+   * Reverse-proxy-level
+     + [[https://github.com/fabriziosalmi/caddy-waf][caddy-waf]]
+     + [[https://github.com/porech/caddy-maxmind-geolocation][caddy-maxmind-geolocation]]
+   * Web application firewall (WAF)
+     + [[https://github.com/corazawaf/coraza-geoip?tab=readme-ov-file][coraza-geoip]]
+8. Have a web application firewall (WAF) to deny web-specific trickery
+   * [[https://github.com/corazawaf/coraza][coraza]] (Caddy integration: [[https://github.com/corazawaf/coraza-caddy][coraza-caddy]])
+9. When possible, prefer Unix Domain Sockets (UDS) (on shared container volumes) over publishing ports. Avoids having to have a network and published port(s) for containers.
+10. If possible, use a non-root user for containers (even rootless ones).
 
 Helpful tips for self-hosting:
-+ [[https://www.reddit.com/r/selfhosted/comments/1ag9q88/comment/koftjss/?context=3][This Reddit comment]][fn:1]
++ [[https://www.reddit.com/r/selfhosted/comments/1ag9q88/comment/koftjss/?context=3][This Reddit comment]][fn:2]
 
 Informative articles on security principles:
 + [[https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/][Zero Trust security | What is a Zero Trust network?]]
 
-[fn:1] See also [[https://www.reddit.com/r/selfhosted/comments/1cv2l3q/security_psa_for_anyone_using_docker_on_a/][this relevant Reddit post]].
+[fn:1] To test if geo-blocking is working, use a tool like https://check-host.net/check-http
+
+[fn:2] See also [[https://www.reddit.com/r/selfhosted/comments/1cv2l3q/security_psa_for_anyone_using_docker_on_a/][this relevant Reddit post]].
    
 *** Nftables: Firewall
 
 I minimize the number of ports I have open and I route all internet traffic through my reverse proxy. (See also [[#h:20251227T085128.494786][Principles and guidelines]].)
-
-I also use nftables firewall rules to geo-block/fence all internet traffic outside the country I reside in. An less manual alternative would be [[https://github.com/friendly-bits/geoip-shell][geoip-shell]].
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu packages linux)
@@ -251,22 +261,7 @@ I also use nftables firewall rules to geo-block/fence all internet traffic outsi
   (service nftables-service-type
     (nftables-configuration
       (ruleset
-       (computed-file
-           "nftables-ruleset"
-         #~(call-with-output-file #$output
-             (lambda (port)
-               (format port
-                       #$(call-with-input-file
-                             (string-append (dirname (current-filename))
-                                            "/files/nftables/sublation.nft")
-                           get-string-all)
-                       ;; Contains all country definitions/alias, e.g.,
-                       ;; $US resolves to a particular number ID
-                       (string-append #$nftables-geoip "/etc/nftables/geoip-def-all.nft")
-                       ;; Map from IPv4 to country
-                       (string-append #$nftables-geoip "/etc/nftables/geoip-ipv4.nft")
-                       ;; Map from IPv6 to country
-                       (string-append #$nftables-geoip "/etc/nftables/geoip-ipv6.nft"))))))))
+       (local-file "files/nftables/sublation.nft"))))
 #+end_src
 
 *** Fail2ban: Scan logs and ban malicious actors 
@@ -507,6 +502,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
 **** Caddy: Reverse proxy
 
 #+begin_src scheme :noweb-ref home-modules
+  (krisb packages networking)
   (gnu services containers)
   (gnu home services containers)
 #+end_src
@@ -516,6 +512,10 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
     (key '("netlify-access-token"))
     (file (local-file "files/sops/sublation.yaml"))
     (permissions #o400))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "caddy-netlify-coraza-maxmind"
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services
@@ -535,11 +535,13 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
              ;; corresponds to the [repository] of an OCI image
              ;; location; it can be whatever we want since this image is
              ;; created locally (in the Guix store)
-             (repository "caddy-netlify")
+             (repository "caddy-netlify-coraza-maxmind")
              (tag "2.10.2")
              (value (specifications->manifest '("coreutils"
-                                                "caddy-netlify")))
-             (pack-options '(#:symlinks (("/bin" -> "bin"))))))
+                                                "caddy-netlify-coraza-maxmind")))
+             (pack-options '(#:symlinks (("/bin" -> "bin")
+                                         ;; MaxMind database files
+                                         ("/var/lib/geoip" -> "/var/lib/geoip"))))))
          ;; These environment variables are set in the Docker image
          ;; Caddy distributes (shown by e.g. "podman image inspect
          ;; docker.io/caddy:2.10.2").  My tests show that they need to
@@ -568,6 +570,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
              . "/run/secrets/netlify-access-token")
             ;; Goaccess real-time web page
             ("goaccess_web" . "/var/www/goaccess")
+            ;; Copyparty unix socket
             ,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
                    "/run/copyparty")))
          (command '("caddy" "run" "--config" "/config/Caddyfile"))

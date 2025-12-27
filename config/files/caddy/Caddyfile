@@ -22,6 +22,9 @@
 		# order
 		client_ip_headers X-Forwarded-For X-Real-IP
 	}
+
+	# Make the coraza_waf block first in the evaluation order
+	order coraza_waf first
 }
 
 # ** Snippets
@@ -100,6 +103,51 @@
 	}
 }
 
+# *** Coraza (WAF)
+
+(waf) {
+	coraza_waf {
+		load_owasp_crs
+		directives `
+		# See
+		# https://github.com/corazawaf/coraza/blob/main/coraza.conf-recommended
+		Include @coraza.conf-recommended
+		# See
+		# https://github.com/corazawaf/coraza-coreruleset/blob/main/rules/%40crs-setup.conf.example
+		Include @crs-setup.conf.example
+		Include @owasp_crs/*.conf
+
+		SecDefaultAction "phase:3,log,auditlog,pass"
+		SecDefaultAction "phase:4,log,auditlog,pass"
+		SecDefaultAction "phase:5,log,auditlog,pass"
+		SecRuleEngine On
+
+		SecAuditEngine RelevantOnly
+		SecAuditLog /data/log/coraza-audit.log
+		SecAuditLogFormat json
+
+		SecDebugLog /data/log/coraza-debug.log
+		SecDebugLogLevel 3
+		`
+	}
+}
+
+# *** MaxMind geo-blocking
+
+(maxmind-us-il) {
+	@geo_blocked {
+		maxmind_geolocation {
+			# See where the geolite2-country-mmdb and
+			# geolite2-city-mmdb packages install the
+			# databases.  The city database is a superset
+			# of the country database
+			db_path /var/lib/geoip/GeoLite2-City.mmdb
+			allow_countries US
+			allow_subdivisions IL
+		}
+	}
+}
+
 # * Domains
 
 # ** Pihole web UI
@@ -110,6 +158,9 @@ pihole.home.kristofferbalintona.me {
 
 	import headers_security_global
 	import headers_security_private
+
+	import maxmind-us-il
+	error @geo_blocked 403
 
 	# Only access in local networks
 	@external not remote_ip private_ranges
@@ -122,6 +173,9 @@ party.home.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
 	import tls_dns_netlify
 
+	import maxmind-us-il
+	error @geo_blocked 403
+
 	import headers_security_global
 	import headers_security_private
 }
@@ -129,6 +183,11 @@ party.home.kristofferbalintona.me {
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
 	import tls_dns_netlify
+
+	import maxmind-us-il
+	error @geo_blocked 403
+
+	import waf
 
 	import headers_security_global
 	import headers_security_public
@@ -160,6 +219,9 @@ goaccess.home.kristofferbalintona.me {
 	reverse_proxy /ws 127.0.0.1:7890
 	import tls_dns_netlify
 
+	import maxmind-us-il
+	error @geo_blocked 403
+
 	import headers_security_global
 	import headers_security_private
 }
@@ -175,12 +237,17 @@ vault.home.kristofferbalintona.me {
 	}
 	import tls_dns_netlify
 
+	import maxmind-us-il
+	error @geo_blocked 403
+
+	import waf
+
 	# Only access admin page in local networks
 	@admin {
 		path /admin*
 		not remote_ip private_ranges
 	}
-	respond @admin 403
+	error @admin 403
 
 	import headers_security_global
 	import headers_security_private
@@ -208,6 +275,9 @@ vault.home.kristofferbalintona.me {
 gatus.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7090
 	import tls_dns_netlify
+
+	import maxmind-us-il
+	error @geo_blocked 403
 
 	import headers_security_global
 	import headers_security_private

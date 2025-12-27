@@ -41,32 +41,6 @@
 
 # IPv4 and IPv6 table for disallowing and allowing packets
 table inet filter {
-
-    # Includes can go anywhere before something that references its
-    # content.  In this (original) file, these are placeholders, so
-    # that later I may use Guix's 'format' procedure to expand them to
-    # /gnu/store/ paths.  See (guile) Formatted Output.
-    include "~a"
-    include "~a"
-    include "~a"
-
-    set accept_countries {
-        type mark
-        elements = { $US }
-    }
-
-    # Mark according to source location.  For all IPv4 and IPv6
-    # packets, set the packet mark (just a number) in its
-    # metainformation.  Match against this metainformation later with
-    # e.g. $US (which is an alias from geoip-def-all.nft that resolves
-    # to a particular number ID)
-    chain geoip-mark-input {
-        type filter hook input priority -1; policy accept;
-
-        meta mark set ip saddr map @geoip4 counter
-        meta mark set ip6 saddr map @geoip6 counter
-    }
-
     chain input {
         # Drop everything unless we accept it with one of the rules
         # below
@@ -74,10 +48,6 @@ table inet filter {
 
         # Early drop of invalid connections
         ct state invalid drop
-
-        # Counters for packet source location
-        meta mark $US counter
-        meta mark ne $US counter
 
         # Allow packets from already already established connections
         # (i.e. subsequent packets on a connection whose first packet
@@ -95,24 +65,6 @@ table inet filter {
         # server rules below though)
         iifname "wg0" udp dport 53 accept
         iifname "wg0" tcp dport 53 accept
-
-        # Before any of the rules below, geo-block every web packet
-        # (incoming on port 80 or 443; these are the ports I have
-        # Caddy listen to) that isn't from within the US
-        #
-        # To test whether my geo-blocking rules are working, use
-        # https://check-host.net/check-http
-        #
-        # For debugging specific web packets, do something like this:
-        #
-        #     sudo nft insert rule inet filter input tcp dport { 80, 443 } meta nftrace set 1
-        #
-        # then this to trace the packet's entire path through the
-        # firewall:
-        #
-        #     sudo nft monitor trace
-        #
-        tcp dport { 80, 443 } meta mark != @accept_countries counter drop
 
         # Allow incoming web packets through web ports (necessary for
         # Caddy, since not accepting the web requests means Caddy
