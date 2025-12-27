@@ -212,6 +212,9 @@ Use Podman by default for ~home-oci-service-type~.
 ** Security
 
 *** Principles and guidelines
+:PROPERTIES:
+:CUSTOM_ID: h:20251227T085128.494786
+:END:
 
 Guiding rules:
 1. Set up a firewall.
@@ -231,7 +234,11 @@ Informative articles on security principles:
 
 [fn:1] See also [[https://www.reddit.com/r/selfhosted/comments/1cv2l3q/security_psa_for_anyone_using_docker_on_a/][this relevant Reddit post]].
    
-*** Firewall: Nftables
+*** Nftables: Firewall
+
+I minimize the number of ports I have open and I route all internet traffic through my reverse proxy. (See also [[#h:20251227T085128.494786][Principles and guidelines]].)
+
+I also geo-block/fence all internet traffic outside the country I reside in.
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu packages linux)

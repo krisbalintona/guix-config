@@ -100,8 +100,10 @@ table inet filter {
         # (incoming on port 80 or 443; these are the ports I have
         # Caddy listen to) that isn't from within the US
         #
-        # For debugging web packets specifically, do something like
-        # this:
+        # To test whether my geo-blocking rules are working, use
+        # https://check-host.net/check-http
+        #
+        # For debugging specific web packets, do something like this:
         #
         #     sudo nft insert rule inet filter input tcp dport { 80, 443 } meta nftrace set 1
         #
