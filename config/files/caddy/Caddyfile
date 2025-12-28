@@ -29,6 +29,28 @@
 
 # ** Snippets
 
+# *** Log files
+
+(service-logs) {
+	log {
+		output file /data/log/{args[0]}.log {
+			roll_size 10MiB
+			roll_keep 10
+		}
+		# More human-readable format
+		format console
+	}
+
+	log {
+		output file /data/log/{args[0]}-json.log {
+			roll_size 30MiB
+			roll_keep 10
+		}
+		# More human-readable format
+		format json
+	}
+}
+
 # *** HTTP headers
 # Many of these are for the sake of hardening.  Most of such settings
 # were taken from
@@ -192,23 +214,7 @@ party.kristofferbalintona.me {
 	import headers_security_global
 	import headers_security_public
 
-	# Access logs
-	log {
-		output file /data/log/copyparty.log {
-			roll_size 10MiB
-			roll_keep 10
-		}
-		# More human-readable format
-		format console
-	}
-	log {
-		output file /data/log/copyparty-json.log {
-			roll_size 30MiB
-			roll_keep 10
-		}
-		# For usage with external log parsers
-		format json
-	}
+	import service-logs copyparty
 }
 
 # ** Goaccess web access log analyzer
@@ -252,22 +258,7 @@ vault.home.kristofferbalintona.me {
 	import headers_security_global
 	import headers_security_private
 
-	log {
-		output file /data/log/vaultwarden.log {
-			roll_size 10MiB
-			roll_keep 10
-		}
-		# More human-readable format
-		format console
-	}
-	log {
-		output file /data/log/vaultwarden-json.log {
-			roll_size 30MiB
-			roll_keep 10
-		}
-		# For usage with external log parsers
-		format json
-	}
+	import service-logs vaultwarden
 }
 
 # ** Gatus
