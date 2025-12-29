@@ -94,21 +94,6 @@
 	}
 }
 
-# *** Wireguard
-
-# Headers useful for accurate IP information.  Use for domains behind
-# a proxy, e.g. a VPN like Wireguard.
-#
-# This snippet can only be used under reverse_proxy directives.
-(headers_wireguard) {
-	# Add this header (when routed from reverse_proxy directive)
-	header_up X-Real-IP {remote_host}
-
-	# Caddy by default already handles the X-Forwarded-For,
-	# X-Forwarded-Host, and X-Forwarded-Proto headers
-	# appropriately
-}
-
 # *** TLS
 
 # DNS-01 ACME verification.  See
@@ -253,9 +238,7 @@ goaccess.home.kristofferbalintona.me {
 # using Vaultwarden specifically with Caddy
 
 vault.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:7000 {
-		import headers_wireguard
-	}
+	reverse_proxy 127.0.0.1:7000
 	import policy_private
 	import service-logs vaultwarden
 	# Only access admin page in local networks.  policy_private
