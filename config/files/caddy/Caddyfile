@@ -10,10 +10,11 @@
 		level DEBUG
 	}
 
-	# Work well with requests traveling through proxies.
-	# Recommended from
-	# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
 	servers {
+		# Work well with requests traveling through proxies.
+		# The two settings below are recommended from
+		# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
+		#
 		# Accept forwarded IPs that originate from a private
 		# IP (e.g., loopback, LAN, Podman bridge)
 		trusted_proxies static private_ranges
@@ -54,6 +55,7 @@
 # *** HTTP headers
 # Many of these are for the sake of hardening.  Most of such settings
 # were taken from
+# https://turbocloud.dev/book/web-application-firewall/ and
 # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
 
 # Useful for accurate IP logging.  Use for domains behind a proxy,
@@ -68,10 +70,15 @@
 
 (headers_security_global) {
 	header {
-		# Disallow sniffing of X-Content-Type-Options
+		# Prevent clickjacking
+		X-Frame-Options "DENY"
+		# Prevent MIME type sniffing
 		X-Content-Type-Options "nosniff"
-		# Don't show full URLs when referred to another side
+		# Referrer policy: don't show full URLs when referred
+		# to another side
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# Cross-site scriptin (XSS) protection
+		X-XSS-Protection "1; mode=block"
 		# Server name removing
 		-Server
 		# Remove X-Powered-By though this shouldn't be an
@@ -82,10 +89,11 @@
 
 (headers_security_public) {
 	header {
-		# Make HTTPS mandatory over HTTP.  (Note: Assumes that
-		# HTTPS and TLS is working properly.  Will get in the
-		# way if TLS isn't working, e.g., during testing)
-		Strict-Transport-Security "max-age=31536000"
+		# Strict Transport Security (HSTS); makes HTTPS
+		# mandatory over HTTP.  (Note: Assumes that HTTPS and
+		# TLS is working properly.  Will get in the way if TLS
+		# isn't working, e.g., during testing)
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 	}
 }
 
