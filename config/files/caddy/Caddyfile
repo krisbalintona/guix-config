@@ -128,7 +128,9 @@
 
 # *** Coraza (WAF)
 
-(waf) {
+# See also the order directives in the global settings
+
+(coraza) {
 	coraza_waf {
 		load_owasp_crs
 		directives `
@@ -191,8 +193,6 @@
 
 	import maxmind-us-il
 	error @geo_blocked 403
-
-	import waf
 }
 
 # Policy for all domains exposed to the internet
