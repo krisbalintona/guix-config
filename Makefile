@@ -1,4 +1,5 @@
-GUIX_LOCKED = guix time-machine --channels=$(LOCKFILE) --
+GUIX = time guix
+GUIX_LOCKED = $(GUIX) time-machine --channels=$(LOCKFILE) --
 ENV_DIR = ./env
 CHANNELS = $(ENV_DIR)/channels.scm
 
@@ -29,7 +30,7 @@ $(MACHINES):
 
 .PHONY: pull
 pull:
-	guix pull -C $(CHANNELS)
+	$(GUIX) pull -C $(CHANNELS)
 
 .PHONY: upgrade
 upgrade: pull lock
@@ -43,7 +44,7 @@ LOCKFILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
 .PHONY: lock
 lock: $(LOCKFILE)
 $(LOCKFILE): $(CHANNELS)
-	guix describe --format=channels $(CHANNELS) > $@
+	$(GUIX) describe --format=channels $(CHANNELS) > $@
 	@echo "Created $@"
 
 # ** System
@@ -61,14 +62,14 @@ endif
 
 .PHONY: system system-build
 system system-build:
-	sudo guix system $(SYSTEM_ACTION) \
+	$(GUIX) system $(SYSTEM_ACTION) \
 		-L src \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
 
 .PHONY: system-lock
 system-lock: $(LOCKFILE)
-	sudo $(GUIX_LOCKED) system reconfigure \
+	$(GUIX_LOCKED) system reconfigure \
 		-L src \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
@@ -83,7 +84,7 @@ home home-build:
 ifeq ($(MACHINE),wsl)
 	$(error The wsl has no home config.)
 endif
-	guix home ${HOME_ACTION} \
+	$(GUIX) home ${HOME_ACTION} \
 		-L src \
 		config/$(MACHINE)-home.scm
 
@@ -116,11 +117,11 @@ endif
 
 .PHONY: build
 build:
-	guix build -L src --keep-failed --verbosity=3 $(PACKAGES)
+	$(GUIX) build -L src --keep-failed --verbosity=3 $(PACKAGES)
 
 .PHONY: shell
 shell:
-	guix shell -L src $(PACKAGES)
+	$(GUIX) shell -L src $(PACKAGES)
 
 # ** Other
 
