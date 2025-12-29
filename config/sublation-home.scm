@@ -360,9 +360,13 @@
             `(,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
                      "/run/copyparty")
               ("/home/krisbalintona/services/copyparty/data" . "/data")
+              ("/home/krisbalintona/services/copyparty/log" . "/var/log/copyparty")
               (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
                . "/srv/copyparty.conf")))
-           (command '("-c" "/srv/copyparty.conf" "--chdir" "/srv"))
+           (command '("-c" "/srv/copyparty.conf"
+                      "--chdir" "/srv"
+                      ;; Logging
+                      "-lo" "/var/log/copyparty/copyparty-%Y-%m%d-%H%M%S.txt"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-vaultwarden
