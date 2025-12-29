@@ -46,11 +46,6 @@ endpoints:
       - "[BODY] == [IP]"
       - "[DNS_RCODE] == NOERROR"
 
-  - name: Vaultwarden (VPN)
-    url: "https://vault.home.kristofferbalintona.me"
-    group: services
-    <<: *http
-    interval: 15m
   - name: Vaultwarden (local)
     url: "https://vault.home.kristofferbalintona.me"
     group: services
