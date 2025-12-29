@@ -13,6 +13,8 @@
              (gnu home services ssh)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb packages networking)
              (gnu services containers)
              (gnu home services containers)
@@ -95,7 +97,7 @@
      "age"
      "bind:utils"
      "unbound"
-     "caddy-netlify-coraza-maxmind"
+     "caddy-security-netlify-coraza-maxmind"
      "restic")))
   
   (services
@@ -165,6 +167,52 @@
                           (user "krisbalintona")
                           (forward-x11? #t)
                           (forward-x11-trusted? #t))))))
+    (simple-service 'home-oci-pocket-id
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "pocket-id-network")
+          (internal? #t))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "pocket-id")
+           ;; TODO 2026-01-02: Use the hardened distroless images they
+           ;; have.  Though requires more setup since the Pocket ID
+           ;; process runs as non-root and their default distro
+           ;; containers configure persmissiona automatically; to make
+           ;; permissions work in a fresh container (which Guix does on
+           ;; shepherd service restart) I have to set up those
+           ;; permissions myself.  See
+           ;; https://pocket-id.org/docs/advanced/hardening
+           (image "ghcr.io/pocket-id/pocket-id:v1")
+           (environment
+            `("PORT=3111"
+              "TRUST_PROXY=true"          ; Whether behind a reverse proxy
+              "APP_URL=https://pocket-id.kristofferbalintona.me"
+              ,(cons "ENCRYPTION_KEY"
+                     (get-sops-secret '("pocket-id-encryption-key")
+                                      #:file sops-sublation-secrets-file))
+              "PUID=1000"                 ; Default
+              "PGID=1000"                 ; Default
+              ;; When false (default), send a "heartbeat" to add my
+              ;; instance to the total Pocket ID count.  Although I'd like
+              ;; to keep this false, this container's network is internal,
+              ;; so it cannot actually send the heartbeat.  This results
+              ;; in a bunch of extraneous messages in the log.  Maybe in
+              ;; the future I can figure out how to get around this while
+              ;; maintaining network security...
+              "ANALYTICS_DISABLED=true"))
+           (network "pocket-id-network")
+           ;; TODO 2026-01-02: Use the UNIX_SOCKET environment variable
+           ;; instead of publishing ports
+           (ports '("127.0.0.1:3111:3111"))
+           (volumes
+            '(("/home/krisbalintona/services/pocket-id/data" . "/app/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
     (simple-service 'home-oci-pihole
         home-oci-service-type
       (oci-extension
@@ -227,10 +275,10 @@
                ;; corresponds to the [repository] of an OCI image
                ;; location; it can be whatever we want since this image is
                ;; created locally (in the Guix store)
-               (repository "caddy-netlify-coraza-maxmind")
+               (repository "caddy-security-netlify-coraza-maxmind")
                (tag "2.10.2")
                (value (specifications->manifest '("coreutils"
-                                                  "caddy-netlify-coraza-maxmind")))
+                                                  "caddy-security-netlify-coraza-maxmind")))
                (pack-options '(#:symlinks (("/bin" -> "bin")
                                            ;; MaxMind database files
                                            ("/var/lib/geoip" -> "/var/lib/geoip"))))))
@@ -238,9 +286,16 @@
            ;; Caddy distributes (shown by e.g. "podman image inspect
            ;; docker.io/caddy:2.10.2").  My tests show that they need to
            ;; be set for some reason
-           (environment '("CADDY_VERSION=v2.10.2"
-                          "XDG_CONFIG_HOME=/config"
-                          "XDG_DATA_HOME=/data"))
+           (environment
+            `("CADDY_VERSION=v2.10.2"
+              "XDG_CONFIG_HOME=/config"
+              "XDG_DATA_HOME=/data"
+              ,(cons "POCKET_ID_CLIENT_ID"
+                     (get-sops-secret '("caddy" "pocket-id" "client_id")
+                                      #:file sops-sublation-secrets-file))
+              ,(cons "POCKET_ID_CLIENT_SECRET"
+                     (get-sops-secret '("caddy" "pocket-id" "client_secret")
+                                      #:file sops-sublation-secrets-file))))
            ;; Use the host network, then for services expose to the host
            ;; only the required ports and have Caddy direct traffic to
            ;; those ports.  An added benefit to using the host network is

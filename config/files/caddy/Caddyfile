@@ -1,5 +1,4 @@
-# * Global
-# ** Settings
+# Global settings
 {
 	# Use ACME staging certificate while testing to not reach
 	# certificate issuance attempt rate limit
@@ -30,6 +29,111 @@
 
 	# Make the coraza_waf block first in the evaluation order
 	order coraza_waf first
+
+	# Configure the caddy-security module to use Pocket ID.
+	# Pocket ID counts as a "generic" OIDC provider (since it
+	# implements OIDC plainly), so we can use this Caddyfile from
+	# caddy-security as an example:
+	# https://github.com/authcrunch/authcrunch.github.io/blob/main/assets/conf/oauth/generic/Caddyfile
+	order authenticate before respond # Require authentication before response
+	security {
+		oauth identity provider pocket_id {
+			delay_start 3
+			realm pocket_id
+			driver generic
+			client_id {env.POCKET_ID_CLIENT_ID}
+			client_secret {env.POCKET_ID_CLIENT_SECRET}
+			# The scopes of Pocket ID are shown in the
+			# OIDC client data preview.  Include all of
+			# them.
+			#
+			# NOTE: Adding the "groups" scope will have
+			# the groups added to the "x-token-user-roles"
+			# HTTP header, a default claim
+			scopes openid email profile groups
+			# My Pocket ID subdomain
+			base_auth_url https://pocket-id.kristofferbalintona.
+			metadata_url https://pocket-id.kristofferbalintona.me/.well-known/openid-configuration
+			# See
+			# https://github.com/greenpau/caddy-security/issues/389#issuecomment-3059648144
+			# for the line below.  Extract all "userinfo"
+			# endpoing responses.  Used later in
+			# authorization blocks to retrieve all the
+			# remaining JWT token fields received by
+			# Pocket ID, like so:
+			#
+			#   inject header "X-Username" from "userinfo|preferred_username"
+			#
+			# The above gets the "preferred_username"
+			# field.  For Pocket ID, the available fields
+			# are listed in the "Userinfo" tab in the OIDC
+			# client data preview menu.
+			extract all from userinfo
+		}
+
+		# Authentication is the process in proving a user's
+		# identity.  Authorization are the rules for what a
+		# given user can access.  We must define at least one
+		# block for both.
+
+		authentication portal pocket_id_portal {
+			enable identity provider pocket_id
+			# 14 days until re-authentication required
+			crypto default token lifetime 1209600
+			cookie insecure off # HTTPS-only cookies
+			cookie domain party.kristofferbalintona.me
+
+			# Modify metadata (claims)
+			transform user {
+				match realm pocket_id
+				# Add claims (information) to tokens.
+				# See
+				# https://docs.authcrunch.com/docs/authenticate/user-transforms.
+				# Can be injected into HTTP headers or
+				# checked against later after
+				# authentication (see authorization
+				# policies)
+				action add role authp/user # Helpful for matching all users in authorization
+			}
+		}
+
+		# See
+		# https://docs.authcrunch.com/docs/authorize/syntax
+		# for the syntax and possible directives.  In
+		# particular,
+		# https://docs.authcrunch.com/docs/authorize/acl-rbac#default-allow-acl
+		# is useful for knowing the ways to allow or deny
+		# access in authorization policies
+		authorization policy pocket_id_policy_user {
+			## Tokens
+			# Most secure setting: only trust cached
+			# tokens (cookies).  "header" can be injected;
+			# "query" can be leaked via URLs
+			set token sources cookie
+			# Validate the found JWT token first
+			validate bearer header
+
+			# Subdomain path matching the callback URL of
+			# the corresponding Pocket ID OIDC client's
+			# (excluding the "authorization-code-callback"
+			# suffix).  See also
+			# https://docs.authcrunch.com/docs/authorize/auto-redirect-url
+			set auth url /oauth2/pocket_id
+
+			# Allow everyone
+			allow roles authp/user
+
+			## Add headers to every authorized packet
+			inject headers with claims # Default headers
+			# Custom Pocket ID headers.  See
+			# https://docs.authcrunch.com/docs/authorize/headers#auto-defined-headers
+			# for the syntax of injecting them.  For a
+			# list of available Pocket ID fields, see the
+			# comment above regarding "extract all from
+			# userinfo".
+			inject header "X-Token-Preferred_Username" from "userinfo|preferred_username"
+		}
+	}
 }
 
 # ** Snippets
@@ -260,4 +364,11 @@ vault.home.kristofferbalintona.me {
 gatus.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7090
 	import policy_private
+}
+
+# ** Pocket ID
+
+pocket-id.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:3111
+	import policy_public
 }
