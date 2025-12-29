@@ -53,20 +53,9 @@
 }
 
 # *** HTTP headers
-# Many of these are for the sake of hardening.  Most of such settings
-# were taken from
-# https://turbocloud.dev/book/web-application-firewall/ and
+# These are settings for the sake of hardening.  Most of them were
+# taken from https://turbocloud.dev/book/web-application-firewall/ and
 # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
-
-# Useful for accurate IP logging.  Use for domains behind a proxy,
-# e.g. a VPN like Wireguard
-(headers_wireguard) {
-	header_up X-Real-IP {remote_host}
-
-	# Caddy by default already handles the X-Forwarded-For,
-	# X-Forwarded-Host, and X-Forwarded-Proto headers
-	# appropriately
-}
 
 (headers_security_global) {
 	header {
@@ -103,6 +92,21 @@
 		# used for private domains that should not be indexed
 		X-Robots-Tag "noindex, nofollow"
 	}
+}
+
+# *** Wireguard
+
+# Headers useful for accurate IP information.  Use for domains behind
+# a proxy, e.g. a VPN like Wireguard.
+#
+# This snippet can only be used under reverse_proxy directives.
+(headers_wireguard) {
+	# Add this header (when routed from reverse_proxy directive)
+	header_up X-Real-IP {remote_host}
+
+	# Caddy by default already handles the X-Forwarded-For,
+	# X-Forwarded-Host, and X-Forwarded-Proto headers
+	# appropriately
 }
 
 # *** TLS
@@ -184,50 +188,53 @@
 	}
 }
 
-# * Domains
+# *** Subdomain policies
 
-# ** Pihole web UI
-
-pihole.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:8080
+(policy_global) {
 	import tls_dns_netlify
-
 	import headers_security_global
-	import headers_security_private
+}
+
+# Policy for domains exposed only locally (via my local DNS)
+(policy_public) {
+	import policy_global
+	import headers_security_public
 
 	import maxmind-us-il
 	error @geo_blocked 403
+
+	import waf
+}
+
+# Policy for all domains exposed to the internet
+(policy_private) {
+	import policy_global
+	import headers_security_private
 
 	# Only access in local networks
 	@external not remote_ip private_ranges
 	error @external 403
 }
 
+# * Domains
+
+# ** Pihole web UI
+
+pihole.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8080
+	import policy_private
+}
+
 # ** Copyparty file server
 
 party.home.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-	import tls_dns_netlify
-
-	import maxmind-us-il
-	error @geo_blocked 403
-
-	import headers_security_global
-	import headers_security_private
+	import policy_private
 }
 
 party.kristofferbalintona.me {
 	reverse_proxy unix//run/copyparty/party.sock
-	import tls_dns_netlify
-
-	import maxmind-us-il
-	error @geo_blocked 403
-
-	import waf
-
-	import headers_security_global
-	import headers_security_public
-
+	import policy_public
 	import service-logs copyparty
 }
 
@@ -237,13 +244,7 @@ goaccess.home.kristofferbalintona.me {
 	root * /var/www/goaccess
 	file_server
 	reverse_proxy /ws 127.0.0.1:7890
-	import tls_dns_netlify
-
-	import maxmind-us-il
-	error @geo_blocked 403
-
-	import headers_security_global
-	import headers_security_private
+	import policy_private
 }
 
 # ** Vaultwarden
@@ -255,35 +256,21 @@ vault.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7000 {
 		import headers_wireguard
 	}
-	import tls_dns_netlify
-
-	import maxmind-us-il
-	error @geo_blocked 403
-
-	import waf
-
-	# Only access admin page in local networks
+	import policy_private
+	import service-logs vaultwarden
+	# Only access admin page in local networks.  policy_private
+	# should only make this domain reachable only locally, but to
+	# avoid future misconfigurations I include it anyway
 	@admin {
 		path /admin*
 		not remote_ip private_ranges
 	}
 	error @admin 403
-
-	import headers_security_global
-	import headers_security_private
-
-	import service-logs vaultwarden
 }
 
 # ** Gatus
 
 gatus.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7090
-	import tls_dns_netlify
-
-	import maxmind-us-il
-	error @geo_blocked 403
-
-	import headers_security_global
-	import headers_security_private
+	import policy_private
 }
