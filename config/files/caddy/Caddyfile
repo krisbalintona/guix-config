@@ -163,10 +163,16 @@
 }
 
 # *** MaxMind geo-blocking
+# I use the caddy-maxmind-geolocation module for geoblocking.  To test
+# whether geoblocking is working, use something like
+# https://check-host.net/check-http
 
 (maxmind-us-il) {
+	# Since we'll be passing this to error/respond for blocking,
+	# it should match all IPs that should be blocked
 	@geo_blocked {
-		maxmind_geolocation {
+		not remote_ip private_ranges
+		not maxmind_geolocation {
 			# See where the geolite2-country-mmdb and
 			# geolite2-city-mmdb packages install the
 			# databases.  The city database is a superset
@@ -194,7 +200,7 @@ pihole.home.kristofferbalintona.me {
 
 	# Only access in local networks
 	@external not remote_ip private_ranges
-	respond @external 403
+	error @external 403
 }
 
 # ** Copyparty file server
