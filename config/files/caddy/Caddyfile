@@ -15,9 +15,13 @@
 		# The two settings below are recommended from
 		# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
 		#
-		# Accept forwarded IPs that originate from a private
-		# IP (e.g., loopback, LAN, Podman bridge)
-		trusted_proxies static private_ranges
+		# Accept forwarded IPs that originate from my
+		# Wireguard subnet
+		trusted_proxies static 10.0.0.0/24
+		# See
+		# https://caddyserver.com/docs/caddyfile/options#trusted-proxies-strict
+		# for why we enable this setting
+		trusted_proxies_strict
 		# When a request comes from a trusted proxy, determine
 		# the client IP by reading these headers, in this
 		# order
