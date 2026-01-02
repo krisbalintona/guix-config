@@ -225,10 +225,6 @@
     (simple-service 'home-oci-pihole
         home-oci-service-type
       (oci-extension
-       (networks
-        (list
-         (oci-network-configuration
-          (name "pihole-network"))))
        (containers
         (list
          (let* ((pihole-password-filename "pihole-webserver-password")
@@ -257,7 +253,11 @@
                 ;; Webserver settings
                 "FTLCONF_webserver_port=8080"
                 ,(cons "WEBPASSWORD_FILE" pihole-password-file)))
-             (network "pihole-network")
+             ;; We use the host network since clients need to directly
+             ;; talk to pihole otherwise pihole can't distinguish clients
+             ;; (an internal container network would make all clients come
+             ;; from the same client)
+             (network "host")
              (ports '(;; DNS queries
                       "53:53/tcp"
                       "53:53/udp"
