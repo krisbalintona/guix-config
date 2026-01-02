@@ -201,6 +201,8 @@
             `("PORT=3111"
               "TRUST_PROXY=true"          ; Whether behind a reverse proxy
               "APP_URL=https://pocket-id.kristofferbalintona.me"
+              ;; FIXME 2026-01-02: I think this is only used when
+              ;; KEYS_STORAGE is set to database?
               ,(cons "ENCRYPTION_KEY"
                      (get-sops-secret '("pocket-id-encryption-key")
                                       #:file sops-sublation-secrets-file))
