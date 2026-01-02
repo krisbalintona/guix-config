@@ -412,4 +412,5 @@ gatus.home.kristofferbalintona.me {
 pocket-id.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:3111
 	import policy_public
+	import service-logs pocket-id
 }
