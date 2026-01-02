@@ -41,9 +41,13 @@ LOCKFILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
 
 # Create a lock target but also make each lock file be their own
 # target (so that other targets can depend on them)
-.PHONY: lock
+#
+# We define the phony FORCE target and add it as a dependent target
+# for LOCKFILE to force its regeneration (otherwise, most of the time
+# Make will think the lockfile is up-to-date and not regenerate it).
+.PHONY: lock FORCE
 lock: $(LOCKFILE)
-$(LOCKFILE): $(CHANNELS)
+$(LOCKFILE): $(CHANNELS) FORCE
 	$(GUIX) describe --format=channels $(CHANNELS) > $@
 	@echo "Created $@"
 
