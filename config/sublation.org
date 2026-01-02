@@ -341,6 +341,14 @@ Some useful tooling:
   "bind:utils"
 #+end_src
 
+*** Network-related packages
+
+#+begin_src scheme :noweb-ref home-packages
+  ;; Port scanning
+  "nmap"
+  "masscan"
+#+end_src
+
 *** DNS
 
 **** Unbound: Privacy-centered DNS resolver
@@ -1023,15 +1031,21 @@ A lightweight, simpler alternative to Uptime Kuma.
      (specifications->packages
       (list
        "glibc-locales"
+       ;; CLI tools
        "git"
        "make"
-       "vim"
-       "neovim"
+       "curl"
        "tree"
        "ripgrep"
+       "time"
+       ;; Utilities
        "parted"
-       "emacs"
        "brightnessctl"
+       ;; Editors
+       "vim"
+       "neovim"
+       "emacs"
+       ;; Other packages
        <<home-packages>>)))
     
     (services

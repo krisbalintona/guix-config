@@ -82,20 +82,29 @@
    (specifications->packages
     (list
      "glibc-locales"
+     ;; CLI tools
      "git"
      "make"
-     "vim"
-     "neovim"
+     "curl"
      "tree"
      "ripgrep"
+     "time"
+     ;; Utilities
      "parted"
-     "emacs"
      "brightnessctl"
+     ;; Editors
+     "vim"
+     "neovim"
+     "emacs"
+     ;; Other packages
      "jujutsu"
      "btop"
      "gnupg"
      "age"
      "bind:utils"
+     ;; Port scanning
+     "nmap"
+     "masscan"
      "unbound"
      "caddy-security-netlify-coraza-maxmind"
      "restic")))
