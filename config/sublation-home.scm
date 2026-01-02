@@ -15,6 +15,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb packages networking)
              (gnu services containers)
              (gnu home services containers)
@@ -106,7 +108,7 @@
      "nmap"
      "masscan"
      "unbound"
-     "caddy-security-netlify-coraza-maxmind"
+     "caddy-security-netlify-crowdsec-coraza-maxmind"
      "restic")))
   
   (services
@@ -176,6 +178,42 @@
                           (user "krisbalintona")
                           (forward-x11? #t)
                           (forward-x11-trusted? #t))))))
+    (simple-service 'home-oci-crowdsec
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          ;; Should be an external network because CrowdSec requires
+          ;; host-outbound internet requests
+          (name "crowdsec-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "crowdsec")
+           (image "crowdsecurity/crowdsec:latest")
+           (environment
+            `(("TZ" . "America/Chicago")
+              ("LOCAL_API_URL" . "http://127.0.0.1:7200")
+              ("COLLECTIONS"
+               . "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/whitelist-good-actors crowdsecurity/base-http-scenarios crowdsecurity/caddy")
+              ;; Enable Write-Ahead Logging with SQLite.  Disable if using
+              ;; a filesystem over the network, e.g., NAS
+              ("USE_WAL" . "true")
+              ;; Bouncers
+              ,(cons "BOUNCER_KEY_caddy"
+                     (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
+                                      #:file sops-sublation-secrets-file))))
+           (network "crowdsec-network")
+           (ports
+            '("127.0.0.1:7200:7200"))
+           (volumes
+            '(("/home/krisbalintona/services/crowdsec/data/" . "/var/lib/crowdsec/data/")
+              ("/home/krisbalintona/services/crowdsec/config/" . "/etc/crowdsec")
+              ;; All Caddy logs
+              ("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")))
+           (auto-start? #t)
+           (respawn? #f))))))
     (simple-service 'home-oci-pocket-id
         home-oci-service-type
       (oci-extension
@@ -286,10 +324,10 @@
                ;; corresponds to the [repository] of an OCI image
                ;; location; it can be whatever we want since this image is
                ;; created locally (in the Guix store)
-               (repository "caddy-security-netlify-coraza-maxmind")
+               (repository "caddy-security-netlify-crowdsec-coraza-maxmind")
                (tag "2.10.2")
                (value (specifications->manifest '("coreutils"
-                                                  "caddy-security-netlify-coraza-maxmind")))
+                                                  "caddy-security-netlify-crowdsec-coraza-maxmind")))
                (pack-options '(#:symlinks (("/bin" -> "bin")
                                            ;; MaxMind database files
                                            ("/var/lib/geoip" -> "/var/lib/geoip"))))))
@@ -302,10 +340,13 @@
               "XDG_CONFIG_HOME=/config"
               "XDG_DATA_HOME=/data"
               ,(cons "POCKET_ID_CLIENT_ID"
-                     (get-sops-secret '("caddy" "pocket-id" "client_id")
+                     (get-sops-secret '("caddy" "pocket-id" "client-id")
                                       #:file sops-sublation-secrets-file))
               ,(cons "POCKET_ID_CLIENT_SECRET"
-                     (get-sops-secret '("caddy" "pocket-id" "client_secret")
+                     (get-sops-secret '("caddy" "pocket-id" "client-secret")
+                                      #:file sops-sublation-secrets-file))
+              ,(cons "CROWDSEC_BOUNCER_API_KEY"
+                     (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
                                       #:file sops-sublation-secrets-file))))
            ;; Use the host network, then for services expose to the host
            ;; only the required ports and have Caddy direct traffic to

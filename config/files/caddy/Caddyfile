@@ -4,9 +4,25 @@
 	# certificate issuance attempt rate limit
 	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 
-	# Internal logs
-	log {
-		level DEBUG
+	# Internal (non-access) logs
+	log internal {
+		level INFO
+		exclude http.log.access
+		output file /data/log/caddy-internal-json.log {
+			roll_size 10MiB
+			roll_keep 4
+		}
+		format json
+	}
+	# HTTP access logs
+	log access {
+		level INFO
+		include http.log.access
+		output file /data/log/caddy-access-json.log {
+			roll_size 10MiB
+			roll_keep 10
+		}
+		format json
 	}
 
 	servers {
@@ -134,6 +150,27 @@
 			inject header "X-Token-Preferred_Username" from "userinfo|preferred_username"
 		}
 	}
+
+	# Integration with CrowdSec via (caddy-crowdsec)
+	crowdsec {
+		# See https://caddyserver.com/docs/modules/crowdsec
+		# for a description of the possible settings
+
+		# LAPI host + port.  Caddy is run on the host network,
+		# and CrowdSec in a container network with this port
+		# published (to the host)
+		api_url http://127.0.0.1:7200
+		# API key given after registering this bouncer with
+		# e.g. "podman exec crowdsec cscli bouncers add
+		# caddy-bouncer"
+		api_key {env.CROWDSEC_BOUNCER_API_KEY}
+		# How often to sync decisions with the LAPI
+		ticker_interval 15s
+	}
+	# Ensure the bouncer runs at an effective time.
+	# Alternatively, the crowdsec directive can be e.g. placed
+	# inside a route block to express the order explicitly
+	order crowdsec first
 }
 
 # ** Snippets
@@ -142,7 +179,7 @@
 
 (service-logs) {
 	log {
-		output file /data/log/{args[0]}.log {
+		output file /data/log/{args[0]}-console.log {
 			roll_size 10MiB
 			roll_keep 10
 		}
@@ -297,6 +334,10 @@
 
 	import maxmind-us-il
 	error @geo_blocked 403
+
+	# CrowdSec bouncer (caddy-crowdsec): block if CrowdSec deems
+	# the client malicious
+	crowdsec
 }
 
 # Policy for all domains exposed to the internet

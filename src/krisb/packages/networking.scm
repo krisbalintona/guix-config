@@ -17,7 +17,8 @@
             geolite2-country-mmdb
             geolite2-city-mmdb
             caddy-netlify-coraza-maxmind
-            caddy-security-netlify-coraza-maxmind))
+            caddy-security-netlify-coraza-maxmind
+            caddy-security-netlify-crowdsec-coraza-maxmind))
 
 (define geoip-address-csv
   (package
@@ -262,4 +263,46 @@ by WP-Statistics. Built from a pinned git commit.")
       (inputs
        (modify-inputs (package-inputs pkg)
          (append geolite2-country-mmdb geolite2-city-mmdb)))
-      (synopsis "Caddy with Netlify DNS, Coraza WAF, MaxMind geoblocking, and authentication support"))))
+      (synopsis "Caddy with Netlify DNS, Coraza WAF, MaxMind geoblocking, and Pocket ID authentication support"))))
+
+(define caddy-security-netlify-crowdsec-coraza-maxmind
+  (let ((pkg (caddy-custom
+              "2.10.2"
+              '("github.com/greenpau/caddy-security"
+                "github.com/caddy-dns/netlify"
+                ;; The next three modules are for
+                ;; caddy-crowdsec-bounder; the latter two are for
+                ;; optional features
+                "github.com/hslatman/caddy-crowdsec-bouncer/http"
+                "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
+                "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
+                "github.com/corazawaf/coraza-caddy/v2"
+                "github.com/porech/caddy-maxmind-geolocation")
+              "0ds06c0hbwf6lpimvsp39v6b9dxifzikv29qij8zlq35f4jkxf6s"
+              "0x386sv2cw8fvix693zwqcz8d9ajrfm4gj8g932bn29c94j5dg92")))
+    (package/inherit pkg
+      (name "caddy-security-netlify-crowdsec-coraza-maxmind")
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'install 'link-geolite-dbs
+                ;; The city database is a superset of the country
+                ;; database, but we bundle both: users may choose
+                ;; which database to use
+                (lambda* (#:key inputs outputs #:allow-other-keys)
+                  (let* ((out (assoc-ref outputs "out"))
+                         (geoip-country (assoc-ref inputs "geolite2-country-mmdb"))
+                         (geoip-city (assoc-ref inputs "geolite2-city-mmdb"))
+                         (target (string-append out "/var/lib/geoip")))
+                    (mkdir-p target)
+                    (symlink
+                     (string-append geoip-country "/var/lib/geoip/GeoLite2-Country.mmdb")
+                     (string-append target "/GeoLite2-Country.mmdb"))
+                    (symlink
+                     (string-append geoip-city "/var/lib/geoip/GeoLite2-City.mmdb")
+                     (string-append target "/GeoLite2-City.mmdb")))))))))
+      (inputs
+       (modify-inputs (package-inputs pkg)
+         (append geolite2-country-mmdb geolite2-city-mmdb)))
+      (synopsis "Caddy with Netlify DNS, CrowdSec,Coraza WAF, MaxMind geoblocking, and Pocket ID authentication support"))))
