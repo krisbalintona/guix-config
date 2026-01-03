@@ -53,6 +53,18 @@
         secret)))
 (define services-dir
   (string-append (getenv "HOME") "/services"))
+(define pocket-id-socket-dir
+    (string-append (getenv "XDG_RUNTIME_DIR")
+                   "/pocket-id"))
+
+(define pocket-id-socket
+  (string-append pocket-id-socket-dir "/pocket-id.sock"))
+(define copyparty-socket-dir
+  (string-append (getenv "XDG_RUNTIME_DIR")
+                 "/copyparty"))
+
+(define copyparty-socket
+  (string-append copyparty-socket-dir "/copyparty.sock"))
 (define* (restic-job/defaults
           #:key
           name
@@ -214,6 +226,18 @@
               ("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")))
            (auto-start? #t)
            (respawn? #f))))))
+    (simple-service 'home-oci-pocket-id-socket
+        home-shepherd-service-type
+      (list
+       (shepherd-service
+         (provision '(home-oci-pocket-id-socket))
+         (one-shot? #t)
+         (start
+          #~(lambda ()
+              (mkdir-p #$pocket-id-socket-dir)
+              (format #t "Socket directory exists at: ~a~%" #$pocket-id-socket-dir)
+              #t))
+         (documentation "Create parent directory for Copyparty socket."))))
     (simple-service 'home-oci-pocket-id
         home-oci-service-type
       (oci-extension
@@ -226,6 +250,7 @@
         (list
          (oci-container-configuration
            (provision "pocket-id")
+           (requirement '(home-oci-pocket-id-socket))
            ;; TODO 2026-01-02: Use the hardened distroless images they
            ;; have.  Though requires more setup since the Pocket ID
            ;; process runs as non-root and their default distro
@@ -244,6 +269,8 @@
                                       #:file sops-sublation-secrets-file))
               "PUID=1000"                 ; Default
               "PGID=1000"                 ; Default
+              ;; Use unix sockets (UDS)
+              ,(cons "UNIX_SOCKET" pocket-id-socket)
               ;; When false (default), send a "heartbeat" to add my
               ;; instance to the total Pocket ID count.  Although I'd like
               ;; to keep this false, this container's network is internal,
@@ -253,11 +280,10 @@
               ;; maintaining network security...
               "ANALYTICS_DISABLED=true"))
            (network "pocket-id-network")
-           ;; TODO 2026-01-02: Use the UNIX_SOCKET environment variable
-           ;; instead of publishing ports
-           (ports '("127.0.0.1:3111:3111"))
            (volumes
-            '(("/home/krisbalintona/services/pocket-id/data" . "/app/data")))
+            `(("/home/krisbalintona/services/pocket-id/data" . "/app/data")
+              ,(cons pocket-id-socket-dir pocket-id-socket-dir)))
+           (extra-arguments '("--userns=keep-id"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-pihole
@@ -313,6 +339,7 @@
         (list
          (oci-container-configuration
            (provision "caddy")
+           (requirement '(home-oci-copyparty-socket home-oci-pocket-id-socket))
            (image
              (oci-image
                ;; OCI images locations follow a
@@ -367,9 +394,9 @@
                . "/run/secrets/netlify-access-token")
               ;; Goaccess real-time web page
               ("goaccess_web" . "/var/www/goaccess")
-              ;; Copyparty unix socket
-              ,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
-                     "/run/copyparty")))
+              ;; Unix sockets
+              ,(cons copyparty-socket-dir copyparty-socket-dir)
+              ,(cons pocket-id-socket-dir pocket-id-socket-dir)))
            (command '("caddy" "run" "--config" "/config/Caddyfile"))
            (auto-start? #t)
            (respawn? #f))))))
@@ -381,10 +408,9 @@
          (one-shot? #t)
          (start
           #~(lambda ()
-              (let ((dir (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")))
-                (mkdir-p dir)
-                (format #t "Socket directory exists at: ~a~%" dir)
-                #t)))
+              (mkdir-p #$copyparty-socket-dir)
+              (format #t "Socket directory exists at: ~a~%" #$copyparty-socket-dir)
+              #t))
          (documentation "Create parent directory for Copyparty socket."))))
     (simple-service 'home-oci-copyparty
         home-oci-service-type
@@ -398,12 +424,11 @@
            ;; Have files mounted at /data and copyparty config + cache
            ;; files in /srv
            (volumes
-            `(,(cons (string-append (getenv "XDG_RUNTIME_DIR") "/copyparty")
-                     "/run/copyparty")
-              ("/home/krisbalintona/services/copyparty/data" . "/data")
+            `(("/home/krisbalintona/services/copyparty/data" . "/data")
               ("/home/krisbalintona/services/copyparty/log" . "/var/log/copyparty")
               (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
-               . "/srv/copyparty.conf")))
+               . "/srv/copyparty.conf")
+              ,(cons copyparty-socket-dir copyparty-socket-dir)))
            (command '("-c" "/srv/copyparty.conf"
                       "--chdir" "/srv"
                       ;; Logging
