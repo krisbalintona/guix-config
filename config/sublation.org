@@ -84,7 +84,7 @@ See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
   (service home-gpg-agent-service-type)
 #+end_src
 
-** SOPS: Secrets management
+** SOPS-Guix: Secrets management in Guix
 
 #+begin_src scheme :noweb-ref home-modules
   (sops secrets)
@@ -111,6 +111,11 @@ See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
       (if number?
           (string->number secret)
           secret)))
+
+  ;; Helper for getting file path of secret
+  (define (get-sops-secret-path filename)
+    (string-append "/run/user/" (number->string (getuid))
+                   "/secrets/" filename))
 #+end_src
 
 #+begin_src scheme :noweb-ref home-packages
@@ -340,6 +345,13 @@ Several of my services integrate with ~fail2ban-service-type~.
     (string-append pocket-id-socket-dir "/pocket-id.sock"))
 #+end_src
 
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("pocket-id-encryption-key"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
 #+begin_src scheme :noweb-ref home-services
   (simple-service 'home-oci-pocket-id-socket
       home-shepherd-service-type
@@ -363,44 +375,46 @@ Several of my services integrate with ~fail2ban-service-type~.
         (internal? #t))))
      (containers
       (list
-       (oci-container-configuration
-         (provision "pocket-id")
-         (requirement '(home-oci-pocket-id-socket))
-         ;; TODO 2026-01-02: Use the hardened distroless images they
-         ;; have.  Though requires more setup since the Pocket ID
-         ;; process runs as non-root and their default distro
-         ;; containers configure persmissiona automatically; to make
-         ;; permissions work in a fresh container (which Guix does on
-         ;; shepherd service restart) I have to set up those
-         ;; permissions myself.  See
-         ;; https://pocket-id.org/docs/advanced/hardening
-         (image "ghcr.io/pocket-id/pocket-id:v2")
-         (environment
-          `("PORT=3111"
-            "TRUST_PROXY=true"          ; Whether behind a reverse proxy
-            "APP_URL=https://pocket-id.kristofferbalintona.me"
-            ,(cons "ENCRYPTION_KEY"
-                   (get-sops-secret '("pocket-id-encryption-key")
-                                    #:file sops-sublation-secrets-file))
-            "PUID=1000"                 ; Default
-            "PGID=1000"                 ; Default
-            ;; Use unix sockets (UDS)
-            ,(cons "UNIX_SOCKET" pocket-id-socket)
-            ;; When false (default), send a "heartbeat" to add my
-            ;; instance to the total Pocket ID count.  Although I'd like
-            ;; to keep this false, this container's network is internal,
-            ;; so it cannot actually send the heartbeat.  This results
-            ;; in a bunch of extraneous messages in the log.  Maybe in
-            ;; the future I can figure out how to get around this while
-            ;; maintaining network security...
-            "ANALYTICS_DISABLED=true"))
-         (network "pocket-id-network")
-         (volumes
-          `(("/home/krisbalintona/services/pocket-id/data" . "/app/data")
-            ,(cons pocket-id-socket-dir pocket-id-socket-dir)))
-         (extra-arguments '("--userns=keep-id"))
-         (auto-start? #t)
-         (respawn? #f))))))
+       (let ((encryption-key-file
+              (get-sops-secret-path "pocket-id-encryption-key")))
+         (oci-container-configuration
+           (provision "pocket-id")
+           (requirement '(home-oci-pocket-id-socket))
+           ;; TODO 2026-01-02: Use the hardened distroless images they
+           ;; have.  Though requires more setup since the Pocket ID
+           ;; process runs as non-root and their default distro
+           ;; containers configure persmissiona automatically; to make
+           ;; permissions work in a fresh container (which Guix does on
+           ;; shepherd service restart) I have to set up those
+           ;; permissions myself.  See https://pocket-id.org/d
+           ;; ocs/advanced/hardening
+           (image "ghcr.io/pocket-id/pocket-id:v2")
+           (environment
+            (list "PORT=3111"
+                  "TRUST_PROXY=true"    ; Whether behind a reverse proxy
+                  "APP_URL=https://pocket-id.kristofferbalintona.me"
+                  (cons "ENCRYPTION_KEY_FILE" encryption-key-file)
+                  "PUID=1000"             ; Default
+                  "PGID=1000"             ; Default
+                  ;; Use unix sockets (UDS)
+                  (cons "UNIX_SOCKET" pocket-id-socket)
+                  ;; When false (default), send a "heartbeat" to add my
+                  ;; instance to the total Pocket ID count.  Although
+                  ;; I'd like to keep this false, this container's
+                  ;; network is internal, so it cannot actually send the
+                  ;; heartbeat.  This results in a bunch of extraneous
+                  ;; messages in the log.  Maybe in the future I can
+                  ;; figure out how to get around this while maintaining
+                  ;; network security...
+                  "ANALYTICS_DISABLED=true"))
+           (network "pocket-id-network")
+           (volumes
+            `(("/home/krisbalintona/services/pocket-id/data" . "/app/data")
+              ,(cons encryption-key-file encryption-key-file)
+              ,(cons pocket-id-socket-dir pocket-id-socket-dir)))
+           (extra-arguments '("--userns=keep-id"))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 ** Networking
@@ -587,12 +601,8 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
     (oci-extension
      (containers
       (list
-       (let* ((pihole-password-filename "pihole-webserver-password")
-              (pihole-password-sops-file
-               (string-append "/run/user/" (number->string (getuid)) "/secrets"
-                              "/" pihole-password-filename))
-              (pihole-password-file
-               (string-append "/run/secrets/" pihole-password-filename)))
+       (let* ((password-file
+               (get-sops-secret-path "pihole-webserver-password")))
          (oci-container-configuration
            (provision "pihole")
            (image "docker.io/pihole/pihole:latest")
@@ -601,7 +611,7 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
               "FTLCONF_dns_port=53" ; Default port
               ;; Webserver
               "FTLCONF_webserver_port=127.0.0.1:7080"
-              ,(cons "WEBPASSWORD_FILE" pihole-password-file)
+              ,(cons "WEBPASSWORD_FILE" password-file)
               ;; Listen for queries on all interfaces and from all
               ;; origins
               "FTLCONF_dns_listeningMode=ALL"
@@ -619,8 +629,8 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
            ;; from the same client)
            (network "host")
            (volumes
-            `(("/home/krisbalintona/services/pihole/data" . "/etc/pihole")
-              ,(cons pihole-password-sops-file pihole-password-file)))
+            (list (cons "/home/krisbalintona/services/pihole/data" "/etc/pihole")
+                  (cons password-file password-file)))
            (auto-start? #t)
            (respawn? #f)))))))
 #+end_src
@@ -637,7 +647,19 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
 
 #+begin_src scheme :noweb-ref home-sops-secrets
   (sops-secret
-    (key '("netlify-access-token"))
+    (key '("caddy" "netlify-access-token"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+  (sops-secret
+    (key '("caddy" "pocket-id" "client-id"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+  (sops-secret
+    (key '("caddy" "pocket-id" "client-secret"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+  (sops-secret
+    (key '("caddy" "crowdsec-bouncer" "api-key"))
     (file (local-file "files/sops/sublation.yaml"))
     (permissions #o400))
 #+end_src
@@ -652,69 +674,68 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
     (oci-extension
      (containers
       (list
-       (oci-container-configuration
-         (provision "caddy")
-         (requirement '(home-oci-copyparty-socket home-oci-pocket-id-socket))
-         (image
-           (oci-image
-             ;; OCI images locations follow a
-             ;; [registry]/[repository]:[tag] format.  Since we are
-             ;; local, we only need to specify a repository and
-             ;; optionally a tag.  The REPOSITORY field below
-             ;; corresponds to the [repository] of an OCI image
-             ;; location; it can be whatever we want since this image is
-             ;; created locally (in the Guix store)
-             (repository "caddy-security-netlify-crowdsec-coraza-maxmind")
-             (tag "2.10.2")
-             (value (specifications->manifest '("coreutils"
-                                                "caddy-security-netlify-crowdsec-coraza-maxmind")))
-             (pack-options '(#:symlinks (("/bin" -> "bin")
-                                         ;; MaxMind database files
-                                         ("/var/lib/geoip" -> "/var/lib/geoip"))))))
-         ;; These environment variables are set in the Docker image
-         ;; Caddy distributes (shown by e.g. "podman image inspect
-         ;; docker.io/caddy:2.10.2").  My tests show that they need to
-         ;; be set for some reason
-         (environment
-          `("CADDY_VERSION=v2.10.2"
-            "XDG_CONFIG_HOME=/config"
-            "XDG_DATA_HOME=/data"
-            ,(cons "POCKET_ID_CLIENT_ID"
-                   (get-sops-secret '("caddy" "pocket-id" "client-id")
-                                    #:file sops-sublation-secrets-file))
-            ,(cons "POCKET_ID_CLIENT_SECRET"
-                   (get-sops-secret '("caddy" "pocket-id" "client-secret")
-                                    #:file sops-sublation-secrets-file))
-            ,(cons "CROWDSEC_BOUNCER_API_KEY"
-                   (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
-                                    #:file sops-sublation-secrets-file))))
-         ;; Use the host network, then for services expose to the host
-         ;; only the required ports and have Caddy direct traffic to
-         ;; those ports.  An added benefit to using the host network is
-         ;; that it permits Caddy to log the real IP of clients, since
-         ;; the NAT of the Podman bridge network is no longer an
-         ;; intermediary
-         (network "host")
-         (volumes
-          `(("/home/krisbalintona/services/caddy/data" . "/data") ; Path of XDG_DATA_HOME
-            ("/home/krisbalintona/services/caddy/log" . "/data/log")
-            (,(string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
-             . "/config/Caddyfile")
-            ;; Netlify access token
-            (,(string-append "/run/user/" (number->string (getuid)) "/secrets"
-                             "/netlify-access-token")
-             ;; Reference this with a file placeholder in my Caddyfile;
-             ;; see
-             ;; https://caddyserver.com/docs/conventions#placeholders
-             . "/run/secrets/netlify-access-token")
-            ;; Goaccess real-time web page
-            ("goaccess_web" . "/var/www/goaccess")
-            ;; Unix sockets
-            ,(cons copyparty-socket-dir copyparty-socket-dir)
-            ,(cons pocket-id-socket-dir pocket-id-socket-dir)))
-         (command '("caddy" "run" "--config" "/config/Caddyfile"))
-         (auto-start? #t)
-         (respawn? #f))))))
+       (let ((netlify-access-token
+              (get-sops-secret-path "caddy/netlify-access-token"))
+             (pocket-id-client-id
+              (get-sops-secret-path "caddy/pocket-id/client-id"))
+             (pocket-id-client-secret
+              (get-sops-secret-path "caddy/pocket-id/client-secret"))
+             (crowdsec-bouncer-api-key
+              (get-sops-secret-path "caddy/crowdsec-bouncer/api-key")))
+         (oci-container-configuration
+           (provision "caddy")
+           (requirement '(home-oci-copyparty-socket home-oci-pocket-id-socket))
+           (image
+             (oci-image
+               ;; OCI images locations follow a
+               ;; [registry]/[repository]:[tag] format.  Since we are
+               ;; local, we only need to specify a repository and
+               ;; optionally a tag.  The REPOSITORY field below
+               ;; corresponds to the [repository] of an OCI image
+               ;; location; it can be whatever we want since this image is
+               ;; created locally (in the Guix store)
+               (repository "caddy-security-netlify-crowdsec-coraza-maxmind")
+               (tag "2.10.2")
+               (value (specifications->manifest '("coreutils"
+                                                  "caddy-security-netlify-crowdsec-coraza-maxmind")))
+               (pack-options '(#:symlinks (("/bin" -> "bin")
+                                           ;; MaxMind database files
+                                           ("/var/lib/geoip" -> "/var/lib/geoip"))))))
+           ;; These environment variables are set in the Docker image
+           ;; Caddy distributes (shown by e.g. "podman image inspect
+           ;; docker.io/caddy:2.10.2").  My tests show that they need to
+           ;; be set for some reason
+           (environment
+            `("CADDY_VERSION=v2.10.2"
+              "XDG_CONFIG_HOME=/config"
+              "XDG_DATA_HOME=/data"))
+           ;; Use the host network, then for services expose to the host
+           ;; only the required ports and have Caddy direct traffic to
+           ;; those ports.  An added benefit to using the host network is
+           ;; that it permits Caddy to log the real IP of clients, since
+           ;; the NAT of the Podman bridge network is no longer an
+           ;; intermediary
+           (network "host")
+           (volumes
+            (list (cons "/home/krisbalintona/services/caddy/data" "/data") ; Path of XDG_DATA_HOME
+                  (cons "/home/krisbalintona/services/caddy/log" "/data/log")
+                  (cons (string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
+                        "/config/Caddyfile")
+                  ;; Goaccess real-time web page
+                  (cons "goaccess_web" "/var/www/goaccess")
+                  ;; Unix sockets
+                  (cons copyparty-socket-dir copyparty-socket-dir)
+                  (cons pocket-id-socket-dir pocket-id-socket-dir)
+                  ;; Secrets.  Reference these in the Caddyfile with
+                  ;; file placeholders; see
+                  ;; https://caddyserver.com/docs/conventions#placeholders
+                  (cons netlify-access-token netlify-access-token)
+                  (cons pocket-id-client-id pocket-id-client-id)
+                  (cons pocket-id-client-secret pocket-id-client-secret)
+                  (cons crowdsec-bouncer-api-key crowdsec-bouncer-api-key)))
+           (command '("caddy" "run" "--config" "/config/Caddyfile"))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 #+begin_src scheme :noweb-ref system-fail2ban-jails

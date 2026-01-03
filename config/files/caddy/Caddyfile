@@ -57,8 +57,8 @@
 			delay_start 3
 			realm pocket_id
 			driver generic
-			client_id {env.POCKET_ID_CLIENT_ID}
-			client_secret {env.POCKET_ID_CLIENT_SECRET}
+			client_id {file./run/user/1000/secrets/caddy/pocket-id/client-id}
+			client_secret {file./run/user/1000/secrets/caddy/pocket-id/client-secret}
 			# The scopes of Pocket ID are shown in the
 			# OIDC client data preview.  Include all of
 			# them.
@@ -163,7 +163,7 @@
 		# API key given after registering this bouncer with
 		# e.g. "podman exec crowdsec cscli bouncers add
 		# caddy-bouncer"
-		api_key {env.CROWDSEC_BOUNCER_API_KEY}
+		api_key {file./run/user/1000/secrets/caddy/crowdsec-bouncer/api-key}
 		# How often to sync decisions with the LAPI
 		ticker_interval 15s
 	}
@@ -263,7 +263,7 @@
 	tls {
 		# Bind mint the access token file and reference the
 		# path
-		dns netlify {file./run/secrets/netlify-access-token}
+		dns netlify {file./run/user/1000/secrets/netlify-access-token}
 	}
 }
 
