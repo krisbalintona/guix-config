@@ -303,30 +303,25 @@
              (environment
               `("TZ=America/Chicago"
                 "FTLCONF_dns_port=53" ; Default port
+                ;; Webserver
+                "FTLCONF_webserver_port=127.0.0.1:7080"
+                ,(cons "WEBPASSWORD_FILE" pihole-password-file)
                 ;; Listen for queries on all interfaces and from all
                 ;; origins
                 "FTLCONF_dns_listeningMode=ALL"
                 ;; Forward queries to Unbound DNS (whose port is 5335 on
                 ;; the host)
-                "FTLCONF_dns_upstreams=host.containers.internal#5335"
+                "FTLCONF_dns_upstreams=127.0.0.1#5335"
                 ;; Pihole as NTP server for other devices?
                 "FTLCONF_ntp_ipv4_active=false"
                 "FTLCONF_ntp_ipv6_active=false"
                 ;; Pihole as NTP server for host?
-                "FTLCONF_ntp_sync_active=false"
-                ;; Webserver settings
-                "FTLCONF_webserver_port=8080"
-                ,(cons "WEBPASSWORD_FILE" pihole-password-file)))
+                "FTLCONF_ntp_sync_active=false"))
              ;; We use the host network since clients need to directly
              ;; talk to pihole otherwise pihole can't distinguish clients
              ;; (an internal container network would make all clients come
              ;; from the same client)
              (network "host")
-             (ports '(;; DNS queries
-                      "53:53/tcp"
-                      "53:53/udp"
-                      ;; Webserver
-                      "127.0.0.1:8080:8080"))
              (volumes
               `(("/home/krisbalintona/services/pihole/data" . "/etc/pihole")
                 ,(cons pihole-password-sops-file pihole-password-file)))
