@@ -72,6 +72,7 @@
   (string-append copyparty-socket-dir "/copyparty.sock"))
 (define* (restic-job/defaults
           #:key
+          (restic (@ (abbe packages golang) restic)) ; More up-to-date Restic
           name
           (repository "/mnt/backup-hdd")
           (password-file
@@ -85,14 +86,17 @@
                           "/secrets/restic-backup-password"))
           files
           schedule
-          (extra-flags '())
+          (wait-for-termination? #t)
+          (extra-flags '("--retry-lock" "15m"))
           (verbose? #t))
   (restic-backup-job
+    (restic restic)
     (name name)
     (files files)
     (schedule schedule)
     (repository repository)
     (password-file password-file)
+    (wait-for-termination? wait-for-termination?)
     (extra-flags extra-flags)
     (verbose? verbose?)))
 
@@ -572,6 +576,20 @@
         #:name "restic-vault"
         #:schedule "0 7-22/3 * * *"
         #:files (list (string-append (getenv "HOME") "/vault")))))
+    (simple-service 'home-restic-crowdsec
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-crowdsec"
+        #:schedule "0 0 */2 * *"
+        #:files (list (string-append services-dir "/crowdsec")))))
+    (simple-service 'home-restic-pocket-id
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-pocket-id"
+        #:schedule "0 0 */4 * *"
+        #:files (list (string-append services-dir "/pocket-id/data")))))
     (simple-service 'home-restic-caddy
         home-restic-backup-service-type
       (list
@@ -586,6 +604,13 @@
         #:name "restic-copyparty"
         #:schedule "0 12 * * *"
         #:files (list (string-append services-dir "/copyparty")))))
+    (simple-service 'home-restic-vaultwarden
+        home-restic-backup-service-type
+      (list
+       (restic-job/defaults
+        #:name "restic-vaultwarden"
+        #:schedule "0 0 * * *"
+        #:files (list (string-append services-dir "/vaultwarden")))))
     
     (simple-service 'guix-locales
         home-environment-variables-service-type

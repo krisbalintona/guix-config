@@ -329,6 +329,16 @@ Several of my services integrate with ~fail2ban-service-type~.
          (respawn? #f))))))
 #+end_src
 
+#+begin_src scheme :noweb-ref home-restic-backup-jobs
+  (simple-service 'home-restic-crowdsec
+      home-restic-backup-service-type
+    (list
+     (restic-job/defaults
+      #:name "restic-crowdsec"
+      #:schedule "0 0 */2 * *"
+      #:files (list (string-append services-dir "/crowdsec")))))
+#+end_src
+
 *** Pocket ID: An out-of-the-box OIDC-compliant IdP provider
 
 #+begin_src scheme :noweb-ref home-modules
@@ -415,6 +425,16 @@ Several of my services integrate with ~fail2ban-service-type~.
            (extra-arguments '("--userns=keep-id"))
            (auto-start? #t)
            (respawn? #f)))))))
+#+end_src
+
+#+begin_src scheme :noweb-ref home-restic-backup-jobs
+  (simple-service 'home-restic-pocket-id
+      home-restic-backup-service-type
+    (list
+     (restic-job/defaults
+      #:name "restic-pocket-id"
+      #:schedule "0 0 */4 * *"
+      #:files (list (string-append services-dir "/pocket-id/data")))))
 #+end_src
 
 ** Networking
@@ -634,6 +654,18 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
            (auto-start? #t)
            (respawn? #f)))))))
 #+end_src
+
+# TODO 2026-01-03: I haven't found a way to have Pihole's files be owned (or at least readable by)
+# the host user
+# #+begin_src scheme :noweb-ref home-restic-backup-jobs
+#   (simple-service 'home-restic-pihole
+#       home-restic-backup-service-type
+#     (list
+#      (restic-job/defaults
+#       #:name "restic-pihole"
+#       #:schedule "0 0 */2 * *"
+#       #:files (list (string-append services-dir "/pihole")))))
+# #+end_src
 
 *** Web traffic
 
@@ -897,6 +929,17 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
   (gnu home services containers)
 #+end_src
 
+#+begin_src scheme :noweb-ref home-sops-secrets
+  (sops-secret
+    (key '("vaultwarden" "push-installation-id"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+  (sops-secret
+    (key '("vaultwarden" "push-installation-key"))
+    (file (local-file "files/sops/sublation.yaml"))
+    (permissions #o400))
+#+end_src
+
 #+begin_src scheme :noweb-ref home-services
   (simple-service 'home-oci-vaultwarden
       home-oci-service-type
@@ -945,15 +988,14 @@ Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI fo
          (respawn? #f))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
-  (sops-secret
-    (key '("vaultwarden" "push-installation-id"))
-    (file (local-file "files/sops/sublation.yaml"))
-    (permissions #o400))
-  (sops-secret
-    (key '("vaultwarden" "push-installation-key"))
-    (file (local-file "files/sops/sublation.yaml"))
-    (permissions #o400))
+#+begin_src scheme :noweb-ref home-restic-backup-jobs
+  (simple-service 'home-restic-vaultwarden
+      home-restic-backup-service-type
+    (list
+     (restic-job/defaults
+      #:name "restic-vaultwarden"
+      #:schedule "0 0 * * *"
+      #:files (list (string-append services-dir "/vaultwarden")))))
 #+end_src
 
 ** Monitoring
@@ -1056,7 +1098,7 @@ A lightweight, simpler alternative to Uptime Kuma.
 
 * Backups
 
-** Restic
+** Restic: Dead-simple and reliable CLI-based backups
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services backup)
@@ -1066,6 +1108,7 @@ A lightweight, simpler alternative to Uptime Kuma.
 #+begin_src scheme :noweb-ref home-helpers
   (define* (restic-job/defaults
             #:key
+            (restic (@ (abbe packages golang) restic)) ; More up-to-date Restic
             name
             (repository "/mnt/backup-hdd")
             (password-file
@@ -1079,14 +1122,17 @@ A lightweight, simpler alternative to Uptime Kuma.
                             "/secrets/restic-backup-password"))
             files
             schedule
-            (extra-flags '())
+            (wait-for-termination? #t)
+            (extra-flags '("--retry-lock" "15m"))
             (verbose? #t))
     (restic-backup-job
+      (restic restic)
       (name name)
       (files files)
       (schedule schedule)
       (repository repository)
       (password-file password-file)
+      (wait-for-termination? wait-for-termination?)
       (extra-flags extra-flags)
       (verbose? verbose?)))
 #+end_src
