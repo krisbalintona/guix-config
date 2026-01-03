@@ -283,7 +283,7 @@ Several of my services integrate with ~fail2ban-service-type~.
   <<system-fail2ban-jails>>
 #+end_src
 
-*** CrowdSec: Pattern-based security
+*** CrowdSec: Security based on client behavioral patterns
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -306,25 +306,35 @@ Several of my services integrate with ~fail2ban-service-type~.
          (provision "crowdsec")
          (image "crowdsecurity/crowdsec:latest")
          (environment
-          `(("TZ" . "America/Chicago")
-            ("LOCAL_API_URL" . "http://127.0.0.1:7200")
-            ("COLLECTIONS"
-             . "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/whitelist-good-actors crowdsecurity/base-http-scenarios crowdsecurity/caddy")
-            ;; Enable Write-Ahead Logging with SQLite.  Disable if using
-            ;; a filesystem over the network, e.g., NAS
-            ("USE_WAL" . "true")
-            ;; Bouncers
-            ,(cons "BOUNCER_KEY_caddy"
-                   (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
-                                    #:file sops-sublation-secrets-file))))
+          (list '("TZ" . "America/Chicago")
+                '("LOCAL_API_URL" . "http://127.0.0.1:7200")
+                (string-append "'"
+                               "COLLECTIONS="
+                               (string-join '("crowdsecurity/linux"
+                                              "crowdsecurity/sshd"
+                                              "crowdsecurity/whitelist-good-actors"
+                                              "crowdsecurity/base-http-scenarios"
+                                              "crowdsecurity/caddy")
+                                            " ")
+                               "'")
+                ;; Enable Write-Ahead Logging with SQLite.  Disable if
+                ;; using a filesystem over the network, e.g., NAS
+                '("USE_WAL" . "true")
+                ;; Bouncers
+                (cons "BOUNCER_KEY_caddy"
+                      (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
+                                       #:file sops-sublation-secrets-file))))
          (network "crowdsec-network")
-         (ports
-          '("127.0.0.1:7200:7200"))
+         (ports '("127.0.0.1:7200:7200"))
          (volumes
-          '(("/home/krisbalintona/services/crowdsec/data/" . "/var/lib/crowdsec/data/")
-            ("/home/krisbalintona/services/crowdsec/config/" . "/etc/crowdsec")
-            ;; All Caddy logs
-            ("/home/krisbalintona/services/caddy/log" . "/var/log/caddy")))
+          (list (cons "/home/krisbalintona/services/crowdsec/data/" "/var/lib/crowdsec/data/")
+                (cons "/home/krisbalintona/services/crowdsec/config/" "/etc/crowdsec")
+                (cons (string-append (dirname (current-filename)) "/files/crowdsec/config.yaml")
+                      "/etc/crowdsec/config.yaml")
+                (cons (string-append (dirname (current-filename)) "/files/crowdsec/acquis.yaml")
+                      "/etc/crowdsec/acquis.yaml")
+                ;; All Caddy logs
+                (cons "/home/krisbalintona/services/caddy/log" "/var/log/caddy")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
