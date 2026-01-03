@@ -234,13 +234,11 @@
            ;; shepherd service restart) I have to set up those
            ;; permissions myself.  See
            ;; https://pocket-id.org/docs/advanced/hardening
-           (image "ghcr.io/pocket-id/pocket-id:v1")
+           (image "ghcr.io/pocket-id/pocket-id:v2")
            (environment
             `("PORT=3111"
               "TRUST_PROXY=true"          ; Whether behind a reverse proxy
               "APP_URL=https://pocket-id.kristofferbalintona.me"
-              ;; FIXME 2026-01-02: I think this is only used when
-              ;; KEYS_STORAGE is set to database?
               ,(cons "ENCRYPTION_KEY"
                      (get-sops-secret '("pocket-id-encryption-key")
                                       #:file sops-sublation-secrets-file))
