@@ -128,6 +128,11 @@ build:
 shell:
 	$(GUIX) shell -L src $(PACKAGES)
 
+.PHONY: repl
+repl: repl
+	$(GUIX) repl -L src
+
+
 # ** Other
 
 .PHONY: doctor status
