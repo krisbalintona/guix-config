@@ -1,7 +1,7 @@
 #+TITLE: Sublation
 #+PROPERTY: header-args :noweb yes
 
-#  LocalWords:  CLI Atuin VCS FZF
+#  LocalWords:  CLI Atuin VCS FZF Zoxide
 
 * Shells
 
@@ -44,7 +44,41 @@
       (abbreviations '(("cd" . "z")))))
 #+end_src
 
-* Tooling
+* Command line
+
+** Common CLI tools
+
+System monitoring packages:
+#+begin_src scheme :noweb-ref home-packages
+  "btop"
+#+end_src
+See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
+
+Build systems:
+#+begin_src scheme :noweb-ref home-packages
+  "git"
+  "make"
+  "cmake"
+#+end_src
+
+File-system searching and visualization:
+#+begin_src scheme :noweb-ref home-packages
+  "tree"
+  "ripgrep"
+  "fd"
+  "jq"
+#+end_src
+
+Partition management:
+#+begin_src scheme :noweb-ref home-packages
+  "parted"
+#+end_src
+
+** Laptop-specific CLI tools
+
+#+begin_src scheme :noweb-ref home-packages
+  "brightnessctl"
+#+end_src
 
 ** Jujutsu: Distributed VCS
 
@@ -104,14 +138,6 @@
     (home-zoxide-configuration
       (zoxide (@ (abbe packages rust) zoxide))))
 #+end_src
-
-** System monitoring packages
-
-#+begin_src scheme :noweb-ref home-packages
-  "btop"
-#+end_src
-
-See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
 
 * Authentication
 
@@ -503,6 +529,8 @@ Some useful tooling:
 *** Network-related packages
 
 #+begin_src scheme :noweb-ref home-packages
+  "curl"
+  "wget"
   ;; Port scanning
   "nmap"
   "masscan"
@@ -1233,15 +1261,6 @@ A lightweight, simpler alternative to Uptime Kuma.
      (specifications->packages
       (list
        "glibc-locales"
-       ;; CLI tools
-       "git"
-       "make"
-       "curl"
-       "tree"
-       "ripgrep"
-       ;; Utilities
-       "parted"
-       "brightnessctl"
        ;; Editors
        "vim"
        "neovim"

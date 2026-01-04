@@ -109,26 +109,28 @@
    (specifications->packages
     (list
      "glibc-locales"
-     ;; CLI tools
-     "git"
-     "make"
-     "curl"
-     "tree"
-     "ripgrep"
-     ;; Utilities
-     "parted"
-     "brightnessctl"
      ;; Editors
      "vim"
      "neovim"
      "emacs"
      ;; Other packages
+     "btop"
+     "git"
+     "make"
+     "cmake"
+     "tree"
+     "ripgrep"
+     "fd"
+     "jq"
+     "parted"
+     "brightnessctl"
      "jujutsu"
      "fzf"
-     "btop"
      "gnupg"
      "age"
      "bind:utils"
+     "curl"
+     "wget"
      ;; Port scanning
      "nmap"
      "masscan"
