@@ -109,7 +109,6 @@
   (packages
    (specifications->packages
     (list
-     "glibc-locales"
      ;; Editors
      "vim"
      "neovim"
@@ -659,9 +658,6 @@
         #:schedule "0 0 * * *"
         #:files (list (string-append services-dir "/vaultwarden")))))
     
-    (simple-service 'guix-locales
-        home-environment-variables-service-type
-      '(("GUIX_LOCPATH" . "$HOME/.guix-profile/lib/locale")))
     (simple-service 'krisb-symlink-git-config-files-service-type
         home-xdg-configuration-files-service-type
       `(("git/config"

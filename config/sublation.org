@@ -5,7 +5,7 @@
 
 * Shells
 
-** Common environment
+** Base environment
 
 #+begin_src scheme :noweb-ref home-services
   (simple-service 'common-environment-variables
@@ -62,7 +62,7 @@ System monitoring packages:
 #+end_src
 See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
 
-Build systems:
+Build systems and programming languages:
 #+begin_src scheme :noweb-ref home-packages
   "git"
   "make"
@@ -82,7 +82,7 @@ Partition management:
   "parted"
 #+end_src
 
-** Laptop-specific CLI tools
+** Control machine
 
 #+begin_src scheme :noweb-ref home-packages
   "brightnessctl"
@@ -1295,7 +1295,6 @@ A lightweight, simpler alternative to Uptime Kuma.
     (packages
      (specifications->packages
       (list
-       "glibc-locales"
        ;; Editors
        "vim"
        "neovim"
@@ -1307,9 +1306,6 @@ A lightweight, simpler alternative to Uptime Kuma.
      (cons*
       <<home-services>>
       
-      (simple-service 'guix-locales
-          home-environment-variables-service-type
-        '(("GUIX_LOCPATH" . "$HOME/.guix-profile/lib/locale")))
       (simple-service 'krisb-symlink-git-config-files-service-type
           home-xdg-configuration-files-service-type
         `(("git/config"
@@ -1362,6 +1358,7 @@ A lightweight, simpler alternative to Uptime Kuma.
 
      (packages
       (cons*
+       "glibc-locales"
        <<system-packages>>
        glibc-locales
        %base-packages))

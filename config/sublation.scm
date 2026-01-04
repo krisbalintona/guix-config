@@ -41,6 +41,7 @@
 
    (packages
     (cons*
+     "glibc-locales"
      
      glibc-locales
      %base-packages))
