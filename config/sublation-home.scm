@@ -118,6 +118,7 @@
      "git"
      "make"
      "cmake"
+     "python"
      "tree"
      "ripgrep"
      "fd"

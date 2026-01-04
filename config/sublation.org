@@ -67,6 +67,7 @@ Build systems and programming languages:
   "git"
   "make"
   "cmake"
+  "python"
 #+end_src
 
 File-system searching and visualization:
