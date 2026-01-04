@@ -34,8 +34,8 @@
   #:use-module (sops home services sops)
   #:use-module (abbe packages rust)     ; For Jujutsu
   #:use-module (krisb packages fonts)
-  #:use-module (krisb packages atuin)
-  #:use-module (krisb packages lieer))
+  #:use-module (krisb packages lieer)
+  #:use-module (krisb services shells))
 
 (define krisb-home-environment
   (home-environment
@@ -85,7 +85,6 @@
                 "gnupg" "pinentry"
                 "mpv"
                 ;; Fancy CLI tools
-                "atuin-bin" ; Don't forget to log in and sync atuin on first install
                 "bat"       ; Also a dependency for zoxide
                 "fd"        ; Also a dependency for zoxide
                 "zoxide"
@@ -408,6 +407,9 @@
             ,(local-file "files/git/config")))))
       ;; Atuin
       (list
+       (service home-fish-atuin-service-type
+         (home-atuin-configuration
+           (atuin-fish-flags '("--disable-up-arrow"))))
        (simple-service 'krisb-symlink-atuin-config-files-service-type
            home-xdg-configuration-files-service-type
          `(("atuin/config.toml"
@@ -433,7 +435,6 @@
            ;; These are appended to ~/.config/fish/config.fish
            (config (list (local-file "files/fish/keychain.fish")
                          (plain-file "fish_greeting.fish" "set -g fish_greeting")
-                         (plain-file "atuin_init.fish" "atuin init fish --disable-up-arrow | source")
                          (plain-file "zoxide_init.fish" "zoxide init fish | source")))
            (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                "--style=plain,header-filesize,grid,snip --paging auto"
