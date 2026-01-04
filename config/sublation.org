@@ -30,6 +30,7 @@
 ** Fish
 
 #+begin_src scheme :noweb-ref home-modules
+  (gnu packages shells)
   (gnu home services shells)
 #+end_src
 
@@ -38,6 +39,8 @@
     (home-fish-configuration
       (config
        (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
+      (environment-variables
+       `(("SHELL" . ,(file-append fish "/bin/fish"))))
       (abbreviations '(("cd" . "z")))))
 #+end_src
 

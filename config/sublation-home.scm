@@ -4,6 +4,7 @@
              (gnu home services)
              (gnu home services shepherd)
              (gnu home services shells)
+             (gnu packages shells)
              (gnu home services shells)
              (abbe packages rust)
              (gnu packages terminals)
@@ -154,6 +155,8 @@
       (home-fish-configuration
         (config
          (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
+        (environment-variables
+         `(("SHELL" . ,(file-append fish "/bin/fish"))))
         (abbreviations '(("cd" . "z")))))
     (simple-service 'krisb-symlink-jj-config-files-service-type
           home-xdg-configuration-files-service-type
