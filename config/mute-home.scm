@@ -85,9 +85,8 @@
                 "gnupg" "pinentry"
                 "mpv"
                 ;; Fancy CLI tools
-                "bat"       ; Also a dependency for zoxide
-                "fd"        ; Also a dependency for zoxide
-                "zoxide"
+                "bat"
+                "fd"
                 ;; Fish shell
                 "grc"           ; For oh-my-fish/plugin-grc fish plugin
                 ;; Emacs
@@ -323,6 +322,11 @@
            home-xdg-configuration-files-service-type
          `(("enchant/enchant.ordering"
             ,(local-file "files/enchant/enchant.ordering")))))
+      ;; Zoxide
+      (list
+       (service home-zoxide-service-type
+         (home-zoxide-configuration
+           (zoxide (@ (abbe packages rust) zoxide)))))
       ;; Ssh
       (list
        (service home-openssh-service-type
@@ -441,8 +445,7 @@
          (home-fish-configuration
            ;; These are appended to ~/.config/fish/config.fish
            (config (list (local-file "files/fish/keychain.fish")
-                         (plain-file "fish_greeting.fish" "set -g fish_greeting")
-                         (plain-file "zoxide_init.fish" "zoxide init fish | source")))
+                         (plain-file "fish_greeting.fish" "set -g fish_greeting")))
            (aliases `(("cat" . ,(string-join '("bat" "--theme=ansi"
                                                "--style=plain,header-filesize,grid,snip --paging auto"
                                                "--italic-text=always --nonprintable-notation=caret")))))
@@ -476,7 +479,6 @@
                       ("la" . "ls -la")
                       ("ll" . "ls -l")
                       ("ls" . "ls -p --color=auto")))
-           (bashrc (list (plain-file "zoxide_init.bash" "eval '$(zoxide init bash)'")))
            (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
       ;; Basic environment for all shells
       (list
