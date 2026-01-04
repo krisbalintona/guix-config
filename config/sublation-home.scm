@@ -8,6 +8,7 @@
              (gnu home services shells)
              (abbe packages rust)
              (gnu packages terminals)
+             (abbe packages rust)
              (krisb services shells)
              (krisb services shells)
              (gnu packages gnupg)
@@ -126,6 +127,7 @@
      "brightnessctl"
      "jujutsu"
      "fzf"
+     "bat"
      "gnupg"
      "age"
      "bind:utils"
@@ -140,6 +142,9 @@
   
   (services
    (cons*
+    (simple-service 'common-environment-variables
+        home-environment-variables-service-type
+      '(("PAGER" . "less -RKF")))
     (service home-bash-service-type
       (home-bash-configuration
         (bashrc
@@ -164,6 +169,18 @@
           home-xdg-configuration-files-service-type
         `(("jj/config.toml"
            ,(local-file "files/jujutsu/config.toml"))))
+    (simple-service 'home-fish-bat
+        home-fish-service-type
+      (home-fish-extension
+        (aliases
+         `(("cat" . ,(string-join '("bat" "--theme=ansi"
+                                    "--style=plain,header-filesize,grid,snip --paging auto"
+                                    "--italic-text=always --nonprintable-notation=caret")))))))
+    (simple-service 'pager-environment-variables
+        home-environment-variables-service-type
+      ;; Use bat as a pager for man.  Taken from
+      ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
+      '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
     (service home-atuin-service-type
       (home-atuin-configuration
         (atuin-fish-flags '("--disable-up-arrow"))

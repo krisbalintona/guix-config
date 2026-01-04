@@ -5,6 +5,14 @@
 
 * Shells
 
+** Common environment
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'common-environment-variables
+      home-environment-variables-service-type
+    '(("PAGER" . "less -RKF")))
+#+end_src
+
 ** Bash
 
 #+begin_src scheme :noweb-ref home-modules
@@ -105,6 +113,33 @@ Partition management:
 
 #+begin_src scheme :noweb-ref home-packages
   "fzf"
+#+end_src
+
+** Bat: Fancier ~cat~
+
+Configurable. Options include output with syntax highlighting, line numbers, and automatic piping to ~less~.
+
+#+begin_src scheme :noweb-ref home-modules
+  (abbe packages rust)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "bat"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-fish-bat
+      home-fish-service-type
+    (home-fish-extension
+      (aliases
+       `(("cat" . ,(string-join '("bat" "--theme=ansi"
+                                  "--style=plain,header-filesize,grid,snip --paging auto"
+                                  "--italic-text=always --nonprintable-notation=caret")))))))
+  (simple-service 'pager-environment-variables
+      home-environment-variables-service-type
+    ;; Use bat as a pager for man.  Taken from
+    ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
+    '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
 #+end_src
 
 ** Atuin: Share shell history across shells and machines
