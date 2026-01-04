@@ -1,7 +1,7 @@
 #+TITLE: Sublation
 #+PROPERTY: header-args :noweb yes
 
-#  LocalWords:  CLI
+#  LocalWords:  CLI Atuin VCS
 
 * Shells
 
@@ -59,7 +59,27 @@
          ,(local-file "files/jujutsu/config.toml"))))
 #+end_src
 
-** System monitoring
+** Atuin: Share shell history across shells and machines
+
+# TODO 2026-01-04: Consider self-hosting a sync server. See
+# https://docs.atuin.sh/cli/self-hosting/server-setup/
+
+#+begin_src scheme :noweb-ref home-modules
+  (krisb services shells)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-atuin-service-type
+    (home-atuin-configuration
+      (atuin-fish-flags '("--disable-up-arrow"))
+      (atuin-bash-flags '("--disable-up-arrow"))))
+  (simple-service 'krisb-symlink-atuin-config-files-service-type
+      home-xdg-configuration-files-service-type
+    `(("atuin/config.toml"
+       ,(local-file "files/atuin/config.toml"))))
+#+end_src
+
+** System monitoring packages
 
 #+begin_src scheme :noweb-ref home-packages
   "btop"

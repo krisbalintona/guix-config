@@ -6,6 +6,7 @@
              (gnu home services shells)
              (gnu home services shells)
              (abbe packages rust)
+             (krisb services shells)
              (gnu packages gnupg)
              (gnu home services gnupg)
              (sops secrets)
@@ -155,6 +156,14 @@
           home-xdg-configuration-files-service-type
         `(("jj/config.toml"
            ,(local-file "files/jujutsu/config.toml"))))
+    (service home-atuin-service-type
+      (home-atuin-configuration
+        (atuin-fish-flags '("--disable-up-arrow"))
+        (atuin-bash-flags '("--disable-up-arrow"))))
+    (simple-service 'krisb-symlink-atuin-config-files-service-type
+        home-xdg-configuration-files-service-type
+      `(("atuin/config.toml"
+         ,(local-file "files/atuin/config.toml"))))
     (service home-gpg-agent-service-type)
     (service home-sops-secrets-service-type
       (home-sops-service-configuration
