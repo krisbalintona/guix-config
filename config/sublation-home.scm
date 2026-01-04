@@ -149,7 +149,7 @@
           ;; started by tramp
           (plain-file "to-fish.bash"
             "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $TERM =~ eat ]]; }; then
-        exec fish
+        SHELL=$(command -v fish) exec fish
     fi")))))
     (service home-fish-service-type
       (home-fish-configuration
