@@ -114,7 +114,6 @@
      "curl"
      "tree"
      "ripgrep"
-     "time"
      ;; Utilities
      "parted"
      "brightnessctl"

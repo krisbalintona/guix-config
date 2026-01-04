@@ -1,3 +1,4 @@
+SHELL := $(shell printenv SHELL) # Run in user's shell
 GUIX = time guix
 GUIX_LOCKED = $(GUIX) time-machine --channels=$(LOCKFILE) --
 ENV_DIR = ./env

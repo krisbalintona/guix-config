@@ -1236,7 +1236,6 @@ A lightweight, simpler alternative to Uptime Kuma.
        "curl"
        "tree"
        "ripgrep"
-       "time"
        ;; Utilities
        "parted"
        "brightnessctl"
