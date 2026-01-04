@@ -407,9 +407,10 @@
             ,(local-file "files/git/config")))))
       ;; Atuin
       (list
-       (service home-fish-atuin-service-type
+       (service home-atuin-service-type
          (home-atuin-configuration
-           (atuin-fish-flags '("--disable-up-arrow"))))
+           (atuin-fish-flags '("--disable-up-arrow"))
+           (atuin-bash-flags '("--disable-up-arrow"))))
        (simple-service 'krisb-symlink-atuin-config-files-service-type
            home-xdg-configuration-files-service-type
          `(("atuin/config.toml"
@@ -469,8 +470,7 @@
                       ("la" . "ls -la")
                       ("ll" . "ls -l")
                       ("ls" . "ls -p --color=auto")))
-           (bashrc (list (plain-file "atuin_init.bash" "eval '$(atuin init bash --disable-up-arrow)'")
-                         (plain-file "zoxide_init.bash" "eval '$(zoxide init bash)'")))
+           (bashrc (list (plain-file "zoxide_init.bash" "eval '$(zoxide init bash)'")))
            (bash-profile (list (local-file "files/bash/keychain.bash" "keychain.bash"))))))
       ;; Basic environment for all shells
       (list

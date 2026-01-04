@@ -10,15 +10,29 @@
   #:use-module (rosenthal packages rust-apps) ; For Atuin package
 
   #:export (home-atuin-configuration
-            home-fish-atuin-service-type))
+            home-atuin-service-type))
 
 (define-configuration/no-serialization home-atuin-configuration
   (atuin
    (file-like atuin)
    "The Atuin package to use.")
+  (atuin-bash-flags
+   (list-of-strings '())
+   "Extra flags passed to `atuin init bash`.")
   (atuin-fish-flags
    (list-of-strings '())
    "Extra flags passed to `atuin init fish`."))
+
+(define %home-atuin-bash
+  (match-record-lambda <home-atuin-configuration>
+      (atuin atuin-bash-flags)
+    (home-bash-extension
+      (bashrc
+       (list (mixed-text-file "atuin.bash"
+               "eval \"$("
+               atuin "/bin/atuin init bash "
+               (string-join atuin-bash-flags " ")
+               ")\"\n"))))))
 
 (define %home-atuin-fish
   (match-record-lambda <home-atuin-configuration>
@@ -35,15 +49,21 @@
       (atuin)
     (list atuin)))
 
-(define home-fish-atuin-service-type
+(define home-atuin-service-type
   (service-type
     (name 'atuin)
     (extensions
-     (list (service-extension home-fish-service-type
-                              %home-atuin-fish)
-           ;; Add Atuin to the home profile, too
-           (service-extension home-profile-service-type
-                              %home-atuin-profile)))
-    (default-value (home-atuin-configuration))
+     (list
+      ;; Bash integration
+      (service-extension home-bash-service-type
+                         %home-atuin-bash)
+      ;; Fish integration
+      (service-extension home-fish-service-type
+                         %home-atuin-fish)
+      ;; Add Atuin to the home profile, too
+      (service-extension home-profile-service-type
+                         %home-atuin-profile)))
+    (default-value
+      (home-atuin-configuration))
     (description
-     "Enable Atuin integration for the Fish shell.")))
+     "Enable Atuin integration for Fish and Bash, and install Atuin.")))
