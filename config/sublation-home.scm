@@ -155,7 +155,7 @@
           ;; shell and dispatch to fish if the current process wasn't
           ;; started by tramp
           (plain-file "to-fish.bash"
-            "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $TERM =~ eat ]]; }; then
+            "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $INSIDE_EMACS == *,eat* ]]; }; then
         SHELL=$(command -v fish) exec fish
     fi")))))
     (service home-fish-service-type
