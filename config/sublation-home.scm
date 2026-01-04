@@ -7,6 +7,7 @@
              (gnu home services shells)
              (abbe packages rust)
              (krisb services shells)
+             (krisb services shells)
              (gnu packages gnupg)
              (gnu home services gnupg)
              (sops secrets)
@@ -151,7 +152,8 @@
     (service home-fish-service-type
       (home-fish-configuration
         (config
-         (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+         (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
+        (abbreviations '(("cd" . "z")))))
     (simple-service 'krisb-symlink-jj-config-files-service-type
           home-xdg-configuration-files-service-type
         `(("jj/config.toml"
@@ -164,6 +166,9 @@
         home-xdg-configuration-files-service-type
       `(("atuin/config.toml"
          ,(local-file "files/atuin/config.toml"))))
+    (service home-zoxide-service-type
+      (home-zoxide-configuration
+        (zoxide (@ (abbe packages rust) zoxide))))
     (service home-gpg-agent-service-type)
     (service home-sops-secrets-service-type
       (home-sops-service-configuration

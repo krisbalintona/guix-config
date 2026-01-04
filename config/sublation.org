@@ -37,7 +37,8 @@
   (service home-fish-service-type
     (home-fish-configuration
       (config
-       (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+       (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
+      (abbreviations '(("cd" . "z")))))
 #+end_src
 
 * Tooling
@@ -77,6 +78,18 @@
       home-xdg-configuration-files-service-type
     `(("atuin/config.toml"
        ,(local-file "files/atuin/config.toml"))))
+#+end_src
+
+** Zoxide: A DWIM ~cd~
+
+#+begin_src scheme :noweb-ref home-modules
+  (krisb services shells)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-zoxide-service-type
+    (home-zoxide-configuration
+      (zoxide (@ (abbe packages rust) zoxide))))
 #+end_src
 
 ** System monitoring packages
