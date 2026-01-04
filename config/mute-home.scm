@@ -405,7 +405,13 @@
            home-xdg-configuration-files-service-type
          `(("git/config"
             ,(local-file "files/git/config")))))
-      ;; Atuin
+      ;; Atuin.  Don't forget to register + login to sync history
+      ;; across machines; see https://docs.atuin.sh/cli/guide/sync/.
+      ;;
+      ;; Alternatives include:
+      ;; - https://github.com/cantino/mcfly (see also
+      ;;   https://github.com/bnprks/mcfly-fzf)
+      ;; - https://github.com/ddworken/hishtory?tab=readme-ov-file
       (list
        (service home-atuin-service-type
          (home-atuin-configuration
