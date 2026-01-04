@@ -6,6 +6,7 @@
              (gnu home services shells)
              (gnu home services shells)
              (abbe packages rust)
+             (gnu packages terminals)
              (krisb services shells)
              (krisb services shells)
              (gnu packages gnupg)
@@ -123,6 +124,7 @@
      "emacs"
      ;; Other packages
      "jujutsu"
+     "fzf"
      "btop"
      "gnupg"
      "age"

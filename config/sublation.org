@@ -1,7 +1,7 @@
 #+TITLE: Sublation
 #+PROPERTY: header-args :noweb yes
 
-#  LocalWords:  CLI Atuin VCS
+#  LocalWords:  CLI Atuin VCS FZF
 
 * Shells
 
@@ -58,6 +58,16 @@
         home-xdg-configuration-files-service-type
       `(("jj/config.toml"
          ,(local-file "files/jujutsu/config.toml"))))
+#+end_src
+
+** FZF: Generic fuzzy matching interface
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu packages terminals)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "fzf"
 #+end_src
 
 ** Atuin: Share shell history across shells and machines
