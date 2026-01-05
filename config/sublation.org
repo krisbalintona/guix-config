@@ -575,6 +575,11 @@ Some useful tooling:
 *** DNS
 
 **** Unbound: Privacy-centered DNS resolver
+:PROPERTIES:
+:CUSTOM_ID: h:20260105T091837.031550
+:END:
+
+I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS filter]]) with Unbound being my DNS resolver.
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu services dns)
@@ -719,9 +724,14 @@ Some useful tooling:
   "unbound"
 #+end_src
 
-**** Pi-hole: Block domains
+**** Pi-hole: DNS filter
+:PROPERTIES:
+:CUSTOM_ID: h:20260105T091835.257202
+:END:
 
-Also do something like ~podman exec -it pihole padd~ for an ncurses, (CLI) UI for Pihole. And logs can be viewed in the CLI via ~podman exec -it pihole pihole tail~ (or just regular ~tail -F~ on any log file).
+I use Pihole as a DNS forwarder, setting the only upstream DNS server to be my self-hosted Unbound instance (see [[#h:20260105T091837.031550][Unbound: Privacy-centered DNS resolver]]). Effectively, Pihole filters DNS requests, and forwards the ones that need to be resolved to Unbound (when the request isn't already cached by Pihole itself).
+
+Regarding monitoring: aside from the webserver UI, uers can also do something like ~podman exec -it <name of pihole container> padd~ for an ncurses (i.e., CLI) UI that shows an abbreviated version of the statistics shown in the webserver UI. And logs can be viewed in the CLI via ~podman exec -it <name of pihole container> pihole tail~ (or just regular ~tail -F~ on any log file).
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
