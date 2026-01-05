@@ -176,6 +176,16 @@ Configurable. Options include output with syntax highlighting, line numbers, and
          ,(local-file "files/jujutsu/config.toml"))))
 #+end_src
 
+Compatibility with the fish shell:
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'fish-vcs-jj
+        home-xdg-configuration-files-service-type
+      `(("fish/functions/fish_jj_prompt.fish"
+         ,(local-file "files/jujutsu/fish_jj_prompt.fish"))
+        ("fish/functions/fish_vcs_prompt.fish"
+         ,(local-file "files/jujutsu/fish_vcs_prompt.fish"))))
+#+end_src
+
 ** FZF: Generic fuzzy matching interface
 
 #+begin_src scheme :noweb-ref home-modules

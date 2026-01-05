@@ -195,6 +195,12 @@
           home-xdg-configuration-files-service-type
         `(("jj/config.toml"
            ,(local-file "files/jujutsu/config.toml"))))
+    (simple-service 'fish-vcs-jj
+          home-xdg-configuration-files-service-type
+        `(("fish/functions/fish_jj_prompt.fish"
+           ,(local-file "files/jujutsu/fish_jj_prompt.fish"))
+          ("fish/functions/fish_vcs_prompt.fish"
+           ,(local-file "files/jujutsu/fish_vcs_prompt.fish"))))
     (service home-atuin-service-type
       (home-atuin-configuration
         (atuin-fish-flags '("--disable-up-arrow"))
