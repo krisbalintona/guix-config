@@ -83,6 +83,76 @@ Partition management:
   "parted"
 #+end_src
 
+** Replacements for essential CLI utilities
+
+*** Bat: Fancier ~cat~
+
+Configurable. Options include output with syntax highlighting, line numbers, and automatic piping to ~less~.
+
+#+begin_src scheme :noweb-ref home-modules
+  (abbe packages rust)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "bat"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-fish-bat
+      home-fish-service-type
+    (home-fish-extension
+      (aliases
+       `(("cat" . ,(string-join '("bat" "--theme=ansi"
+                                  "--style=plain,header-filesize,grid,snip --paging auto"
+                                  "--italic-text=always --nonprintable-notation=caret")))))))
+  (simple-service 'pager-environment-variables
+      home-environment-variables-service-type
+    ;; Use bat as a pager for man.  Taken from
+    ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
+    '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
+#+end_src
+
+*** Zoxide: A DWIM ~cd~
+
+#+begin_src scheme :noweb-ref home-modules
+  (krisb services shells)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-zoxide-service-type
+    (home-zoxide-configuration
+      (zoxide (@ (abbe packages rust) zoxide))))
+#+end_src
+
+*** Procs: Fancier ~ps~
+
+#+begin_src scheme :noweb-ref home-packages
+  "procs"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-fish-procs
+      home-fish-service-type
+    (home-fish-extension
+      (abbreviations `(("ps" . "procs")))))
+#+end_src
+
+*** Eza: Fancier ~ls~
+
+[[https://github.com/eza-community/eza][Eza]] is the maintained fork of [[https://github.com/ogham/exa][exa]].
+
+#+begin_src scheme :noweb-ref home-packages
+  "eza"
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-fish-eza
+      home-fish-service-type
+    (home-fish-extension
+      (aliases `(("ls" . "eza")
+                 ("la" . "eza -la")))))
+#+end_src
+
 ** Control machine
 
 #+begin_src scheme :noweb-ref home-packages
@@ -116,33 +186,6 @@ Partition management:
   "fzf"
 #+end_src
 
-** Bat: Fancier ~cat~
-
-Configurable. Options include output with syntax highlighting, line numbers, and automatic piping to ~less~.
-
-#+begin_src scheme :noweb-ref home-modules
-  (abbe packages rust)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-packages
-  "bat"
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-fish-bat
-      home-fish-service-type
-    (home-fish-extension
-      (aliases
-       `(("cat" . ,(string-join '("bat" "--theme=ansi"
-                                  "--style=plain,header-filesize,grid,snip --paging auto"
-                                  "--italic-text=always --nonprintable-notation=caret")))))))
-  (simple-service 'pager-environment-variables
-      home-environment-variables-service-type
-    ;; Use bat as a pager for man.  Taken from
-    ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
-    '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
-#+end_src
-
 ** Atuin: Share shell history across shells and machines
 
 # TODO 2026-01-04: Consider self-hosting a sync server. See
@@ -161,18 +204,6 @@ Configurable. Options include output with syntax highlighting, line numbers, and
       home-xdg-configuration-files-service-type
     `(("atuin/config.toml"
        ,(local-file "files/atuin/config.toml"))))
-#+end_src
-
-** Zoxide: A DWIM ~cd~
-
-#+begin_src scheme :noweb-ref home-modules
-  (krisb services shells)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (service home-zoxide-service-type
-    (home-zoxide-configuration
-      (zoxide (@ (abbe packages rust) zoxide))))
 #+end_src
 
 * Authentication

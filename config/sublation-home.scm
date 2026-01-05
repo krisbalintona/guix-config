@@ -7,9 +7,9 @@
              (gnu packages shells)
              (gnu home services shells)
              (abbe packages rust)
-             (gnu packages terminals)
-             (abbe packages rust)
              (krisb services shells)
+             (abbe packages rust)
+             (gnu packages terminals)
              (krisb services shells)
              (gnu packages gnupg)
              (gnu home services gnupg)
@@ -124,10 +124,12 @@
      "fd"
      "jq"
      "parted"
+     "bat"
+     "procs"
+     "eza"
      "brightnessctl"
      "jujutsu"
      "fzf"
-     "bat"
      "gnupg"
      "age"
      "bind:utils"
@@ -165,10 +167,6 @@
         (environment-variables
          `(("SHELL" . ,(file-append fish "/bin/fish"))))
         (abbreviations '(("cd" . "z")))))
-    (simple-service 'krisb-symlink-jj-config-files-service-type
-          home-xdg-configuration-files-service-type
-        `(("jj/config.toml"
-           ,(local-file "files/jujutsu/config.toml"))))
     (simple-service 'home-fish-bat
         home-fish-service-type
       (home-fish-extension
@@ -181,6 +179,22 @@
       ;; Use bat as a pager for man.  Taken from
       ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
       '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
+    (service home-zoxide-service-type
+      (home-zoxide-configuration
+        (zoxide (@ (abbe packages rust) zoxide))))
+    (simple-service 'home-fish-procs
+        home-fish-service-type
+      (home-fish-extension
+        (abbreviations `(("ps" . "procs")))))
+    (simple-service 'home-fish-eza
+        home-fish-service-type
+      (home-fish-extension
+        (aliases `(("ls" . "eza")
+                   ("la" . "eza -la")))))
+    (simple-service 'krisb-symlink-jj-config-files-service-type
+          home-xdg-configuration-files-service-type
+        `(("jj/config.toml"
+           ,(local-file "files/jujutsu/config.toml"))))
     (service home-atuin-service-type
       (home-atuin-configuration
         (atuin-fish-flags '("--disable-up-arrow"))
@@ -189,9 +203,6 @@
         home-xdg-configuration-files-service-type
       `(("atuin/config.toml"
          ,(local-file "files/atuin/config.toml"))))
-    (service home-zoxide-service-type
-      (home-zoxide-configuration
-        (zoxide (@ (abbe packages rust) zoxide))))
     (service home-gpg-agent-service-type)
     (service home-sops-secrets-service-type
       (home-sops-service-configuration
