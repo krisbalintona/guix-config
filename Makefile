@@ -130,7 +130,7 @@ shell:
 
 .PHONY: repl
 repl: repl
-	$(GUIX) repl -L src
+	guix repl -L src
 
 
 # ** Other
