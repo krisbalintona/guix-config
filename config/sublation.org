@@ -189,15 +189,20 @@ Compatibility with the fish shell:
 ** FZF: Generic fuzzy matching interface
 
 #+begin_src scheme :noweb-ref home-modules
-  (gnu packages terminals)
+  (gnu packages terminals)                ; fzf
+  (gnu packages rust-apps)                ; fd
 #+end_src
 
 #+begin_src scheme :noweb-ref home-packages
   "fzf"
+  "fd"
 #+end_src
 
 Bespoke integration with Fish. The initial inspiration for this was [[https://github.com/gazorby/fifc][gazorby/fifc]].
 #+begin_src scheme :noweb-ref home-services
+  (simple-service 'fish-fzf-packages
+      home-profile-service-type
+    (list fd fzf))                        ; Function dependencies
   (simple-service 'fish-fzf-function
         home-xdg-configuration-files-service-type
       `(("fish/functions/fzf_completion.fish"

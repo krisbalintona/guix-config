@@ -9,7 +9,8 @@
              (abbe packages rust)
              (krisb services shells)
              (abbe packages rust)
-             (gnu packages terminals)
+             (gnu packages terminals)                ; fzf
+             (gnu packages rust-apps)                ; fd
              (krisb services shells)
              (gnu packages gnupg)
              (gnu home services gnupg)
@@ -130,6 +131,7 @@
      "brightnessctl"
      "jujutsu"
      "fzf"
+     "fd"
      "gnupg"
      "age"
      "bind:utils"
@@ -201,6 +203,9 @@
            ,(local-file "files/jujutsu/fish_jj_prompt.fish"))
           ("fish/functions/fish_vcs_prompt.fish"
            ,(local-file "files/jujutsu/fish_vcs_prompt.fish"))))
+    (simple-service 'fish-fzf-packages
+        home-profile-service-type
+      (list fd fzf))                        ; Function dependencies
     (simple-service 'fish-fzf-function
           home-xdg-configuration-files-service-type
         `(("fish/functions/fzf_completion.fish"
