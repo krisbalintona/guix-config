@@ -201,6 +201,15 @@
            ,(local-file "files/jujutsu/fish_jj_prompt.fish"))
           ("fish/functions/fish_vcs_prompt.fish"
            ,(local-file "files/jujutsu/fish_vcs_prompt.fish"))))
+    (simple-service 'fish-fzf-function
+          home-xdg-configuration-files-service-type
+        `(("fish/functions/fzf_completion.fish"
+           ,(local-file "files/fish/fzf_complete.fish"))))
+    (simple-service 'fish-fzf-config
+        home-fish-service-type
+      (home-fish-extension
+        (config
+         (list (plain-file "fzf_custom.fish" "bind \\t fzf_complete")))))
     (service home-atuin-service-type
       (home-atuin-configuration
         (atuin-fish-flags '("--disable-up-arrow"))

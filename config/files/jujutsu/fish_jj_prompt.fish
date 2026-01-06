@@ -24,16 +24,6 @@ function fish_jj_prompt
                         if(conflict, label("conflict", "×")),
                         if(divergent, label("divergent", "??")),
                         if(hidden, label("hidden prefix", "(hidden)")),
-                        if(
-                            empty,
-                            coalesce(
-                                if(
-                                    parents.len() > 1,
-                                    label("empty", "(merged)"),
-                                ),
-                                label("empty", "(empty)"),
-                            ),
-                        ),
                     )
                 )'
     )"
