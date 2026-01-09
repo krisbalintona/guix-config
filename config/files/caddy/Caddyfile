@@ -425,3 +425,10 @@ transmission.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:9091
 	import policy_private
 }
+
+# ** qBittorrent
+
+qbittorrent.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:6701
+	import policy_private
+}

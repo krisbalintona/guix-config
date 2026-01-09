@@ -39,6 +39,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -645,9 +647,11 @@
                 ;; See
                 ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/firewall.md
                 ;; for all firewall options
-                "FIREWALL_INPUT_PORTS=9091")) ; Transmission web UI
+                "FIREWALL_INPUT_PORTS=9091"   ; Transmission web UI
+                "FIREWALL_INPUT_PORTS=6701")) ; qBittorrent web UI
              (network "gluetun-network")
-             (ports '("127.0.0.1:9091:9091")) ; Transmission web UI
+             (ports '("127.0.0.1:9091:9091"   ; Transmission web UI
+                      "127.0.0.1:6701:6701")) ; qBittorrent web UI
              (extra-arguments '("--device=/dev/net/tun:/dev/net/tun"
                                 "--cap-add=NET_ADMIN"
                                 "--cap-add=NET_RAW")) ; For UDP health checks
@@ -677,6 +681,27 @@
             '(("/home/krisbalintona/services/transmission/config" . "/config")
               ("/home/krisbalintona/services/transmission/downloads" . "/downloads")
               ("/home/krisbalintona/services/transmission/watch" . "/watch")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-qbittorrent
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "qbittorrent")
+           (requirement '(gluetun))
+           (image "linuxserver/qbittorrent:latest")
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"
+              "WEBUI_PORT=6701"))
+           (network "container:gluetun")
+           (volumes
+            '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
+              ("/home/krisbalintona/services/qbittorrent/downloads" . "/downloads")
+              ("/home/krisbalintona/services/qbittorrent/log" . "/log")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess

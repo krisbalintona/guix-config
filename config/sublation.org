@@ -1256,9 +1256,11 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
               ;; See
               ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/firewall.md
               ;; for all firewall options
-              "FIREWALL_INPUT_PORTS=9091")) ; Transmission web UI
+              "FIREWALL_INPUT_PORTS=9091"   ; Transmission web UI
+              "FIREWALL_INPUT_PORTS=6701")) ; qBittorrent web UI
            (network "gluetun-network")
-           (ports '("127.0.0.1:9091:9091")) ; Transmission web UI
+           (ports '("127.0.0.1:9091:9091"   ; Transmission web UI
+                    "127.0.0.1:6701:6701")) ; qBittorrent web UI
            (extra-arguments '("--device=/dev/net/tun:/dev/net/tun"
                               "--cap-add=NET_ADMIN"
                               "--cap-add=NET_RAW")) ; For UDP health checks
@@ -1301,6 +1303,39 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
+
+**** qBittorrent: Feature-full torrent client
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-qbittorrent
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "qbittorrent")
+         (requirement '(gluetun))
+         (image "linuxserver/qbittorrent:latest")
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"
+            "WEBUI_PORT=6701"))
+         (network "container:gluetun")
+         (volumes
+          '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
+            ("/home/krisbalintona/services/qbittorrent/downloads" . "/downloads")
+            ("/home/krisbalintona/services/qbittorrent/log" . "/log")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
 
 ** Monitoring
 
