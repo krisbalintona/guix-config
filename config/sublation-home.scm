@@ -679,8 +679,8 @@
            (network "container:gluetun")
            (volumes
             '(("/home/krisbalintona/services/transmission/config" . "/config")
-              ("/home/krisbalintona/services/transmission/downloads" . "/downloads")
-              ("/home/krisbalintona/services/transmission/watch" . "/watch")))
+              ("/home/krisbalintona/services/transmission/watch" . "/watch")
+              ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-qbittorrent
@@ -700,8 +700,8 @@
            (network "container:gluetun")
            (volumes
             '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
-              ("/home/krisbalintona/services/qbittorrent/downloads" . "/downloads")
-              ("/home/krisbalintona/services/qbittorrent/log" . "/log")))
+              ("/home/krisbalintona/services/qbittorrent/log" . "/log")
+              ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess
