@@ -57,3 +57,9 @@ endpoints:
     group: network
     <<: [*http, *internal]
     interval: 5m
+
+  - name: Transmission (local)
+    url: "https://transmission.home.kristofferbalintona.me"
+    group: services
+    <<: [*http, *internal]
+    interval: 2m
