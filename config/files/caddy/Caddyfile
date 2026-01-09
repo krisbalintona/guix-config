@@ -263,7 +263,7 @@
 	tls {
 		# Bind mint the access token file and reference the
 		# path
-		dns netlify {file./run/user/1000/secrets/netlify-access-token}
+		dns netlify {file./run/user/1000/secrets/caddy/netlify-access-token}
 	}
 }
 
