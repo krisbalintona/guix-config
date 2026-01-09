@@ -127,7 +127,6 @@
      "parted"
      "bat"
      "procs"
-     "eza"
      "brightnessctl"
      "jujutsu"
      "fzf"
@@ -188,11 +187,6 @@
         home-fish-service-type
       (home-fish-extension
         (abbreviations `(("ps" . "procs")))))
-    (simple-service 'home-fish-eza
-        home-fish-service-type
-      (home-fish-extension
-        (aliases `(("ls" . "eza")
-                   ("la" . "eza -la")))))
     (simple-service 'krisb-symlink-jj-config-files-service-type
           home-xdg-configuration-files-service-type
         `(("jj/config.toml"

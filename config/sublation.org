@@ -137,22 +137,6 @@ Configurable. Options include output with syntax highlighting, line numbers, and
       (abbreviations `(("ps" . "procs")))))
 #+end_src
 
-*** Eza: Fancier ~ls~
-
-[[https://github.com/eza-community/eza][Eza]] is the maintained fork of [[https://github.com/ogham/exa][exa]].
-
-#+begin_src scheme :noweb-ref home-packages
-  "eza"
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-fish-eza
-      home-fish-service-type
-    (home-fish-extension
-      (aliases `(("ls" . "eza")
-                 ("la" . "eza -la")))))
-#+end_src
-
 ** Control machine
 
 #+begin_src scheme :noweb-ref home-packages
