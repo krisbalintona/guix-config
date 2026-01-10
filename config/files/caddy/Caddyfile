@@ -97,7 +97,11 @@
 			# 14 days until re-authentication required
 			crypto default token lifetime 1209600
 			cookie insecure off # HTTPS-only cookies
-			cookie domain party.kristofferbalintona.me
+			cookie samesite none # Pocket ID needs cross-site
+			# Declare a cookie for each site I use Pocket
+			# ID authentication with.  See
+			# https://docs.authcrunch.com/docs/authenticate/auth-cookie
+			#cookie domain jellyfin.kristofferbalintona.me
 
 			# Modify metadata (claims)
 			transform user {
@@ -205,7 +209,11 @@
 (headers_security_global) {
 	header {
 		# Prevent clickjacking
-		X-Frame-Options "DENY"
+		#
+		# NOTE 2026-01-10: SAMEORIGIN is preferable to DENY
+		# (outright rejection) because Pocket ID authorization
+		# sometimes (always?) relies on same-site frames.
+		X-Frame-Options "SAMEORIGIN"
 		# Prevent MIME type sniffing
 		X-Content-Type-Options "nosniff"
 		# Referrer policy: don't show full URLs when referred
@@ -213,7 +221,7 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# Cross-site scriptin (XSS) protection
 		X-XSS-Protection "1; mode=block"
-		# Server name removing
+		# Remove server name
 		-Server
 		# Remove X-Powered-By though this shouldn't be an
 		# issue, but better safe than sorry

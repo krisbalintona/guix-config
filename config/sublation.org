@@ -1439,6 +1439,8 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
 
 *** Jellyfin: Media streamer
 
+Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
+
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
