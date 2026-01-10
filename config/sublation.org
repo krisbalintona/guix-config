@@ -284,6 +284,8 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 
 * Podman: Containers
 
+The logs for all Shepherd-run (home) containers can be found at =$HOME/.local/state/shepherd/shepherd.log=. Thus, something like ~tail -f $HOME/.local/state/shepherd/shepherd.log~ can be used to monitor all logs simultaneously. This can be useful when, e.g., a given Shepherd service is not configured to log to file, and its service fails before the user can read any of the stdout logs from ~herd status SERVICE~.
+
 #+begin_src scheme :noweb-ref system-modules
   (gnu services containers)
   (gnu services sysctl)
