@@ -1338,7 +1338,7 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
 
-**** Sonarr: Get movies
+**** Sonarr: Get shows
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1366,6 +1366,39 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          (volumes
           '(("/home/krisbalintona/services/sonarr/data" . "/config")
             ("/home/krisbalintona/services/sonarr/log" . "/config/logs")
+            ("/home/krisbalintona/services/media" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Radarr: Get movies
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-radarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "radarr")
+         (image "linuxserver/radarr:latest")
+         ;; See all environment variables here:
+         ;; https://wiki.servarr.com/radarr/environment-variables
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"
+            "RADARR__SERVER__PORT=14100"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:14100:14100"))
+         (volumes
+          '(("/home/krisbalintona/services/radarr/data" . "/config")
+            ("/home/krisbalintona/services/radarr/log" . "/config/logs")
             ("/home/krisbalintona/services/media" . "/data")))
          (auto-start? #t)
          (respawn? #f))))))

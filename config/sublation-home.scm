@@ -45,6 +45,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -729,6 +731,29 @@
            (volumes
             '(("/home/krisbalintona/services/sonarr/data" . "/config")
               ("/home/krisbalintona/services/sonarr/log" . "/config/logs")
+              ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-radarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "radarr")
+           (image "linuxserver/radarr:latest")
+           ;; See all environment variables here:
+           ;; https://wiki.servarr.com/radarr/environment-variables
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"
+              "RADARR__SERVER__PORT=14100"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:14100:14100"))
+           (volumes
+            '(("/home/krisbalintona/services/radarr/data" . "/config")
+              ("/home/krisbalintona/services/radarr/log" . "/config/logs")
               ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
