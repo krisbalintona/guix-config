@@ -595,7 +595,8 @@
        (networks
         (list
          (oci-network-configuration
-          (name "gluetun-network"))))
+          (name "gluetun-network")
+          (subnet "10.89.6.0/24"))))
        (containers
         (list
          (let ((wireguard_private_key
