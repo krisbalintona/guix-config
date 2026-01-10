@@ -795,12 +795,30 @@
         (list
          (oci-container-configuration
            (provision "jellyfin")
+           ;; NOTE 2026-01-10: I've implemented the hardware acceleration
+           ;; instructions specific to my device as instructed by this
+           ;; maintainer; if I change the image in the future, I must
+           ;; change my configuration elsewhere to support hardware
+           ;; acceleration.  See those instructions here:
+           ;; https://github.com/linuxserver/docker-jellyfin?tab=readme-ov-file#hardware-acceleration-enhancements
            (image "linuxserver/jellyfin:latest")
            (environment
             '("TZ='America/Chicago'"
               "PUID=1000"
               "PGID=1000"
-              "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"))
+              "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"
+              ;; For hardware acceleration support, enable the linuxserver
+              ;; OpenCL-Intel mod; see
+              ;; https://github.com/linuxserver/docker-mods/tree/jellyfin-opencl-intel.
+              ;; This is just the prerequisite for hardware acceleration
+              ;; support; see
+              ;; https://github.com/linuxserver/docker-jellyfin?tab=readme-ov-file#hardware-acceleration-enhancements
+              ;; for the full instructions.
+              ;;
+              ;; NOTE 2026-01-10: I believe that in order for the
+              ;; linuxserver mods to be installed, the container must be
+              ;; run at least once manually, not by Shepherd?
+              "DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel"))
            (network "jellyfin-network")
            (ports '("127.0.0.1:17200:8096"))
            (volumes
@@ -808,6 +826,12 @@
               ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
               ("/home/krisbalintona/services/media/shows" . "/data/shows")
               ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+           ;; Pass the appropriate GPU device to Jellyfin, as instructed
+           ;; here:
+           ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel#configure-on-linux-host,
+           ;; for the sake of hardware acceleration. The device is
+           ;; specific to Intel GPUs.
+           (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-bazarr
