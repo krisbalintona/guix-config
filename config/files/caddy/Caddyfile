@@ -432,3 +432,10 @@ qbittorrent.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:6701
 	import policy_private
 }
+
+# ** Prowlarr
+
+prowlarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:13031
+	import policy_private
+}

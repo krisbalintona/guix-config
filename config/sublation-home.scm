@@ -41,6 +41,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -696,12 +698,35 @@
             '("TZ='America/Chicago'"
               "PUID=1000"
               "PGID=1000"
+              "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
               "WEBUI_PORT=6701"))
            (network "container:gluetun")
            (volumes
             '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
               ("/home/krisbalintona/services/qbittorrent/log" . "/log")
               ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-prowlarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "prowlarr")
+           (image "lscr.io/linuxserver/prowlarr:latest")
+           ;; See all environment variables here:
+           ;; https://wiki.servarr.com/prowlarr/environment-variables
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"
+              "PROWLARR__SERVER__PORT=13031"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:13031:13031"))
+           (volumes
+            '(("/home/krisbalintona/services/prowlarr/data" . "/config")
+              ("/home/krisbalintona/services/prowlarr/log" . "/config/logs")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess

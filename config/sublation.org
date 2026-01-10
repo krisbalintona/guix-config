@@ -1325,6 +1325,7 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
           '("TZ='America/Chicago'"
             "PUID=1000"
             "PGID=1000"
+            "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
             "WEBUI_PORT=6701"))
          (network "container:gluetun")
          (volumes
@@ -1336,6 +1337,38 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
 #+end_src
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
+
+*** Prowlarr: Centralize trackers
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-prowlarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "prowlarr")
+         (image "lscr.io/linuxserver/prowlarr:latest")
+         ;; See all environment variables here:
+         ;; https://wiki.servarr.com/prowlarr/environment-variables
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"
+            "PROWLARR__SERVER__PORT=13031"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:13031:13031"))
+         (volumes
+          '(("/home/krisbalintona/services/prowlarr/data" . "/config")
+            ("/home/krisbalintona/services/prowlarr/log" . "/config/logs")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
 
 ** Monitoring
 
