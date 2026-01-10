@@ -1437,6 +1437,42 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          (respawn? #f))))))
 #+end_src
 
+*** Jellyfin: Media streamer
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-jellyfin
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "jellyfin-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "jellyfin")
+         (image "linuxserver/jellyfin:latest")
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"
+            "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"))
+         (network "jellyfin-network")
+         (ports '("127.0.0.1:17200:8096"))
+         (volumes
+          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+            ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
+            ("/home/krisbalintona/services/media/shows" . "/data/shows")
+            ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 ** Monitoring
 
 *** Goaccess: Web log access analytics

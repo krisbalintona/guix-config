@@ -453,3 +453,10 @@ radarr.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:14100
 	import policy_private
 }
+
+# ** Jellyfin
+
+jellyfin.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:17200
+	import policy_public
+}

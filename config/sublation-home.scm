@@ -47,6 +47,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -778,6 +780,32 @@
            (volumes
             '(("/home/krisbalintona/services/prowlarr/data" . "/config")
               ("/home/krisbalintona/services/prowlarr/log" . "/config/logs")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-jellyfin
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "jellyfin-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "jellyfin")
+           (image "linuxserver/jellyfin:latest")
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"
+              "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"))
+           (network "jellyfin-network")
+           (ports '("127.0.0.1:17200:8096"))
+           (volumes
+            '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+              ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
+              ("/home/krisbalintona/services/media/shows" . "/data/shows")
+              ("/home/krisbalintona/services/media/movies" . "/data/movies")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess
