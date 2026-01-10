@@ -709,7 +709,7 @@
            (volumes
             '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
               ("/home/krisbalintona/services/qbittorrent/log" . "/log")
-              ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
+              ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-sonarr
