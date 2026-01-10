@@ -1,5 +1,6 @@
 SHELL := $(shell printenv SHELL) # Run in user's shell
-GUIX = time guix
+_GUIX = guix
+GUIX = time $(_GUIX)
 GUIX_LOCKED = $(GUIX) time-machine --channels=$(LOCKFILE) --
 ENV_DIR = ./env
 CHANNELS = $(ENV_DIR)/channels.scm
@@ -54,6 +55,7 @@ $(LOCKFILE): $(CHANNELS) FORCE
 
 # ** System
 
+system system-build system-lock: _GUIX = sudo guix
 system: SYSTEM_ACTION = reconfigure
 system-build: SYSTEM_ACTION = build
 system system-lock: SYSTEM_EXTRA_FLAGS =
