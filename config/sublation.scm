@@ -194,11 +194,11 @@
               ;; See
               ;; https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
               ;; for an explanation of these values
+              (prefetch . "yes")
               (edns-buffer-size . "1232")
               (so-rcvbuf . "1m")
               (use-caps-for-id . "no")
-              (num-threads . "1")
-              (prefetch . "yes")))))
+              (num-threads . "1")))))
         (remote-control
          (unbound-remote
            (control-enable #t)

@@ -719,11 +719,11 @@ I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS f
             ;; See
             ;; https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
             ;; for an explanation of these values
+            (prefetch . "yes")
             (edns-buffer-size . "1232")
             (so-rcvbuf . "1m")
             (use-caps-for-id . "no")
-            (num-threads . "1")
-            (prefetch . "yes")))))
+            (num-threads . "1")))))
       (remote-control
        (unbound-remote
          (control-enable #t)
@@ -842,6 +842,17 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
 #       #:files (list (string-append services-dir "/pihole")))))
 # #+end_src
 
+Other notes:
++ 2026-01-10: There is the following occasional error in Pihole:
+  #+begin_quote
+  Connection error (127.0.0.1#5335): TCP connection failed while receiving payload length from upstream (Connection prematurely closed by remote server)
+  #+end_quote
+  It seems the error is due to the Unbound upstream DNS resolver (at port 5335 in my configuration). See https://github.com/NLnetLabs/unbound/issues/1237, namely https://github.com/NLnetLabs/unbound/issues/1237#issuecomment-2726267894. Run the following and the connection should time out and Pihole should generate the same error as above.
+  #+begin_src bash
+    dig www.cga.ct.gov https +tcp
+  #+end_src
+  As such, the issue is not with Pi-hole nor Unbound, but with badly configured domains. Therefore, there is nothing to be "fixed" on the user's end.
+  
 *** Web traffic
 
 **** Caddy: Reverse proxy
