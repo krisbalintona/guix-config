@@ -1338,6 +1338,39 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
 
+**** Sonarr: Get movies
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-sonarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "sonarr")
+         (image "linuxserver/sonarr:latest")
+         ;; See all environment variables here:
+         ;; https://wiki.servarr.com/sonarr/environment-variables
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"
+            "SONARR__SERVER__PORT=15151"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:15151:15151"))
+         (volumes
+          '(("/home/krisbalintona/services/sonarr/data" . "/config")
+            ("/home/krisbalintona/services/sonarr/log" . "/config/logs")
+            ("/home/krisbalintona/services/media" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 *** Prowlarr: Centralize trackers
 
 #+begin_src scheme :noweb-ref home-modules

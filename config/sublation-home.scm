@@ -43,6 +43,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -705,6 +707,29 @@
             '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
               ("/home/krisbalintona/services/qbittorrent/log" . "/log")
               ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-sonarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "sonarr")
+           (image "linuxserver/sonarr:latest")
+           ;; See all environment variables here:
+           ;; https://wiki.servarr.com/sonarr/environment-variables
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"
+              "SONARR__SERVER__PORT=15151"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:15151:15151"))
+           (volumes
+            '(("/home/krisbalintona/services/sonarr/data" . "/config")
+              ("/home/krisbalintona/services/sonarr/log" . "/config/logs")
+              ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-prowlarr

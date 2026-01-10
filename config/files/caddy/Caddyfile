@@ -439,3 +439,9 @@ prowlarr.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:13031
 	import policy_private
 }
+# ** Sonarr
+
+sonarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:15151
+	import policy_private
+}
