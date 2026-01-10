@@ -460,3 +460,10 @@ jellyfin.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:17200
 	import policy_public
 }
+
+# ** Bazarr
+
+bazarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9799
+	import policy_public
+}

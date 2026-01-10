@@ -1473,6 +1473,43 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          (respawn? #f))))))
 #+end_src
 
+*** Bazarr: Get subtitles
+
+Good resources:
++ Setup guide: [[https://wiki.bazarr.media/Getting-Started/Setup-Guide/][Setup Guide - Bazarr Wiki]]
++ For good scoring settings: [[https://trash-guides.info/Bazarr/Bazarr-suggested-scoring/][Suggested Scoring - TRaSH Guides]]
++ Usage stats, allows you to find good subtitle providers per language: [[https://wiki.bazarr.media/bazarr-stats/][Bazarr Usage Stats - Bazarr Wiki]]
++ Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
+  - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-bazarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "bazarr")
+         (image "linuxserver/bazarr:latest")
+         (environment
+          '("TZ='America/Chicago'"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:9799:6767"))
+         (volumes
+          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+            ("/home/krisbalintona/services/media/shows" . "/data/shows")
+            ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 ** Monitoring
 
 *** Goaccess: Web log access analytics

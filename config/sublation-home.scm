@@ -49,6 +49,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -804,6 +806,26 @@
            (volumes
             '(("/home/krisbalintona/services/jellyfin/data" . "/config")
               ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
+              ("/home/krisbalintona/services/media/shows" . "/data/shows")
+              ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-bazarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "bazarr")
+           (image "linuxserver/bazarr:latest")
+           (environment
+            '("TZ='America/Chicago'"
+              "PUID=1000"
+              "PGID=1000"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:9799:6767"))
+           (volumes
+            '(("/home/krisbalintona/services/jellyfin/data" . "/config")
               ("/home/krisbalintona/services/media/shows" . "/data/shows")
               ("/home/krisbalintona/services/media/movies" . "/data/movies")))
            (auto-start? #t)
