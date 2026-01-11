@@ -51,6 +51,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -620,7 +622,7 @@
                (cons "WIREGUARD_PRIVATE_KEY" wireguard_private_key)
                (cons "WIREGUARD_PRESHARED_KEY" wireguard_preshared_key)))
              (environment
-              '("TZ='America/Chicago'"
+              '("TZ=America/Chicago"
                 ;; See
                 ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/windscribe.md
                 ;; for Windscribe-specific Gluetun instructions
@@ -682,7 +684,7 @@
            ;; instructions on setting up Gluetun
            (image "lscr.io/linuxserver/transmission:latest")
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"))
            ;; NOTE: The transmission web UI is exposed by the Gluetun
@@ -704,7 +706,7 @@
            (requirement '(gluetun))
            (image "linuxserver/qbittorrent:latest")
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"
               "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
@@ -727,7 +729,7 @@
            ;; See all environment variables here:
            ;; https://wiki.servarr.com/sonarr/environment-variables
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"
               "SONARR__SERVER__PORT=15151"))
@@ -750,7 +752,7 @@
            ;; See all environment variables here:
            ;; https://wiki.servarr.com/radarr/environment-variables
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"
               "RADARR__SERVER__PORT=14100"))
@@ -760,6 +762,26 @@
             '(("/home/krisbalintona/services/radarr/data" . "/config")
               ("/home/krisbalintona/services/radarr/log" . "/config/logs")
               ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-profilarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "profilarr")
+           (image "santiagosayshey/profilarr:beta")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"
+              "UMASK=022"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:11200:6868"))
+           (volumes
+            '(("/home/krisbalintona/services/profilarr/data" . "/config")
+              ("/home/krisbalintona/services/profilarr/log" . "/config/log")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-prowlarr
@@ -773,7 +795,7 @@
            ;; See all environment variables here:
            ;; https://wiki.servarr.com/prowlarr/environment-variables
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"
               "PROWLARR__SERVER__PORT=13031"))
@@ -803,7 +825,7 @@
            ;; https://github.com/linuxserver/docker-jellyfin?tab=readme-ov-file#hardware-acceleration-enhancements
            (image "linuxserver/jellyfin:latest")
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"
               "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"
@@ -843,7 +865,7 @@
            (provision "bazarr")
            (image "linuxserver/bazarr:latest")
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               "PUID=1000"
               "PGID=1000"))
            (network "gluetun-network")
@@ -907,7 +929,7 @@
                       "--real-time-html"
                       "--ws-url=wss://goaccess.home.kristofferbalintona.me:443/ws"
                       "--port=7890"
-                      "--tz='America/Chicago'"))
+                      "--tz=America/Chicago"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-gatus

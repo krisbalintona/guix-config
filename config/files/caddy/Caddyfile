@@ -441,24 +441,40 @@ qbittorrent.home.kristofferbalintona.me {
 	import policy_private
 }
 
-# ** Prowlarr
+# ** Arr stack
 
-prowlarr.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:13031
-	import policy_private
-}
-
-# ** Sonarr
+# *** Sonarr
 
 sonarr.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:15151
 	import policy_private
 }
 
-# ** Radarr
+# *** Radarr
 
 radarr.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:14100
+	import policy_private
+}
+
+# *** Prowlarr
+
+prowlarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:13031
+	import policy_private
+}
+
+# *** Profilarr
+
+profilarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:11200
+	import policy_private
+}
+
+# *** Bazarr
+
+bazarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9799
 	import policy_private
 }
 
@@ -466,12 +482,5 @@ radarr.home.kristofferbalintona.me {
 
 jellyfin.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:17200
-	import policy_public
-}
-
-# ** Bazarr
-
-bazarr.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:9799
 	import policy_public
 }

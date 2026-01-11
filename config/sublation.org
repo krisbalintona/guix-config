@@ -1,7 +1,8 @@
 #+TITLE: Sublation
 #+PROPERTY: header-args :noweb yes
 
-#  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty
+#  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty Sonarr Radarr
+#  LocalWords:  Prowlarr qBittorrent TRaSH
 
 * Shells
 
@@ -1232,7 +1233,7 @@ Other notes:
              (cons "WIREGUARD_PRIVATE_KEY" wireguard_private_key)
              (cons "WIREGUARD_PRESHARED_KEY" wireguard_preshared_key)))
            (environment
-            '("TZ='America/Chicago'"
+            '("TZ=America/Chicago"
               ;; See
               ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/windscribe.md
               ;; for Windscribe-specific Gluetun instructions
@@ -1304,7 +1305,7 @@ Other notes:
          ;; instructions on setting up Gluetun
          (image "lscr.io/linuxserver/transmission:latest")
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"))
          ;; NOTE: The transmission web UI is exposed by the Gluetun
@@ -1336,7 +1337,7 @@ Other notes:
          (requirement '(gluetun))
          (image "linuxserver/qbittorrent:latest")
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
             "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
@@ -1352,8 +1353,28 @@ Other notes:
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
 
+*** Arr media stack
+
+Configuration creation/sync[fn:3] projects:
++ [[https://github.com/Notifiarr/notifiarr][GitHub - Notifiarr/notifiarr: Client for Notifiarr.com]]
+  A notification client for the Arr stack. Does many things including syncing ones configuration files to TRaSH guide's settings---but requires a Patron donation.
++ [[https://github.com/recyclarr/recyclarr][GitHub - recyclarr/recyclarr: Automatically sync TRaSH Guides to your Sonarr and Radarr instances]]
+  Like Notifiarr but free and through CLI commands.
++ [[https://github.com/raydak-labs/configarr?tab=readme-ov-file][GitHub - raydak-labs/configarr: Sync TRaSH Guides + custom configs with Sonarr/Radarr]]
+  A newer alternative intended to be a more configurable Recyclarr (sync with TRaSH guides).
+  - Overview article: [[https://www.raydak.de/projects/configarr/][(Community) Introducing Configarr: Streamlining Configuration Management for Sonarr and Radarr | raydak GmbH]]
++ [[https://github.com/Dictionarry-Hub/profilarr][GitHub - Dictionarry-Hub/profilarr: Configuration Management Platform for Radarr/Sonarr]]
+  Does not sync with TRaSH guides. Instead, offers very reasonable and high-quality quality out-of-the-box profiles. Therefore, it is more shapable to user needs and preferences. In particular, TRaSH guides has a "the best or nothing" type of style, which does not align for smaller file size needs. So Profilarr would be especially useful in such cases.
+
+[fn:3] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
+
 **** Sonarr: Get shows
 
+The Trash guides are great. A few pages that have been useful to me:
++ Robust naming schemes: [[https://trash-guides.info/Sonarr/Sonarr-recommended-naming-scheme/][Recommended naming scheme - TRaSH Guides]]
++ Quality definitions (general and anime-specific): [[https://trash-guides.info/Sonarr/Sonarr-Quality-Settings-File-Size/#animeanimatedcartoons][Quality Settings (File Size) - TRaSH Guides]]
++ Anime-specific setup (naming scheme, quality settings, quality profiles): [[https://trash-guides.info/Sonarr/sonarr-setup-quality-profiles-anime/][How to set up Quality Profiles (Anime) - TRaSH Guides]]
+  
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
@@ -1371,7 +1392,7 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          ;; See all environment variables here:
          ;; https://wiki.servarr.com/sonarr/environment-variables
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
             "SONARR__SERVER__PORT=15151"))
@@ -1404,7 +1425,7 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          ;; See all environment variables here:
          ;; https://wiki.servarr.com/radarr/environment-variables
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
             "RADARR__SERVER__PORT=14100"))
@@ -1418,7 +1439,43 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          (respawn? #f))))))
 #+end_src
 
-*** Prowlarr: Centralize trackers
+**** Profilarr: An updated set of great configurations for Sonarr and Radarr
+
+On [[https://dictionarry.dev/quality-profile][this page]] of their wiki is a description of all the quality profiles that come with their [[https://github.com/Dictionarry-Hub/database][default Profillar compliant database (PCD)]]. And usefully, there is a "Profile Wizard" at the bottom of the page, which recommends to users a profile based on their responses to various criteria.
+
+Alternative databases:
++ [[https://github.com/Dumpstarr/Dumpstarr?tab=readme-ov-file][GitHub - Dumpstarr/Dumpstarr: Profilarr database based on TRaSH Guides and Dictionarry]]
++ [[https://github.com/Dictionarry-Hub/database][GitHub - Dictionarry-Hub/database: Database configurations for Dictionarry]]
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-profilarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "profilarr")
+         (image "santiagosayshey/profilarr:beta")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"
+            "UMASK=022"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:11200:6868"))
+         (volumes
+          '(("/home/krisbalintona/services/profilarr/data" . "/config")
+            ("/home/krisbalintona/services/profilarr/log" . "/config/log")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Prowlarr: Centralize trackers
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1437,7 +1494,7 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
          ;; See all environment variables here:
          ;; https://wiki.servarr.com/prowlarr/environment-variables
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
             "PROWLARR__SERVER__PORT=13031"))
@@ -1479,7 +1536,7 @@ Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-
          ;; https://github.com/linuxserver/docker-jellyfin?tab=readme-ov-file#hardware-acceleration-enhancements
          (image "linuxserver/jellyfin:latest")
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
             "JELLYFIN_PublishedServerUrl=https://jellyfin.kristofferbalintona.me"
@@ -1544,7 +1601,7 @@ Good resources:
          (provision "bazarr")
          (image "linuxserver/bazarr:latest")
          (environment
-          '("TZ='America/Chicago'"
+          '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"))
          (network "gluetun-network")
@@ -1623,7 +1680,7 @@ Good resources:
                     "--real-time-html"
                     "--ws-url=wss://goaccess.home.kristofferbalintona.me:443/ws"
                     "--port=7890"
-                    "--tz='America/Chicago'"))
+                    "--tz=America/Chicago"))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
