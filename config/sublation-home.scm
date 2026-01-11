@@ -53,6 +53,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -715,6 +717,26 @@
            (volumes
             '(("/home/krisbalintona/services/qbittorrent/config" . "/config")
               ("/home/krisbalintona/services/qbittorrent/log" . "/log")
+              ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-sabnzbd
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "sabnzbd")
+           (image "linuxserver/sabnzbd:latest")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:5790:8080"))
+           (volumes
+            '(("/home/krisbalintona/services/sabnzbd/data" . "/config")
+              ("/home/krisbalintona/services/sabnzbd/log" . "/config/logs")
               ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))

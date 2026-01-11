@@ -1185,9 +1185,11 @@ Other notes:
       #:files (list (string-append services-dir "/vaultwarden")))))
 #+end_src
 
-*** Torrenting
+*** Downloading clients
 
-**** Gluetun: Bind all torrent client traffic to a VPN
+**** Torrenting
+
+***** Gluetun: Bind all torrent client traffic to a VPN
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1285,7 +1287,7 @@ Other notes:
            (respawn? #f)))))))
 #+end_src
 
-**** Transmission: Lightweight torrent client
+***** Transmission: Lightweight torrent client
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1319,7 +1321,7 @@ Other notes:
          (respawn? #f))))))
 #+end_src
 
-**** qBittorrent: Feature-full torrent client
+***** qBittorrent: Feature-full torrent client
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1352,6 +1354,38 @@ Other notes:
 #+end_src
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
+
+**** Usenet
+
+***** SABnzbd: A better maintained NZBGet
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-sabnzbd
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "sabnzbd")
+         (image "linuxserver/sabnzbd:latest")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:5790:8080"))
+         (volumes
+          '(("/home/krisbalintona/services/sabnzbd/data" . "/config")
+            ("/home/krisbalintona/services/sabnzbd/log" . "/config/logs")
+            ("/home/krisbalintona/services/media" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
 
 *** Arr media stack
 

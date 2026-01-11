@@ -427,17 +427,28 @@ pocket-id.kristofferbalintona.me {
 	import service-logs pocket-id
 }
 
-# ** Transmission
+# ** Torrents
+
+# *** Transmission
 
 transmission.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:9091
 	import policy_private
 }
 
-# ** qBittorrent
+# *** qBittorrent
 
 qbittorrent.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:6701
+	import policy_private
+}
+
+# ** NZB
+
+# *** SABnzbd
+
+sabnzbd.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:5790
 	import policy_private
 }
 
