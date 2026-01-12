@@ -16,7 +16,10 @@
              (gnu services security)
              (gnu services dns)
              (gnu services vpn)
-             (gnu services sysctl))
+             (gnu services sysctl)
+             (gnu services linux)
+             (gnu services sysctl)
+             (gnu system file-systems))
 
 (operating-system
   ;; Use Linux kernel.  See also the (nonguix transformations) module
@@ -279,6 +282,21 @@
     (simple-service 'sysctl-wireguard
         sysctl-service-type
       '(("net.ipv4.ip_forward" . "1")))
+    (service zram-device-service-type
+      (zram-device-configuration
+        (size "3G")
+        (memory-limit "2G")
+        (compression-algorithm 'zstd)
+        (priority 100)))
+    ;; Based on the settings recommended here
+    ;; https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+    ;; (follow the links there recursively for some reasoning)
+    (simple-service 'sysctl-zram
+        sysctl-service-type
+      '(("vm.swappiness" . "170")
+        ("vm.watermark_boost_factor". "0")
+        ("vm.watermark_scale_factor" . "110")
+        ("vm.page-cluster" . "0")))
     (service network-manager-service-type)
     (service wpa-supplicant-service-type)
     (service ntp-service-type)
@@ -316,4 +334,13 @@
                          (device (uuid "8D5D-5605"
                                        'fat32))
                          (type "vfat"))
-                       %base-file-systems)))
+                       %base-file-systems))
+
+  (swap-devices
+   (list
+    (swap-space
+      (target "/swapfile")
+      (dependencies
+       (filter (file-system-mount-point-predicate "/")
+               file-systems))
+      (priority 0)))))
