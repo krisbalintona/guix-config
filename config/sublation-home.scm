@@ -57,6 +57,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -871,6 +873,26 @@
             '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
               ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
               ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-byparr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "byparr")
+           (image "thephaseless/byparr:latest")
+           ;; See
+           ;; https://deepwiki.com/ThePhaseless/Byparr/4.3-environment-configuration
+           ;; for a list of all environment variables
+           (environment '())
+           (network "gluetun-network")
+           (ports '("127.0.0.1:8191:8191"))
+           ;; 2026-01-12: Persist the Python .venv because the GeoIP
+           ;; database is downloaded on first API call, and it'd be best
+           ;; not to redownload it upon every restart of the service
+           (volumes '(("/home/krisbalintona/services/byparr/venv" . "/app/.venv")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-jellyfin
