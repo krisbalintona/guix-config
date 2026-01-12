@@ -2,7 +2,7 @@
 #+PROPERTY: header-args :noweb yes
 
 #  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty Sonarr Radarr
-#  LocalWords:  Prowlarr qBittorrent TRaSH
+#  LocalWords:  Prowlarr qBittorrent TRaSH Jellyfin
 
 * Shells
 
@@ -1403,12 +1403,17 @@ Configuration creation/sync[fn:3] projects:
   - Overview article: [[https://www.raydak.de/projects/configarr/][(Community) Introducing Configarr: Streamlining Configuration Management for Sonarr and Radarr | raydak GmbH]]
 + [[https://github.com/Dictionarry-Hub/profilarr][GitHub - Dictionarry-Hub/profilarr: Configuration Management Platform for Radarr/Sonarr]]
   Does not sync with TRaSH guides. Instead, offers very reasonable and high-quality quality out-of-the-box profiles. Therefore, it is more shapable to user needs and preferences. In particular, TRaSH guides has a "the best or nothing" type of style, which does not align for smaller file size needs. So Profilarr would be especially useful in such cases.
++ [[https://github.com/ThePhaseless/Byparr][GitHub - ThePhaseless/Byparr: Get your valid antibot cookies yourself!]]
 
 Other useful projects that integrate with the Arr stack and tools related to it:
 + [[https://github.com/Cleanuparr/Cleanuparr?tab=readme-ov-file][GitHub - Cleanuparr/Cleanuparr: Cleanuparr is a tool for automating the cleanup of unwanted or blocked files in Sonarr, Radarr, and supported download clients like qBittorrent, Deluge and Transmission.]]
 + [[https://github.com/plexguide/Huntarr.io][GitHub - plexguide/Huntarr.io: A specialized utility that automates discovering missing and upgrading your media collection!]]
 + [[https://github.com/StuffAnThings/qbit_manage/wiki][Home · StuffAnThings/qbit_manage Wiki · GitHub]]
-  
+
+Projects related to the Usenet:
++ [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
++ [[https://github.com/rix1337/Quasarr][GitHub - rix1337/Quasarr: Quasarr connects JDownloader with Radarr, Sonarr and LazyLibrarian. It also decrypts links protected by CAPTCHAs.]]
+
 [fn:3] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
 **** Sonarr: Get shows
@@ -1629,6 +1634,24 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
+Useful Jellyfin plugins:
++ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:4]
++ [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
+
+Other potentially useful projects:[fn:5]
++ [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
++ [[https://github.com/Maintainerr/Maintainerr][GitHub - Maintainerr/Maintainerr: Looks and smells like Overseerr, does the opposite. Maintenance tool for the Plex ecosystem]]
+  - See also the related [[https://github.com/Schaka/janitorr][GitHub - Schaka/janitorr: Cleans your Radarr, Sonarr, Jellyseerr and Jellyfin before you run out of space]]
++ [[https://github.com/shemanaev/jellyfin-plugin-media-cleaner][GitHub - shemanaev/jellyfin-plugin-media-cleaner: Automatically delete played media files after specified amount of time.]]
++ [[https://github.com/giuseppe99barchetta/SuggestArr][GitHub - giuseppe99barchetta/SuggestArr: Effortlessly request recommended movies, TV shows and anime to Jellyseer/Overseer based on your recently watched content on Jellyfin, Plex or Emby—let SuggestArr handle it all automatically, keeping your library fresh with new and exciting content!]] and [[https://github.com/fingerthief/recommendarr][GitHub - fingerthief/recommendarr: An LLM driven recommendation system based on Radarr and Sonarr library or watch history information]]
++ [[https://tautulli.com/#about][Tautulli]]
++ [[https://home.tdarr.io/][Tdarr]]
++ [[https://github.com/dan-online/autopulse][GitHub - dan-online/autopulse: 💫 automated lightweight service that updates media servers like Plex and Jellyfin based on notifications from media organizers like Sonarr and Radarr]]
+
+See also these tangential projects:
++ Alternative to Jellyfin and the Arr stack: [[https://github.com/maxdorninger/MediaManager][GitHub - maxdorninger/MediaManager: A modern selfhosted media management system for your media library]].
++ [[https://kometa.wiki/en/latest/#example-usage][Home - Kometa Wiki]]
+
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
@@ -1694,6 +1717,10 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
   "i915.enable_guc=3"
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
+
+[fn:4] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
+
+[fn:5] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
 ** Monitoring
 
