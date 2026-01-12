@@ -1323,6 +1323,8 @@ Other notes:
 
 ***** qBittorrent: Feature-full torrent client
 
+See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021955.674828][Cleanuparr: Keep download client queues tidy]].
+
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
@@ -1389,6 +1391,8 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
 
 *** Arr media stack
 
+The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
+
 Configuration creation/sync[fn:3] projects:
 + [[https://github.com/Notifiarr/notifiarr][GitHub - Notifiarr/notifiarr: Client for Notifiarr.com]]
   A notification client for the Arr stack. Does many things including syncing ones configuration files to TRaSH guide's settings---but requires a Patron donation.
@@ -1400,9 +1404,10 @@ Configuration creation/sync[fn:3] projects:
 + [[https://github.com/Dictionarry-Hub/profilarr][GitHub - Dictionarry-Hub/profilarr: Configuration Management Platform for Radarr/Sonarr]]
   Does not sync with TRaSH guides. Instead, offers very reasonable and high-quality quality out-of-the-box profiles. Therefore, it is more shapable to user needs and preferences. In particular, TRaSH guides has a "the best or nothing" type of style, which does not align for smaller file size needs. So Profilarr would be especially useful in such cases.
 
-Other projects that integrate with the Arr stack:
+Other useful projects that integrate with the Arr stack and tools related to it:
 + [[https://github.com/Cleanuparr/Cleanuparr?tab=readme-ov-file][GitHub - Cleanuparr/Cleanuparr: Cleanuparr is a tool for automating the cleanup of unwanted or blocked files in Sonarr, Radarr, and supported download clients like qBittorrent, Deluge and Transmission.]]
 + [[https://github.com/plexguide/Huntarr.io][GitHub - plexguide/Huntarr.io: A specialized utility that automates discovering missing and upgrading your media collection!]]
++ [[https://github.com/StuffAnThings/qbit_manage/wiki][Home · StuffAnThings/qbit_manage Wiki · GitHub]]
   
 [fn:3] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
@@ -1545,6 +1550,81 @@ Alternative databases:
          (respawn? #f))))))
 #+end_src
 
+**** Bazarr: Get subtitles
+
+Good resources:
++ Setup guide: [[https://wiki.bazarr.media/Getting-Started/Setup-Guide/][Setup Guide - Bazarr Wiki]]
++ For good scoring settings: [[https://trash-guides.info/Bazarr/Bazarr-suggested-scoring/][Suggested Scoring - TRaSH Guides]]
++ Usage stats, allows you to find good subtitle providers per language: [[https://wiki.bazarr.media/bazarr-stats/][Bazarr Usage Stats - Bazarr Wiki]]
++ Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
+  - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-bazarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "bazarr")
+         (image "linuxserver/bazarr:latest")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:9799:6767"))
+         (volumes
+          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+            ("/home/krisbalintona/services/media/shows" . "/data/shows")
+            ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Cleanuparr: Keep download client queues tidy
+:PROPERTIES:
+:CUSTOM_ID: h:20260112T021955.674828
+:END:
+
+See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][How it works | Cleanuparr]].
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-cleanuparr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "cleanuparr")
+         (image "cleanuparr/cleanuparr:latest")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"
+            "UMASK=022"
+            "PORT=10001"
+            "BASE_PATH="))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:10001:10001"))
+         (volumes
+          '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
+            ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
+            ("/home/krisbalintona/services/media" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 *** Jellyfin: Media streamer
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
@@ -1614,43 +1694,6 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
   "i915.enable_guc=3"
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
-
-*** Bazarr: Get subtitles
-
-Good resources:
-+ Setup guide: [[https://wiki.bazarr.media/Getting-Started/Setup-Guide/][Setup Guide - Bazarr Wiki]]
-+ For good scoring settings: [[https://trash-guides.info/Bazarr/Bazarr-suggested-scoring/][Suggested Scoring - TRaSH Guides]]
-+ Usage stats, allows you to find good subtitle providers per language: [[https://wiki.bazarr.media/bazarr-stats/][Bazarr Usage Stats - Bazarr Wiki]]
-+ Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
-  - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
-
-#+begin_src scheme :noweb-ref home-modules
-  (gnu services containers)
-  (gnu home services containers)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-oci-bazarr
-      home-oci-service-type
-    (oci-extension
-     (containers
-      (list
-       (oci-container-configuration
-         (provision "bazarr")
-         (image "linuxserver/bazarr:latest")
-         (environment
-          '("TZ=America/Chicago"
-            "PUID=1000"
-            "PGID=1000"))
-         (network "gluetun-network")
-         (ports '("127.0.0.1:9799:6767"))
-         (volumes
-          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
-            ("/home/krisbalintona/services/media/shows" . "/data/shows")
-            ("/home/krisbalintona/services/media/movies" . "/data/movies")))
-         (auto-start? #t)
-         (respawn? #f))))))
-#+end_src
 
 ** Monitoring
 

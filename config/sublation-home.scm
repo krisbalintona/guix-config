@@ -55,6 +55,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -828,6 +830,49 @@
               ("/home/krisbalintona/services/prowlarr/log" . "/config/logs")))
            (auto-start? #t)
            (respawn? #f))))))
+    (simple-service 'home-oci-bazarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "bazarr")
+           (image "linuxserver/bazarr:latest")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:9799:6767"))
+           (volumes
+            '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+              ("/home/krisbalintona/services/media/shows" . "/data/shows")
+              ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-cleanuparr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "cleanuparr")
+           (image "cleanuparr/cleanuparr:latest")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"
+              "UMASK=022"
+              "PORT=10001"
+              "BASE_PATH="))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:10001:10001"))
+           (volumes
+            '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
+              ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
+              ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
     (simple-service 'home-oci-jellyfin
         home-oci-service-type
       (oci-extension
@@ -876,26 +921,6 @@
            ;; for the sake of hardware acceleration. The device is
            ;; specific to Intel GPUs.
            (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
-           (auto-start? #t)
-           (respawn? #f))))))
-    (simple-service 'home-oci-bazarr
-        home-oci-service-type
-      (oci-extension
-       (containers
-        (list
-         (oci-container-configuration
-           (provision "bazarr")
-           (image "linuxserver/bazarr:latest")
-           (environment
-            '("TZ=America/Chicago"
-              "PUID=1000"
-              "PGID=1000"))
-           (network "gluetun-network")
-           (ports '("127.0.0.1:9799:6767"))
-           (volumes
-            '(("/home/krisbalintona/services/jellyfin/data" . "/config")
-              ("/home/krisbalintona/services/media/shows" . "/data/shows")
-              ("/home/krisbalintona/services/media/movies" . "/data/movies")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess
