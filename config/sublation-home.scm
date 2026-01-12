@@ -140,6 +140,9 @@
      "emacs"
      ;; Other packages
      "btop"
+     "glances"
+     "nmon"
+     "atop"
      "git"
      "make"
      "cmake"

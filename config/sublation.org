@@ -60,6 +60,9 @@
 System monitoring packages:
 #+begin_src scheme :noweb-ref home-packages
   "btop"
+  "glances"
+  "nmon"
+  "atop"
 #+end_src
 See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
 
@@ -1917,6 +1920,9 @@ A lightweight, simpler alternative to Uptime Kuma.
 #+end_src
 
 * Memory management
+
+Learning about memory management in servers:
++ [[https://linuxblog.io/free-vs-available-memory-in-linux/][Free vs. Available Memory in Linux]]
 
 ** Zram
 
