@@ -1525,6 +1525,8 @@ Alternative databases:
 
 **** Prowlarr: Centralize trackers
 
+See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on connecting to indexers via your public IP versus through your VPN. TL;DR: prowlarr is only needed behind a VPN in countries where searching for torrents (e.g., accessing indexers) is illegal, or when those sites are blocked by ISPs.
+
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
