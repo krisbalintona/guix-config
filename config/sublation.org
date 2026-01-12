@@ -1400,6 +1400,10 @@ Configuration creation/sync[fn:3] projects:
 + [[https://github.com/Dictionarry-Hub/profilarr][GitHub - Dictionarry-Hub/profilarr: Configuration Management Platform for Radarr/Sonarr]]
   Does not sync with TRaSH guides. Instead, offers very reasonable and high-quality quality out-of-the-box profiles. Therefore, it is more shapable to user needs and preferences. In particular, TRaSH guides has a "the best or nothing" type of style, which does not align for smaller file size needs. So Profilarr would be especially useful in such cases.
 
+Other projects that integrate with the Arr stack:
++ [[https://github.com/Cleanuparr/Cleanuparr?tab=readme-ov-file][GitHub - Cleanuparr/Cleanuparr: Cleanuparr is a tool for automating the cleanup of unwanted or blocked files in Sonarr, Radarr, and supported download clients like qBittorrent, Deluge and Transmission.]]
++ [[https://github.com/plexguide/Huntarr.io][GitHub - plexguide/Huntarr.io: A specialized utility that automates discovering missing and upgrading your media collection!]]
+  
 [fn:3] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
 **** Sonarr: Get shows
