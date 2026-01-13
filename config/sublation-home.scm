@@ -61,6 +61,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -936,8 +938,7 @@
            (volumes
             '(("/home/krisbalintona/services/jellyfin/data" . "/config")
               ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
-              ("/home/krisbalintona/services/media/shows" . "/data/shows")
-              ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+              ("/home/krisbalintona/services/media" . "/media")))
            ;; Pass the appropriate GPU device to Jellyfin, as instructed
            ;; here:
            ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel#configure-on-linux-host,
@@ -964,6 +965,28 @@
            (volumes
             '(("/home/krisbalintona/services/seerr/data" . "/app/config")
               ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-shoko
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "shoko")
+           (image "shokoanime/server:latest")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"
+              "PORT=5055"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:8111:8111"))
+           (volumes
+            '(("/home/krisbalintona/services/shoko/data" . "/home/shoko/.shoko")
+              ("/home/krisbalintona/services/media" . "/media")))
+           ;; Additional argument set in the official documentation
+           (extra-arguments '("--shm-size=256m"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess

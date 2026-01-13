@@ -509,3 +509,10 @@ seerr.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:5055
 	import policy_public
 }
+
+# ** Shoko
+
+shoko.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8111
+	import policy_private
+}
