@@ -1413,7 +1413,7 @@ See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021
          (respawn? #f))))))
 #+end_src
 
-*** Arr media stack
+*** Servarr (Arr media stack)
 
 The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
 
@@ -1429,10 +1429,15 @@ Configuration creation/sync[fn:5] projects:
   Does not sync with TRaSH guides. Instead, offers very reasonable and high-quality quality out-of-the-box profiles. Therefore, it is more shapable to user needs and preferences. In particular, TRaSH guides has a "the best or nothing" type of style, which does not align for smaller file size needs. So Profilarr would be especially useful in such cases.
 + [[https://github.com/ThePhaseless/Byparr][GitHub - ThePhaseless/Byparr: Get your valid antibot cookies yourself!]]
 
-Other useful projects that integrate with the Arr stack and tools related to it:
+Other useful projects that integrate with the Arr stack and tools related to it. See also [[https://wiki.servarr.com/useful-tools][Useful Tools | Servarr Wiki]].
 + [[https://github.com/Cleanuparr/Cleanuparr?tab=readme-ov-file][GitHub - Cleanuparr/Cleanuparr: Cleanuparr is a tool for automating the cleanup of unwanted or blocked files in Sonarr, Radarr, and supported download clients like qBittorrent, Deluge and Transmission.]]
 + [[https://github.com/plexguide/Huntarr.io][GitHub - plexguide/Huntarr.io: A specialized utility that automates discovering missing and upgrading your media collection!]]
 + [[https://github.com/StuffAnThings/qbit_manage/wiki][Home · StuffAnThings/qbit_manage Wiki · GitHub]]
++ See also [[https://www.reddit.com/r/radarr/comments/hbwnb2/a_list_of_all_companion_tools_and_software/][this Reddit post]]
++ A compiled list (an "awesome" list): [[https://github.com/Ravencentric/awesome-arr][GitHub - Ravencentric/awesome-arr: A collection of *arrs and related stuff]]
++ [[https://github.com/aetaric/checkrr][GitHub - aetaric/checkrr: Checkrr Scans your library files for corrupt media and optionally replaces the files via sonarr and radarr]]
++ [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
++ [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
 
 Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
@@ -1446,6 +1451,9 @@ The Trash guides are great. A few pages that have been useful to me:
 + Robust naming schemes: [[https://trash-guides.info/Sonarr/Sonarr-recommended-naming-scheme/][Recommended naming scheme - TRaSH Guides]]
 + Quality definitions (general and anime-specific): [[https://trash-guides.info/Sonarr/Sonarr-Quality-Settings-File-Size/#animeanimatedcartoons][Quality Settings (File Size) - TRaSH Guides]]
 + Anime-specific setup (naming scheme, quality settings, quality profiles): [[https://trash-guides.info/Sonarr/sonarr-setup-quality-profiles-anime/][How to set up Quality Profiles (Anime) - TRaSH Guides]]
+
+Other useful projects:
++ [[https://github.com/p-hueber/prefetcharr?tab=readme-ov-file][GitHub - p-hueber/prefetcharr: Let Sonarr fetch episodes on demand for a show you are watching on Jellyfin/Emby/Plex.]]
   
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -1590,6 +1598,9 @@ Good resources:
 + Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
   - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
 
+Other projects:
++ [[https://github.com/lingarr-translate/lingarr][GitHub - lingarr-translate/lingarr: Lingarr is an application that supports both local and SaaS translation services to translate subtitle files into a specified target language. With automated translation options, Lingarr simplifies translating subtitles.]]
+    
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
@@ -1703,9 +1714,14 @@ Other potentially useful projects:[fn:7]
 + [[https://tautulli.com/#about][Tautulli]]
 + [[https://home.tdarr.io/][Tdarr]]
 + [[https://github.com/dan-online/autopulse][GitHub - dan-online/autopulse: 💫 automated lightweight service that updates media servers like Plex and Jellyfin based on notifications from media organizers like Sonarr and Radarr]]
++ [[https://github.com/nullable-eth/labelarr][GitHub - nullable-eth/labelarr: Application that bridges your Plex media libraries with The Movie Database, adding relevant keywords as searchable labels or genres.]]
 
 See also these tangential projects:
-+ Alternative to Jellyfin and the Arr stack: [[https://github.com/maxdorninger/MediaManager][GitHub - maxdorninger/MediaManager: A modern selfhosted media management system for your media library]].
++ Alternatives media servers, some wrapping Arr functionality:
+  - [[https://github.com/maxdorninger/MediaManager][GitHub - maxdorninger/MediaManager: A modern selfhosted media management system for your media library]].
+  - [[https://github.com/getmydia/mydia?tab=readme-ov-file][GitHub - getmydia/mydia: Your personal media companion, built with Phoenix LiveView]]
+  - [[https://github.com/aleksilassila/reiverr][GitHub - aleksilassila/reiverr: Reiverr is a clean combined interface for Jellyfin, TMDB, Radarr and Sonarr, as well as a replacement to Overseerr]]
+  - [[https://github.com/midarrlabs/midarr-server][GitHub - midarrlabs/midarr-server: 🔥Midarr, the minimal lightweight media server.]]
 + [[https://kometa.wiki/en/latest/#example-usage][Home - Kometa Wiki]]
 
 #+begin_src scheme :noweb-ref home-modules
