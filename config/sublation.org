@@ -1733,10 +1733,6 @@ See also these tangential projects:
   (simple-service 'home-oci-jellyfin
       home-oci-service-type
     (oci-extension
-     (networks
-      (list
-       (oci-network-configuration
-        (name "jellyfin-network"))))
      (containers
       (list
        (oci-container-configuration
@@ -1765,8 +1761,8 @@ See also these tangential projects:
             ;; linuxserver mods to be installed, the container must be
             ;; run at least once manually, not by Shepherd?
             "DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel"))
-         (network "jellyfin-network")
-         (ports '("127.0.0.1:17200:8096"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:8096:8096"))
          (volumes
           '(("/home/krisbalintona/services/jellyfin/data" . "/config")
             ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
@@ -1793,6 +1789,36 @@ To check if hardware acceleration is working, play a piece of media that should 
 [fn:6] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
 
 [fn:7] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
+
+*** Seerr: Centralized media requests
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-seerr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "seerr")
+         (image "seerr/seerr:develop")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"
+            "PORT=5055"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:5055:5055"))
+         (volumes
+          '(("/home/krisbalintona/services/seerr/data" . "/app/config")
+            ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
 
 ** Monitoring
 

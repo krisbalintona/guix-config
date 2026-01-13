@@ -499,6 +499,13 @@ cleanuparr.home.kristofferbalintona.me {
 # ** Jellyfin
 
 jellyfin.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:17200
+	reverse_proxy 127.0.0.1:8096
+	import policy_public
+}
+
+# ** Seerr
+
+seerr.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:5055
 	import policy_public
 }
