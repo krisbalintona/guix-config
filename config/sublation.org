@@ -1326,8 +1326,23 @@ Other notes:
 
 ***** qBittorrent: Feature-full torrent client
 
-See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021955.674828][Cleanuparr: Keep download client queues tidy]].
+Non-obvious settings to adjust in qBittorrent's options menu:
++ Disk IO type[fn:3] --- Relevant to RAM usage
+  *NOTE 2026-01-12: Not certain about the descriptions and advice below.*
+  - Memory mapped files (mmap)
+    * Assumes you have a lot of RAM
+    * Doesn't work well with swap and zram
+    * Better for read-only of few files (i.e., seeding a few potentially large files)
+  - Simple pread/pwrite --- Preferred for my use case[fn:4]
+    * Better for large binary files
+    * Better for many active files
+    * Better for downloading (non-read-only) files
++ Disk queue size
++ Physical memory (RAM) usage limit
 
+See also a few helpful links:
++ [[https://www.reddit.com/r/qBittorrent/comments/1boqu5n/comment/kwrc328/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]]
+      
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
@@ -1359,6 +1374,12 @@ See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021
 #+end_src
 
 To "disable" the authentication page in the qBittorrent web UI, add the Gluetun network subnet address to the whitelisted IP subnets list in the "Web UI" tab in the settings. The subnet can be seen in the qBittorrent logs (the =qbittorrent.log= file in the log directory): search for lines with " WebAPI login success. IP: ...".
+
+See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021955.674828][Cleanuparr: Keep download client queues tidy]] for managing download queues.
+
+[fn:3] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
+
+[fn:4] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
 
 **** Usenet
 
@@ -1396,7 +1417,7 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
 
 The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
 
-Configuration creation/sync[fn:3] projects:
+Configuration creation/sync[fn:5] projects:
 + [[https://github.com/Notifiarr/notifiarr][GitHub - Notifiarr/notifiarr: Client for Notifiarr.com]]
   A notification client for the Arr stack. Does many things including syncing ones configuration files to TRaSH guide's settings---but requires a Patron donation.
 + [[https://github.com/recyclarr/recyclarr][GitHub - recyclarr/recyclarr: Automatically sync TRaSH Guides to your Sonarr and Radarr instances]]
@@ -1417,7 +1438,7 @@ Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
 + [[https://github.com/rix1337/Quasarr][GitHub - rix1337/Quasarr: Quasarr connects JDownloader with Radarr, Sonarr and LazyLibrarian. It also decrypts links protected by CAPTCHAs.]]
 
-[fn:3] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
+[fn:5] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
 **** Sonarr: Get shows
 
@@ -1670,10 +1691,10 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
 Useful Jellyfin plugins:
-+ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:4]
++ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:6]
 + [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
 
-Other potentially useful projects:[fn:5]
+Other potentially useful projects:[fn:7]
 + [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
 + [[https://github.com/Maintainerr/Maintainerr][GitHub - Maintainerr/Maintainerr: Looks and smells like Overseerr, does the opposite. Maintenance tool for the Plex ecosystem]]
   - See also the related [[https://github.com/Schaka/janitorr][GitHub - Schaka/janitorr: Cleans your Radarr, Sonarr, Jellyseerr and Jellyfin before you run out of space]]
@@ -1753,9 +1774,9 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
 
-[fn:4] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
+[fn:6] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
 
-[fn:5] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
+[fn:7] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
 ** Monitoring
 
