@@ -13,7 +13,7 @@ storage:
 
 profiles:
   http: &http
-    interval: 60s
+    interval: 240s
     conditions:
       - "[STATUS] == 200"
 
