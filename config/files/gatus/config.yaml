@@ -58,8 +58,8 @@ endpoints:
     <<: [*http, *internal]
     interval: 5m
 
-  - name: Transmission (local)
-    url: "https://transmission.home.kristofferbalintona.me"
+  - name: qBittorrent (local)
+    url: "https://qbittorrent.home.kristofferbalintona.me"
     group: services
     <<: [*http, *internal]
     interval: 2m
