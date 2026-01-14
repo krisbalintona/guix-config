@@ -1438,12 +1438,16 @@ Other useful projects that integrate with the Arr stack and tools related to it.
 + [[https://github.com/aetaric/checkrr][GitHub - aetaric/checkrr: Checkrr Scans your library files for corrupt media and optionally replaces the files via sonarr and radarr]]
 + [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
 + [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
++ [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]]
+  Although I prefer the design choices[fn:6] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
 
 Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
 + [[https://github.com/rix1337/Quasarr][GitHub - rix1337/Quasarr: Quasarr connects JDownloader with Radarr, Sonarr and LazyLibrarian. It also decrypts links protected by CAPTCHAs.]]
 
 [fn:5] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
+
+[fn:6] I prefer qbit-quard's event-based oeprations (swurApp uses timers), scope (qbit-guard is for both Radarr and Sonarr, whereas swurApp is only for Sonarr), and dislike that swurApp may remonitor skipped (unmonitored) episodes.
 
 **** Sonarr: Get shows
 
@@ -1702,10 +1706,10 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
 Useful Jellyfin plugins:
-+ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:6]
++ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:7]
 + [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
 
-Other potentially useful projects:[fn:7]
+Other potentially useful projects:[fn:8]
 + [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
 + [[https://github.com/Maintainerr/Maintainerr][GitHub - Maintainerr/Maintainerr: Looks and smells like Overseerr, does the opposite. Maintenance tool for the Plex ecosystem]]
   - See also the related [[https://github.com/Schaka/janitorr][GitHub - Schaka/janitorr: Cleans your Radarr, Sonarr, Jellyseerr and Jellyfin before you run out of space]]
@@ -1785,9 +1789,9 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
 
-[fn:6] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
+[fn:7] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
 
-[fn:7] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
+[fn:8] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
 *** Seerr: Centralized media requests
 
