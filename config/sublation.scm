@@ -21,6 +21,16 @@
              (gnu services sysctl)
              (gnu system file-systems))
 
+(define file-system-media
+  (file-system
+    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+    (mount-point "/home/krisbalintona/services/media")
+    (type "btrfs")
+    (flags '(no-atime))
+    (options "subvol=@media,compress=zstd")
+    (create-mount-point? #t)
+    (mount-may-fail? #t)))
+
 (operating-system
   ;; Use Linux kernel.  See also the (nonguix transformations) module
   ;; from the nonguix channel for several convenient wrappers (e.g.,
@@ -334,6 +344,19 @@
                          (device (uuid "8D5D-5605"
                                        'fat32))
                          (type "vfat"))
+                       file-system-media
+                       (file-system
+                         (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+                         (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
+                         (type "btrfs")
+                         (flags '(no-atime))
+                         ;; This subvolume is not mounted with "nodatacow," but it consists
+                         ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
+                         ;; option because btrfs subvolumes currently inherit the mount
+                         ;; options of the first mounted subvolume.
+                         (options "subvol=@torrents-incomplete,compress=zstd")
+                         (mount-may-fail? #t)
+                         (dependencies (list file-system-media)))
                        %base-file-systems))
 
   (swap-devices

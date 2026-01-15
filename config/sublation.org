@@ -1339,8 +1339,11 @@ Non-obvious settings to adjust in qBittorrent's options menu:
     * Better for downloading (non-read-only) files
 + Disk queue size
 + Physical memory (RAM) usage limit
++ μTP-TCP mixed mode algorithm
+  - Set to "Prefer TCP" (default anyway)
+    Explanation on why: [[https://www.reddit.com/r/qBittorrent/comments/ot75uu/comment/h6trgr2/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]] that links to [[https://bittorrent.org/beps/bep_0029.html][this bittorrent article]]. Basically, using μTP allows bittorrent traffic to yield to other traffic on your network, preventing torrents from saturating your network.
 
-See also a few helpful links:
+See also a few helpful resources:
 + [[https://www.reddit.com/r/qBittorrent/comments/1boqu5n/comment/kwrc328/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]]
       
 #+begin_src scheme :noweb-ref home-modules
@@ -2073,6 +2076,58 @@ In informative article for swap spaces in servers: [[https://linuxblog.io/linux-
     (priority 0))
 #+end_src
 
+* BTRFS: The B-Tree File System
+
+I use btrfs for my external storage. Learn about setting up a btrfs file system:
++ RAID profiles:
+  - https://wiki.tnonline.net/w/Btrfs/Profiles
+  - [[https://carfax.org.uk/btrfs-usage/][Btrfs disk usage calculator]]
+Learn about maintaining a btrfs file system:
++ Top source, written by one of btrfs's developers: [[https://github.com/kdave/btrfsmaintenance][kdave/btrfsmaintenance]]
++ [[https://wiki.tnonline.net/w/Btrfs/Defrag]]
++ https://wiki.tnonline.net/w/Btrfs/Balance
++ https://wiki.tnonline.net/w/Btrfs/Scrub
+
+Mounting subvolumes specific to torrenting:
+#+begin_src scheme :noweb-ref system-helpers
+  (define file-system-media
+    (file-system
+      (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+      (mount-point "/home/krisbalintona/services/media")
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@media,compress=zstd")
+      (create-mount-point? #t)
+      (mount-may-fail? #t)))
+#+end_src
+#+begin_src scheme :noweb-ref system-filesystems
+  file-system-media
+  (file-system
+    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+    (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
+    (type "btrfs")
+    (flags '(no-atime))
+    ;; This subvolume is not mounted with "nodatacow," but it consists
+    ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
+    ;; option because btrfs subvolumes currently inherit the mount
+    ;; options of the first mounted subvolume.
+    (options "subvol=@torrents-incomplete,compress=zstd")
+    (mount-may-fail? #t)
+    (dependencies (list file-system-media)))
+#+end_src
+A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:9]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:10]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:11]
+
+2026-01-15:
+Although [[https://www.reddit.com/r/qBittorrent/comments/1ecdmfg/comment/lezmjyj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this comment]] suggests that fragmentation doesn't matter when seeding many torrents since in such a case random IO occurs anyway...
+
+I think the idea is this: if the file is complete, readahead makes it such that there are always reads queued as the drive seeks. So the seeking time isn't the bottleneck, the predictability of the reads (i.e., the "access pattern") is. Consequently, fragmentation doesn't affect the speed of reads and writes /for sequential reads (e.g., single file), as opposed to random (e.g., jumping between many files) reads/: seek speed is increased but is masked by the kernel's readahead.
+
+[fn:9] I learned about this from [[https://www.reddit.com/r/btrfs/comments/s7qz6d/torrenting_on_btrfs_fragmentation_and_drive/][several comments from this Reddit thread]].
+
+[fn:10] In this context, the trade off of a single copy of a large file is much smaller than the HDD seeking speed degradation we're trying to avoid (for large torrented binary files) due to high fragmentation.
+
+[fn:11] Additionally, since the first mounted subvolume's options are applied to all mounted subvolumes (see [[https://man.archlinux.org/man/btrfs.5#MOUNT_OPTIONS][btrfs(5) — Arch manual pages]]), one must use ~chattr +C /path/to/incomplete/downloads~ to make the specific directory NOCOW rather than the entire subvolume. (And to repeat, a separate subvolume is needed to exploit the trick of turning a NOCOW file into a COW one when moved into a COW subvolume.)
+
 * Home
 
 #+begin_src scheme :tangle sublation-home.scm
@@ -2128,6 +2183,8 @@ In informative article for swap spaces in servers: [[https://linuxblog.io/linux-
                (nongnu packages linux)
                (nongnu system linux-initrd)
                <<system-modules>>)
+
+  <<system-helpers>>
 
   (operating-system
     ;; Use Linux kernel.  See also the (nonguix transformations) module
@@ -2209,6 +2266,7 @@ In informative article for swap spaces in servers: [[https://linuxblog.io/linux-
                            (device (uuid "8D5D-5605"
                                          'fat32))
                            (type "vfat"))
+                         <<system-filesystems>>
                          %base-file-systems))
 
     (swap-devices
