@@ -124,7 +124,7 @@ endif
 
 .PHONY: build
 build:
-	$(GUIX) build -L src --keep-failed --verbosity=3 $(PACKAGES)
+	$(GUIX) build -L src --keep-failed --log-file --verbosity=3 $(PACKAGES)
 
 .PHONY: shell
 shell:
