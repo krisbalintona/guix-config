@@ -16,6 +16,7 @@
 # - Preserves ~ path abbreviation from original token
 # - Replaces the current token with the selected completion
 # - Completions are relative file paths
+# - Escape file paths using quotes when necessary
 function fzf_complete
     # Get command line context
     set -l cmdline (commandline -poc)
@@ -56,6 +57,26 @@ function fzf_complete
             # initially, calling fd at start time and allowing
             # (asynchronous) querying as fd runs in the background
             set result (fzf --height "$fzf_height" --query "$file_basename" --bind "start:reload:$fd_cmd")
+
+            # Our strategy: if RESULT needs escaping, then do so.  I
+            # prefer escaping via quotes (since backslashes make it
+            # hard to make out the file path).  Check if the escaped
+            # version of the file path with --no-quotes (which forces
+            # using backslashes) differs from RESULT, and if so, set
+            # RESULT to the file path escaped with quotes
+            set -l escaped (
+            string escape --no-quoted -- $result |
+            # Replace leading ~/ or leading e.g. ~USER, since the
+            # above command escapes ~
+            string replace --regex '^\\\\~(?=/|$)' '~'
+            )
+            if test "$escaped" != "$result"
+                set result (
+                string escape --style=script -- $result |
+                string replace -r '^"\\~(?=/|$)' '"~'
+                )
+            end
+
             # echo "Result: '$result'" >&2 # Debug
         end
     else
@@ -69,6 +90,7 @@ function fzf_complete
     commandline -f repaint
     # Replace current token with selected completion
     if test -n "$result"
+
         commandline --current-token --replace -- $result
     end
 end
