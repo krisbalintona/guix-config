@@ -83,7 +83,14 @@ function fzf_complete
         # Token is either empty (then: regular prompt for directory)
         # or a non-path (e.g., flag or option): use Fish's built-in
         # completion system
-        set result (complete -C(commandline -cp) | fzf --height $fzf_height)
+        #
+        # Additionally, fish's annotations, which are delimited by the
+        # tab character, are stripped
+        set result (
+        complete -C(commandline -cp) |
+        fzf --height $fzf_height |
+        string split -f1 \t
+        )
     end
 
     # Repaint prompt after fzf exits (handles Escape key cleanup)
