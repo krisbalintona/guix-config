@@ -239,7 +239,7 @@
       (list fd fzf))                        ; Function dependencies
     (simple-service 'fish-fzf-function
           home-xdg-configuration-files-service-type
-        `(("fish/functions/fzf_completion.fish"
+        `(("fish/functions/fzf_complete.fish"
            ,(local-file "files/fish/fzf_complete.fish"))))
     (simple-service 'fish-fzf-config
         home-fish-service-type
