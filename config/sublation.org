@@ -11,7 +11,8 @@
 #+begin_src scheme :noweb-ref home-services
   (simple-service 'common-environment-variables
       home-environment-variables-service-type
-    '(("PAGER" . "less -RKF")))
+    '(("PATH" . "$HOME/.local/bin:$PATH")
+      ("PAGER" . "less -RKF"))))
 #+end_src
 
 ** Bash

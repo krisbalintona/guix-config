@@ -184,7 +184,8 @@
    (cons*
     (simple-service 'common-environment-variables
         home-environment-variables-service-type
-      '(("PAGER" . "less -RKF")))
+      '(("PATH" . "$HOME/.local/bin:$PATH")
+        ("PAGER" . "less -RKF"))))
     (service home-bash-service-type
       (home-bash-configuration
         (bashrc
