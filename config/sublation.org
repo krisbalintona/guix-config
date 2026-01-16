@@ -12,7 +12,7 @@
   (simple-service 'common-environment-variables
       home-environment-variables-service-type
     '(("PATH" . "$HOME/.local/bin:$PATH")
-      ("PAGER" . "less -RKF"))))
+      ("PAGER" . "less -RKF")))
 #+end_src
 
 ** Bash
@@ -222,6 +222,23 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
       home-xdg-configuration-files-service-type
     `(("atuin/config.toml"
        ,(local-file "files/atuin/config.toml"))))
+#+end_src
+
+** Tools for video and audio codecs
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu home services dotfiles)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-packages
+  "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (service home-dotfiles-service-type
+    (home-dotfiles-configuration
+      (layout 'plain)
+      (directories '("files/scripts"))))
 #+end_src
 
 * Authentication
@@ -1736,10 +1753,6 @@ See also these tangential projects:
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-packages
-  "ffmpeg"                          ; Diagnose video info (e.g., codecs)
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services

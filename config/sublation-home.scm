@@ -12,6 +12,7 @@
              (gnu packages terminals)                ; fzf
              (gnu packages rust-apps)                ; fd
              (krisb services shells)
+             (gnu home services dotfiles)
              (gnu packages gnupg)
              (gnu home services gnupg)
              (sops secrets)
@@ -163,6 +164,7 @@
      "jujutsu"
      "fzf"
      "fd"
+     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
      "gnupg"
      "age"
      "bind:utils"
@@ -173,7 +175,6 @@
      "masscan"
      "unbound"
      "caddy-security-netlify-crowdsec-coraza-maxmind"
-     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
      "restic"
      "smartmontools"            ; For smartctl
      "btrfs-progs"
@@ -185,7 +186,7 @@
     (simple-service 'common-environment-variables
         home-environment-variables-service-type
       '(("PATH" . "$HOME/.local/bin:$PATH")
-        ("PAGER" . "less -RKF"))))
+        ("PAGER" . "less -RKF")))
     (service home-bash-service-type
       (home-bash-configuration
         (bashrc
@@ -255,6 +256,10 @@
         home-xdg-configuration-files-service-type
       `(("atuin/config.toml"
          ,(local-file "files/atuin/config.toml"))))
+    (service home-dotfiles-service-type
+      (home-dotfiles-configuration
+        (layout 'plain)
+        (directories '("files/scripts"))))
     (service home-gpg-agent-service-type)
     (service home-sops-secrets-service-type
       (home-sops-service-configuration
