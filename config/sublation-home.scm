@@ -155,6 +155,7 @@
      "ripgrep"
      "fd"
      "jq"
+     "rsync"
      "parted"
      "bat"
      "procs"
@@ -172,7 +173,12 @@
      "masscan"
      "unbound"
      "caddy-security-netlify-crowdsec-coraza-maxmind"
-     "restic")))
+     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+     "restic"
+     "smartmontools"            ; For smartctl
+     "btrfs-progs"
+     "compsize"
+     "lsof")))
   
   (services
    (cons*

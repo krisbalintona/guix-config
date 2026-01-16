@@ -74,13 +74,14 @@ Build systems and programming languages:
   "python"
 #+end_src
 
-File-system searching and visualization:
-#+begin_src scheme :noweb-ref home-packages
-  "tree"
-  "ripgrep"
-  "fd"
-  "jq"
-#+end_src
+File searching, visualization, and transfer:
+  #+begin_src scheme :noweb-ref home-packages
+    "tree"
+    "ripgrep"
+    "fd"
+    "jq"
+    "rsync"
+  #+end_src
 
 Partition management:
 #+begin_src scheme :noweb-ref home-packages
@@ -1736,6 +1737,10 @@ See also these tangential projects:
   (gnu home services containers)
 #+end_src
 
+#+begin_src scheme :noweb-ref home-packages
+  "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+#+end_src
+
 #+begin_src scheme :noweb-ref home-services
   (simple-service 'home-oci-jellyfin
       home-oci-service-type
@@ -2076,7 +2081,14 @@ In informative article for swap spaces in servers: [[https://linuxblog.io/linux-
     (priority 0))
 #+end_src
 
-* BTRFS: The B-Tree File System
+* File systems
+
+Common file system and drive tools for introspection, monitoring, and management:
+#+begin_src scheme :noweb-ref home-packages
+  "smartmontools"            ; For smartctl
+#+end_src
+
+** BTRFS: The B-Tree File System
 
 I use btrfs for my external storage. Learn about setting up a btrfs file system:
 + RAID profiles:
@@ -2087,6 +2099,13 @@ Learn about maintaining a btrfs file system:
 + [[https://wiki.tnonline.net/w/Btrfs/Defrag]]
 + https://wiki.tnonline.net/w/Btrfs/Balance
 + https://wiki.tnonline.net/w/Btrfs/Scrub
+
+Install some programs useful for introspecting a btrfs file system, including the main =btrfs= program itself:
+#+begin_src scheme :noweb-ref home-packages
+  "btrfs-progs"
+  "compsize"
+  "lsof"
+#+end_src
 
 Mounting subvolumes specific to torrenting:
 #+begin_src scheme :noweb-ref system-helpers
