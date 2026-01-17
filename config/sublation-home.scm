@@ -914,6 +914,26 @@
            (volumes '(("/home/krisbalintona/services/byparr/venv" . "/app/.venv")))
            (auto-start? #t)
            (respawn? #f))))))
+    (simple-service 'home-oci-seerr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "seerr")
+           (image "seerr/seerr:develop")
+           (environment
+            '("TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"
+              "PORT=5055"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:5055:5055"))
+           (volumes
+            '(("/home/krisbalintona/services/seerr/data" . "/app/config")
+              ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
+           (auto-start? #t)
+           (respawn? #f))))))
     (simple-service 'home-oci-jellyfin
         home-oci-service-type
       (oci-extension
@@ -957,26 +977,6 @@
            ;; for the sake of hardware acceleration. The device is
            ;; specific to Intel GPUs.
            (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
-           (auto-start? #t)
-           (respawn? #f))))))
-    (simple-service 'home-oci-seerr
-        home-oci-service-type
-      (oci-extension
-       (containers
-        (list
-         (oci-container-configuration
-           (provision "seerr")
-           (image "seerr/seerr:develop")
-           (environment
-            '("TZ=America/Chicago"
-              "PUID=1000"
-              "PGID=1000"
-              "PORT=5055"))
-           (network "gluetun-network")
-           (ports '("127.0.0.1:5055:5055"))
-           (volumes
-            '(("/home/krisbalintona/services/seerr/data" . "/app/config")
-              ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-shoko

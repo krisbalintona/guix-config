@@ -1723,7 +1723,41 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
          (respawn? #f))))))
 #+end_src
 
-*** Jellyfin: Media streamer
+**** Seerr: Centralized media requests
+
+Merges Overseerr and Jellyserr, the latter of the two being a successor of the former.
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-seerr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "seerr")
+         (image "seerr/seerr:develop")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"
+            "PORT=5055"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:5055:5055"))
+         (volumes
+          '(("/home/krisbalintona/services/seerr/data" . "/app/config")
+            ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+*** Media library
+
+**** Jellyfin: Media streamer
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
@@ -1815,37 +1849,7 @@ To check if hardware acceleration is working, play a piece of media that should 
 
 [fn:8] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
-*** Seerr: Centralized media requests
-
-#+begin_src scheme :noweb-ref home-modules
-  (gnu services containers)
-  (gnu home services containers)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-oci-seerr
-      home-oci-service-type
-    (oci-extension
-     (containers
-      (list
-       (oci-container-configuration
-         (provision "seerr")
-         (image "seerr/seerr:develop")
-         (environment
-          '("TZ=America/Chicago"
-            "PUID=1000"
-            "PGID=1000"
-            "PORT=5055"))
-         (network "gluetun-network")
-         (ports '("127.0.0.1:5055:5055"))
-         (volumes
-          '(("/home/krisbalintona/services/seerr/data" . "/app/config")
-            ("/home/krisbalintona/services/seerr/log" . "/app/config/logs")))
-         (auto-start? #t)
-         (respawn? #f))))))
-#+end_src
-
-*** Shoko: Better anime metadata retrieval
+**** Shoko: Better anime metadata retrieval
 
 Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/comment/maprg6j/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][Shoko is categorically a more robust metadata solution]] for anime.
 
