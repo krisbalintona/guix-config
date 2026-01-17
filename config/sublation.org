@@ -2,7 +2,7 @@
 #+PROPERTY: header-args :noweb yes
 
 #  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty Sonarr Radarr
-#  LocalWords:  Prowlarr qBittorrent TRaSH Jellyfin
+#  LocalWords:  Prowlarr qBittorrent TRaSH Jellyfin codec bitrate transcode Transcoding HEVC
 
 * Shells
 
@@ -1756,6 +1756,18 @@ Merges Overseerr and Jellyserr, the latter of the two being a successor of the f
 #+end_src
 
 *** Media library
+
+**** On video encoding, decoding, and transcoding
+
++ There is hardware encoding (GPU) and software encoding (CPU)
+  - Hardware encoding is much faster with slighty worse compression and fewer knobs to configure but is worse quailty (usually: see [[https://www.reddit.com/r/homelab/comments/1pl1y0y/comment/ntpl2pb/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment by the maintainer of FileFlows]] explaining how hardware encoding can be made to equal CPU encoding's quality)
+  - As such, hardware is better for live transcoding whereas software is better for quality and compression, where time is plentiful.
+  - The difference in compression and speed in hardware and software encoding becomes tremendous the higher the quality and resolution. Take [[https://www.reddit.com/r/AV1/comments/1bz6dht/comment/kynxupj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]], for instance: Remux is 108GB, software encoding is 6GB after 3 days, while hardware encoding is 27GB after 12 hours.
++ H.264 is the most supported video codec but has bad compression
++ HEVC/H.265 has significantly better compression but not all clients support decoding it (e.g., for playback). For a 1920x1080 video file, HEVC can be 40--50% smaller in size compared to H.264 at the same quality at a lower bitrate; the difference in size is even larger for larger resolutions.
++ AV1 is the best, most future-proof video codec with regard to compression. However, it is the most intense to encode and is uncommonly supported by clients. Additionally, encoding is also quite rare on consumer hardware. For a 1920x1080 video file, HEVC can be 50--70% smaller in size compared to H.264 at the same quality at a lower bitrate; the difference in size is even larger for larger resolutions.
++ Transcoding necessarily degrades quality, since it's lossy. The difference may be negligible, but it is still there, and repeated transcoding is noticeable.
++ [[https://www.reddit.com/r/homelab/comments/1pl1y0y/comment/ntpf6y9/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] summarizes the downsides of expensive encoding well, namely the energy costs (having your CPU or GPU running full blasts for hours for a single movie, or months for a media library) and the ultimate necessity of having to transcode anyway (since most clients don't support AV1 decoding).
 
 **** Jellyfin: Media streamer
 
