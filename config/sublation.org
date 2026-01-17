@@ -1774,6 +1774,9 @@ Projects for automatic transcoding of media:
 + [[https://github.com/HaveAGitGat/Tdarr][Tdarr]] :: Best if one values flexibility and customizability of transcoding options. Also good if one has multiple machines and would like to distribute the transcoding workload among them.[fn:7] (Though people complain about the UI; many of these users found FileFlows's UI much more understandable.)
 + [[https://fileflows.com/][FileFlows]] :: Can do more than just transcode. Use node graphs to represent encoding, transcoding, and decoding, etc. flows, supporting sophisticated pipelines. Not open source and has pricing tiers. Also has support for using multiple machines, although 2+ nodes is paywalled... ([[https://www.reddit.com/r/Tdarr/comments/v0c72p/comment/ifiape7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] summarizes the comparison to Tdarr well.) Some people report using FileFlows because they don't want to be finicky with Tdarr or Unmanic.
 
+Other useful resources:
++ See which codecs the current client supports: [[https://jellyfin.org/docs/general/clients/codec-support/][Codec Support | Jellyfin]]
+  
 [fn:7] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
   
 **** Jellyfin: Media streamer
@@ -1794,6 +1797,7 @@ Other potentially useful projects:[fn:9]
 + [[https://home.tdarr.io/][Tdarr]]
 + [[https://github.com/dan-online/autopulse][GitHub - dan-online/autopulse: 💫 automated lightweight service that updates media servers like Plex and Jellyfin based on notifications from media organizers like Sonarr and Radarr]]
 + [[https://github.com/nullable-eth/labelarr][GitHub - nullable-eth/labelarr: Application that bridges your Plex media libraries with The Movie Database, adding relevant keywords as searchable labels or genres.]]
++ [[https://jfcovers.jan.run/][Jellyfin Cover Maker]]
 
 See also these tangential projects:
 + Alternatives media servers, some wrapping Arr functionality:
@@ -1802,6 +1806,7 @@ See also these tangential projects:
   - [[https://github.com/aleksilassila/reiverr][GitHub - aleksilassila/reiverr: Reiverr is a clean combined interface for Jellyfin, TMDB, Radarr and Sonarr, as well as a replacement to Overseerr]]
   - [[https://github.com/midarrlabs/midarr-server][GitHub - midarrlabs/midarr-server: 🔥Midarr, the minimal lightweight media server.]]
 + [[https://kometa.wiki/en/latest/#example-usage][Home - Kometa Wiki]]
++ [[https://github.com/jaypyles/anirra][GitHub - jaypyles/anirra: Anirra is a completely self-hosted anime watchlist, search, and recommendations app. It allows anime enthusiasts to manage their watchlists, discover new anime, and receive personalized recommendations, all from a single platform.]]
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
