@@ -489,6 +489,13 @@ bazarr.home.kristofferbalintona.me {
 	import policy_private
 }
 
+# *** Huntarr
+
+huntarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9705
+	import policy_private
+}
+
 # *** Cleanuparr
 
 cleanuparr.home.kristofferbalintona.me {

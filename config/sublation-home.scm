@@ -64,6 +64,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -869,6 +871,22 @@
             '(("/home/krisbalintona/services/jellyfin/data" . "/config")
               ("/home/krisbalintona/services/media/shows" . "/data/shows")
               ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-huntarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "huntarr")
+           (image "huntarr/huntarr:latest")
+           (environment '("TZ=America/Chicago"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:9705:9705"))
+           (volumes
+            '(("/home/krisbalintona/services/huntarr/data" . "/config")
+              ("/home/krisbalintona/services/huntarr/log" . "/config/logs")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-cleanuparr
