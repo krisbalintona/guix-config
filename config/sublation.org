@@ -1802,6 +1802,7 @@ Projects for automatic transcoding of media:
 Other useful resources:
 + See which codecs the current client supports: [[https://jellyfin.org/docs/general/clients/codec-support/][Codec Support | Jellyfin]]
 + Guide for encoding to AV1 via Unraid + Tdarr:[fn:8] [[https://github.com/plexguide/Unraid_Intel-ARC_Deployment?tab=readme-ov-file][GitHub - plexguide/Unraid_Intel-ARC_Deployment: Unraid - Comprehensive Guide to Enabling AV1 Encoding, Plex Deployment & GPU Management with Tdarr on Unraid 7.0+]]
++ Sensible AV1 CPU encoding considering VMAF and grain: [[https://gitlab.com/g33kphr33k/av1conv.sh][g33kphr33k / av1conv.sh]]
 
 [fn:7] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
 
