@@ -1544,6 +1544,45 @@ Other useful projects:
          (respawn? #f))))))
 #+end_src
 
+**** Bazarr: Get subtitles
+
+Good resources:
++ Setup guide: [[https://wiki.bazarr.media/Getting-Started/Setup-Guide/][Setup Guide - Bazarr Wiki]]
++ For good scoring settings: [[https://trash-guides.info/Bazarr/Bazarr-suggested-scoring/][Suggested Scoring - TRaSH Guides]]
++ Usage stats, allows you to find good subtitle providers per language: [[https://wiki.bazarr.media/bazarr-stats/][Bazarr Usage Stats - Bazarr Wiki]]
++ Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
+  - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
+
+Other projects:
++ [[https://github.com/lingarr-translate/lingarr][GitHub - lingarr-translate/lingarr: Lingarr is an application that supports both local and SaaS translation services to translate subtitle files into a specified target language. With automated translation options, Lingarr simplifies translating subtitles.]]
+    
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-bazarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "bazarr")
+         (image "linuxserver/bazarr:latest")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:9799:6767"))
+         (volumes
+          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
+            ("/home/krisbalintona/services/media" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 **** Profilarr: An updated set of great configurations for Sonarr and Radarr
 
 On [[https://dictionarry.dev/quality-profile][this page]] of their wiki is a description of all the quality profiles that come with their [[https://github.com/Dictionarry-Hub/database][default Profillar compliant database (PCD)]]. And usefully, there is a "Profile Wizard" at the bottom of the page, which recommends to users a profile based on their responses to various criteria.
@@ -1614,42 +1653,32 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
          (respawn? #f))))))
 #+end_src
 
-**** Bazarr: Get subtitles
+***** Byparr: Bypass Cloudflare challenges
 
-Good resources:
-+ Setup guide: [[https://wiki.bazarr.media/Getting-Started/Setup-Guide/][Setup Guide - Bazarr Wiki]]
-+ For good scoring settings: [[https://trash-guides.info/Bazarr/Bazarr-suggested-scoring/][Suggested Scoring - TRaSH Guides]]
-+ Usage stats, allows you to find good subtitle providers per language: [[https://wiki.bazarr.media/bazarr-stats/][Bazarr Usage Stats - Bazarr Wiki]]
-+ Good subtitle synchronization with audio settings: [[https://www.reddit.com/r/bazarr/comments/17ud9nt/comment/mm39err/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment's suggestions]]
-  - For mass re-search of subtitles across all shows and/or movies (bazarr only allows this per-show, per-movie, and per-release): [[https://github.com/ajmandourah/bazarr-sync][GitHub - ajmandourah/bazarr-sync: Bulk sync your subtitles via Bazarr.]]
-
-Other projects:
-+ [[https://github.com/lingarr-translate/lingarr][GitHub - lingarr-translate/lingarr: Lingarr is an application that supports both local and SaaS translation services to translate subtitle files into a specified target language. With automated translation options, Lingarr simplifies translating subtitles.]]
-    
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
 #+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-oci-bazarr
+  (simple-service 'home-oci-byparr
       home-oci-service-type
     (oci-extension
      (containers
       (list
        (oci-container-configuration
-         (provision "bazarr")
-         (image "linuxserver/bazarr:latest")
-         (environment
-          '("TZ=America/Chicago"
-            "PUID=1000"
-            "PGID=1000"))
+         (provision "byparr")
+         (image "thephaseless/byparr:latest")
+         ;; See
+         ;; https://deepwiki.com/ThePhaseless/Byparr/4.3-environment-configuration
+         ;; for a list of all environment variables
+         (environment '())
          (network "gluetun-network")
-         (ports '("127.0.0.1:9799:6767"))
-         (volumes
-          '(("/home/krisbalintona/services/jellyfin/data" . "/config")
-            ("/home/krisbalintona/services/media/shows" . "/data/shows")
-            ("/home/krisbalintona/services/media/movies" . "/data/movies")))
+         (ports '("127.0.0.1:8191:8191"))
+         ;; 2026-01-12: Persist the Python .venv because the GeoIP
+         ;; database is downloaded on first API call, and it'd be best
+         ;; not to redownload it upon every restart of the service
+         (volumes '(("/home/krisbalintona/services/byparr/venv" . "/app/.venv")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
@@ -1714,36 +1743,6 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
           '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
             ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
             ("/home/krisbalintona/services/media" . "/data")))
-         (auto-start? #t)
-         (respawn? #f))))))
-#+end_src
-
-**** Byparr: Bypass Cloudflare challenges
-
-#+begin_src scheme :noweb-ref home-modules
-  (gnu services containers)
-  (gnu home services containers)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-oci-byparr
-      home-oci-service-type
-    (oci-extension
-     (containers
-      (list
-       (oci-container-configuration
-         (provision "byparr")
-         (image "thephaseless/byparr:latest")
-         ;; See
-         ;; https://deepwiki.com/ThePhaseless/Byparr/4.3-environment-configuration
-         ;; for a list of all environment variables
-         (environment '())
-         (network "gluetun-network")
-         (ports '("127.0.0.1:8191:8191"))
-         ;; 2026-01-12: Persist the Python .venv because the GeoIP
-         ;; database is downloaded on first API call, and it'd be best
-         ;; not to redownload it upon every restart of the service
-         (volumes '(("/home/krisbalintona/services/byparr/venv" . "/app/.venv")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
