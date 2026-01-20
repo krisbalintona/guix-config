@@ -2195,6 +2195,11 @@ I use btrfs for my external storage. Learn about setting up a btrfs file system:
 + RAID profiles:
   - https://wiki.tnonline.net/w/Btrfs/Profiles
   - [[https://carfax.org.uk/btrfs-usage/][Btrfs disk usage calculator]]
++ The /Working with BTRFS/ Fedora Magazine series
+  - COW and file-system concepts: [[https://fedoramagazine.org/working-with-btrfs-general-concepts/][Working with Btrfs - General Concepts - Fedora Magazine]]
+  - Subvolumes: [[https://fedoramagazine.org/working-with-btrfs-subvolumes/][Working with Btrfs - Subvolumes - Fedora Magazine]]
+  - Snapshots: [[https://fedoramagazine.org/working-with-btrfs-snapshots/][Working with Btrfs - Snapshots - Fedora Magazine]]
+  - Compression: [[https://fedoramagazine.org/working-with-btrfs-compression/][Working with Btrfs - Compression - Fedora Magazine]]
 Learn about maintaining a btrfs file system:
 + Top source, written by one of btrfs's developers: [[https://github.com/kdave/btrfsmaintenance][kdave/btrfsmaintenance]]
 + [[https://wiki.tnonline.net/w/Btrfs/Defrag]]
