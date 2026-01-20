@@ -66,6 +66,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -929,6 +931,18 @@
             '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
               ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
               ("/home/krisbalintona/services/media" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-renamarr
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "renamarr")
+           (image "ghcr.io/hollanbm/renamarr:latest")
+           (network "gluetun-network")
+           (volumes '(("/home/krisbalintona/services/renamarr/config" . "/config")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-seerr

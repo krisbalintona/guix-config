@@ -1747,6 +1747,31 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
          (respawn? #f))))))
 #+end_src
 
+**** Renamarr: Rename media files when they can be
+
+Files in Sonarr and Radarr are renamed on first import. However, if the file metadata has since changed (e.g., the show or movie data has been updated on TMDB), then the file name gets out of sync with the actual metadata of the media. Renamarr addresses that by renaming files whose file name metadata differs from the actual metadata.
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-renamarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "renamarr")
+         (image "ghcr.io/hollanbm/renamarr:latest")
+         (environment '("TZ=America/Chicago"))
+         (network "gluetun-network")
+         (volumes '(("/home/krisbalintona/services/renamarr/config" . "/config")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 **** Seerr: Centralized media requests
 
 Merges Overseerr and Jellyserr, the latter of the two being a successor of the former.
