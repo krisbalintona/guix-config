@@ -1454,7 +1454,9 @@ Configuration creation/sync[fn:5] projects:
 Other useful projects that integrate with the Arr stack and tools related to it. See also [[https://wiki.servarr.com/useful-tools][Useful Tools | Servarr Wiki]].
 + [[https://github.com/StuffAnThings/qbit_manage/wiki][Home · StuffAnThings/qbit_manage Wiki · GitHub]]
 + See also [[https://www.reddit.com/r/radarr/comments/hbwnb2/a_list_of_all_companion_tools_and_software/][this Reddit post]]
-+ A compiled list (an "awesome" list): [[https://github.com/Ravencentric/awesome-arr][GitHub - Ravencentric/awesome-arr: A collection of *arrs and related stuff]]
++ "Awesome" lists:
+  - [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
+  - [[https://github.com/Ravencentric/awesome-arr][GitHub - Ravencentric/awesome-arr: A collection of *arrs and related stuff]]
 + [[https://github.com/aetaric/checkrr][GitHub - aetaric/checkrr: Checkrr Scans your library files for corrupt media and optionally replaces the files via sonarr and radarr]]
 + [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
 + [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
