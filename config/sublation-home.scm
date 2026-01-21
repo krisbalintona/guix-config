@@ -1076,6 +1076,10 @@
              
              (cons "ANILIST_SECRET"
                    (get-sops-secret '("yamtrack" "anilist" "api-secret")
+                                    #:file sops-sublation-secrets-file))
+             
+             (cons "STEAM_API_KEY"
+                   (get-sops-secret '("yamtrack" "steam-api-key")
                                     #:file sops-sublation-secrets-file))))
            ;; A list of all environment variables:
            ;; https://github.com/FuzzyGrim/Yamtrack/wiki/Environment-Variables
@@ -1085,8 +1089,7 @@
               "PUID=1000"
               "PGID=1000"
               "ACCOUNT_DEFAULT_HTTP_PROTOCOL=https"
-              ,(cons "ACCOUNT_LOGOUT_REDIRECT_URL"
-                     "https://yamtrack.kristofferbalintona.me/accounts/oidc/PocketID/logout/callback/")
+              ;; See also ACCOUNT_LOGOUT_REDIRECT_URL
               "SOCIAL_PROVIDERS=allauth.socialaccount.providers.openid_connect"
               "SOCIALACCOUNT_PROVIDERS"
               "SOCIALACCOUNT_ONLY=true"
@@ -1103,7 +1106,7 @@
               "TMDB_LANG=en-US"
     
               ;;; Media imports
-              ;;
+              "STEAM_API_KEY"
               ;; I have a public Anilist account but set up an API client
               ;; in case in the future I decide to make it private
               "ANILIST_ID"
