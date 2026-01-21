@@ -535,6 +535,13 @@ yamtrack.kristofferbalintona.me {
 	error @admin 403
 }
 
+# ** Immich
+
+immich.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:2283
+	import policy_private
+}
+
 # ** Shoko
 
 shoko.home.kristofferbalintona.me {

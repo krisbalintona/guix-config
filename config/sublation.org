@@ -1965,7 +1965,7 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
          (respawn? #f))))))
 #+end_src
 
-**** Yamtrack: Track watch, read, played, etc. progress of many types of media
+*** Yamtrack: Track watch, read, played, etc. progress of many types of media
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -2033,7 +2033,7 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
             "SOCIALACCOUNT_ONLY=true"
             
             ;;; Redis and Django Settings
-            "REDIS_URL=redis://yamtrack_redis:6379" ; Default redis port
+            "REDIS_URL=redis://yamtrack-redis:6379" ; Default redis port
             "REDIS_PREFIX=yamtrack"
             "URLS=https://yamtrack.kristofferbalintona.me"
             "SECRET"
@@ -2055,12 +2055,137 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
          (auto-start? #t)
          (respawn? #f))
        (oci-container-configuration
-         (provision "yamtrack_redis")
+         (provision "yamtrack-redis")
          (image "docker.io/library/redis:8-alpine")
          (network "yamtrack-network")
-         (volumes '(("/home/krisbalintona/services/yamtrack/redis_data" . "/data")))
+         (volumes '(("/home/krisbalintona/services/yamtrack/redis-data" . "/data")))
          (auto-start? #t)
          (respawn? #f))))))
+#+end_src
+
+*** Immich: Photo and video management
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-immich
+      home-oci-service-type
+    (let* ((immich-network-subnet "10.89.12.0/24")
+           (immich-version "v2.4.1")
+           ;; These Database (postgres) variables are the ones that I've
+           ;; customized; they must be provided (as env vars inside the
+           ;; container) to all Immich workers (i.e., the server and
+           ;; machine learning containers).  See
+           ;; https://docs.immich.app/install/environment-variables/#database
+           (db-hostname "DB_HOSTNAME=immich-postgres")
+           (db-password "DB_PASSWORD=s6nshtP8kkKcjF")
+           (db-storage-type "DB_STORAGE_TYPE=HDD") ; I use an HDD
+           ;; Do not change these two variables
+           (db-username "DB_USERNAME=postgres")
+           (db-database-name "DB_DATABASE_NAME=immich")
+           (db-env-vars
+            (list db-hostname db-password db-storage-type db-username db-database-name))
+           ;; These Redis variables are the ones that I've customized;
+           ;; they must be provided (as env vars inside the container)
+           ;; to all Immich workers (i.e., the server and machine
+           ;; learning containers).  See
+           ;; https://docs.immich.app/install/environment-variables/#redis
+           (redis-hostname "REDIS_HOSTNAME=immich-redis")
+           (redis-port "REDIS_PORT=6379")  ; Default
+           (redis-env-vars
+            (list redis-hostname redis-port)))
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "immich-network")
+          (subnet immich-network-subnet))))
+       ;; All supported environment variables can be found:
+       ;; https://docs.immich.app/install/environment-variables
+       (containers
+        (list
+         ;; Worker containers
+         (oci-container-configuration
+           (provision "immich-server")
+           (image (string-append "ghcr.io/immich-app/immich-server:" immich-version))
+           (requirement '(immich-redis immich-postgres))
+           ;; (host-environment (append db-env-vars redis-env-vars))
+           (environment
+            (cons*
+             "TZ=America/Chicago"
+             "IMMICH_PORT=2283"          ; Default
+             (cons "IMMICH_TRUSTED_PROXIES"
+                   immich-network-subnet) ; Trust the Caddy reverse proxy
+             (append db-env-vars
+                     redis-env-vars)))
+           ;; Enable hardware transcoding (Intel QuickSync).  This is
+           ;; specific to my hardware; if my hardware changes, I may
+           ;; need to change the relevant settings too.  See
+           ;; https://docs.immich.app/features/hardware-transcoding and
+           ;; the linked hwaccel.transcoding.yml file
+           (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
+           (network "immich-network")
+           (ports '("127.0.0.1:2283:2283"))
+           (volumes
+            '("/etc/localtime:/etc/localtime:ro"
+              ("/home/krisbalintona/services/immich/data" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))
+         (oci-container-configuration
+           (provision "immich-machine-learning")
+           (image (string-append "ghcr.io/immich-app/immich-machine-learning:" immich-version))
+           ;; NOTE 2026-01-21: My machine does not support
+           ;; "Hardware-Accelerated Machine Learning," so I have not
+           ;; inserted the relevant configuration from their
+           ;; hwaccel.ml.yml file.  But in the future that may change.
+           ;; See
+           ;; https://docs.immich.app/features/ml-hardware-acceleration/.
+           ;; This also involves changing the container image used,
+           ;; e.g., adding the "-cuda" suffix
+           ;; (host-environment (append db-env-vars redis-env-vars))
+           (environment
+            (cons*
+             "TZ=America/Chicago"
+             (append db-env-vars
+                     redis-env-vars)))
+           (network "immich-network")
+           (volumes '(("/home/krisbalintona/services/yamtrack/data" . "/yamtrack/db")))
+           (auto-start? #t)
+           (respawn? #f))
+
+         ;; Helper containers
+         (oci-container-configuration
+           (provision "immich-redis")
+           (image "docker.io/valkey/valkey:9@sha256:fb8d272e529ea567b9bf1302245796f21a2672b8368ca3fcb938ac334e613c8f")
+           (network "immich-network")
+           (environment
+            (cons*
+             "TZ=America/Chicago"
+             redis-env-vars))
+           (volumes '(("/home/krisbalintona/services/immich/redis-data" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))
+         (oci-container-configuration
+           ;; Refereed to as the "database" in the documentation
+           (provision "immich-postgres")
+           (image "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23")
+           (environment
+            (list
+             "TZ=America/Chicago"
+             (cons "POSTGRES_PASSWORD" db-password)
+             (cons "POSTGRES_USER" db-username)
+             (cons "POSTGRES_DB" db-database-name)
+             (cons "POSTGRES_INITDB_ARGS" "--data-checksums")
+             "DB_STORAGE_TYPE"))
+           (extra-arguments '("--shm-size=256m"))
+           (network "immich-network")
+           (volumes
+            '(("/home/krisbalintona/services/immich/postgres-data" . "/var/lib/postgresql/data")))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 ** Monitoring
