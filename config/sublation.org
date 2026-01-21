@@ -1461,6 +1461,7 @@ Other useful projects that integrate with the Arr stack and tools related to it.
 + [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]]
   Although I prefer the design choices[fn:6] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
 + [[https://github.com/Wizarrrr/wizarr][GitHub - wizarrrr/wizarr: Wizarr is an advanced user invitation and management system for Jellyfin, Plex, Emby etc.]]
++ [[https://github.com/arabcoders/watchstate][GitHub - arabcoders/watchstate: Self-hosted service to sync your plex, jellyfin and emby play state. without relying on 3rd-party external services.]]
 
 Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
