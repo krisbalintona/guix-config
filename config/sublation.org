@@ -1211,6 +1211,48 @@ Other notes:
 
 **** Torrenting
 
+***** External storage
+
+Mounting subvolumes specific to torrenting:
+#+begin_src scheme :noweb-ref system-helpers
+  (define file-system-media
+    (file-system
+      (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+      (mount-point "/home/krisbalintona/services/media")
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@media,compress=zstd")
+      (create-mount-point? #t)
+      (mount-may-fail? #t)))
+#+end_src
+#+begin_src scheme :noweb-ref system-filesystems
+  file-system-media
+  (file-system
+    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+    (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
+    (type "btrfs")
+    (flags '(no-atime))
+    ;; This subvolume is not mounted with "nodatacow," but it consists
+    ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
+    ;; option because btrfs subvolumes currently inherit the mount
+    ;; options of the first mounted subvolume.
+    (options "subvol=@torrents-incomplete,compress=zstd")
+    (mount-may-fail? #t)
+    (dependencies (list file-system-media)))
+#+end_src
+A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:3]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:4]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:5]
+
+2026-01-15:
+Although [[https://www.reddit.com/r/qBittorrent/comments/1ecdmfg/comment/lezmjyj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this comment]] suggests that fragmentation doesn't matter when seeding many torrents since in such a case random IO occurs anyway...
+
+I think the idea is this: if the file is complete, readahead makes it such that there are always reads queued as the drive seeks. So the seeking time isn't the bottleneck, the predictability of the reads (i.e., the "access pattern") is. Consequently, fragmentation doesn't affect the speed of reads and writes /for sequential reads (e.g., single file), as opposed to random (e.g., jumping between many files) reads/: seek speed is increased but is masked by the kernel's readahead.
+
+[fn:3] I learned about this from [[https://www.reddit.com/r/btrfs/comments/s7qz6d/torrenting_on_btrfs_fragmentation_and_drive/][several comments from this Reddit thread]].
+
+[fn:4] In this context, the trade off of a single copy of a large file is much smaller than the HDD seeking speed degradation we're trying to avoid (for large torrented binary files) due to high fragmentation.
+
+[fn:5] Additionally, since the first mounted subvolume's options are applied to all mounted subvolumes (see [[https://man.archlinux.org/man/btrfs.5#MOUNT_OPTIONS][btrfs(5) — Arch manual pages]]), one must use ~chattr +C /path/to/incomplete/downloads~ to make the specific directory NOCOW rather than the entire subvolume. (And to repeat, a separate subvolume is needed to exploit the trick of turning a NOCOW file into a COW one when moved into a COW subvolume.)
+
 ***** Gluetun: Bind all torrent client traffic to a VPN
 
 #+begin_src scheme :noweb-ref home-modules
@@ -1346,13 +1388,13 @@ Other notes:
 ***** qBittorrent: Feature-full torrent client
 
 Non-obvious settings to adjust in qBittorrent's options menu:
-+ Disk IO type[fn:3] --- Relevant to RAM usage
++ Disk IO type[fn:6] --- Relevant to RAM usage
   *NOTE 2026-01-12: Not certain about the descriptions and advice below.*
   - Memory mapped files (mmap)
     * Assumes you have a lot of RAM
     * Doesn't work well with swap and zram
     * Better for read-only of few files (i.e., seeding a few potentially large files)
-  - Simple pread/pwrite --- Preferred for my use case[fn:4]
+  - Simple pread/pwrite --- Preferred for my use case[fn:7]
     * Better for large binary files
     * Better for many active files
     * Better for downloading (non-read-only) files
@@ -1399,9 +1441,9 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
 
 See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021955.674828][Cleanuparr: Keep download client queues tidy]] for managing download queues.
 
-[fn:3] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
+[fn:6] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
 
-[fn:4] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
+[fn:7] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
 
 **** Usenet
 
@@ -1439,7 +1481,7 @@ See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021
 
 The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
 
-Configuration creation/sync[fn:5] projects:
+Configuration creation/sync[fn:8] projects:
 + [[https://github.com/Notifiarr/notifiarr][GitHub - Notifiarr/notifiarr: Client for Notifiarr.com]]
   A notification client for the Arr stack. Does many things including syncing ones configuration files to TRaSH guide's settings---but requires a Patron donation.
 + [[https://github.com/recyclarr/recyclarr][GitHub - recyclarr/recyclarr: Automatically sync TRaSH Guides to your Sonarr and Radarr instances]]
@@ -1461,7 +1503,7 @@ Other useful projects that integrate with the Arr stack and tools related to it.
 + [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
 + [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
 + [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]]
-  Although I prefer the design choices[fn:6] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
+  Although I prefer the design choices[fn:9] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
 + [[https://github.com/Wizarrrr/wizarr][GitHub - wizarrrr/wizarr: Wizarr is an advanced user invitation and management system for Jellyfin, Plex, Emby etc.]]
 + [[https://github.com/arabcoders/watchstate][GitHub - arabcoders/watchstate: Self-hosted service to sync your plex, jellyfin and emby play state. without relying on 3rd-party external services.]]
 
@@ -1469,9 +1511,9 @@ Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
 + [[https://github.com/rix1337/Quasarr][GitHub - rix1337/Quasarr: Quasarr connects JDownloader with Radarr, Sonarr and LazyLibrarian. It also decrypts links protected by CAPTCHAs.]]
 
-[fn:5] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
+[fn:8] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
-[fn:6] I prefer qbit-quard's event-based oeprations (swurApp uses timers), scope (qbit-guard is for both Radarr and Sonarr, whereas swurApp is only for Sonarr), and dislike that swurApp may remonitor skipped (unmonitored) episodes.
+[fn:9] I prefer qbit-quard's event-based oeprations (swurApp uses timers), scope (qbit-guard is for both Radarr and Sonarr, whereas swurApp is only for Sonarr), and dislike that swurApp may remonitor skipped (unmonitored) episodes.
 
 **** Sonarr: Get shows
 
@@ -1823,29 +1865,29 @@ Merges Overseerr and Jellyserr, the latter of the two being a successor of the f
 
 Projects for automatic transcoding of media:
 + [[https://github.com/Unmanic/unmanic][Unmanic]] :: Best for simplicity. Can distribute workload across machines (only 3 machines in the network in the non-Supporter tier.) Has "Supporter"-only features, but basically all of them are in the free, non-Supporter tier.
-+ [[https://github.com/HaveAGitGat/Tdarr][Tdarr]] :: Best if one values flexibility and customizability of transcoding options. Also good if one has multiple machines and would like to distribute the transcoding workload among them.[fn:7] (Though people complain about the UI; many of these users found FileFlows's UI much more understandable.)
++ [[https://github.com/HaveAGitGat/Tdarr][Tdarr]] :: Best if one values flexibility and customizability of transcoding options. Also good if one has multiple machines and would like to distribute the transcoding workload among them.[fn:10] (Though people complain about the UI; many of these users found FileFlows's UI much more understandable.)
 + [[https://fileflows.com/][FileFlows]] :: Can do more than just transcode. Use node graphs to represent encoding, transcoding, and decoding, etc. flows, supporting sophisticated pipelines. Not open source and has pricing tiers. Also has support for using multiple machines, although 2+ nodes is paywalled... ([[https://www.reddit.com/r/Tdarr/comments/v0c72p/comment/ifiape7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] summarizes the comparison to Tdarr well.) Some people report using FileFlows because they don't want to be finicky with Tdarr or Unmanic.
 
 Other useful resources:
 + See which codecs the current client supports: [[https://jellyfin.org/docs/general/clients/codec-support/][Codec Support | Jellyfin]]
-+ Guide for encoding to AV1 via Unraid + Tdarr:[fn:8] [[https://github.com/plexguide/Unraid_Intel-ARC_Deployment?tab=readme-ov-file][GitHub - plexguide/Unraid_Intel-ARC_Deployment: Unraid - Comprehensive Guide to Enabling AV1 Encoding, Plex Deployment & GPU Management with Tdarr on Unraid 7.0+]]
++ Guide for encoding to AV1 via Unraid + Tdarr:[fn:11] [[https://github.com/plexguide/Unraid_Intel-ARC_Deployment?tab=readme-ov-file][GitHub - plexguide/Unraid_Intel-ARC_Deployment: Unraid - Comprehensive Guide to Enabling AV1 Encoding, Plex Deployment & GPU Management with Tdarr on Unraid 7.0+]]
 + Sensible AV1 CPU encoding considering VMAF and grain: [[https://gitlab.com/g33kphr33k/av1conv.sh][g33kphr33k / av1conv.sh]]
 + Great advice specific to home media server hardware: [[https://www.youtube.com/watch?v=Lga0RcHnaMY&list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ&index=5][Perfect Media Server Part 2 - Hardware | Intel Quick Sync + Component Selection - YouTube]]
 + Summarized conclusions of a crowd-sourced hardware analysis of CPU and GPU video encoding: [[https://blog.ktz.me/the-best-media-server-cpu-in-the-world/][The Best Media Server CPU... in the world.]]
 
-[fn:7] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
+[fn:10] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
 
-[fn:8] From the developer of Huntarr.
+[fn:11] From the developer of Huntarr.
   
 **** Jellyfin: Media streamer
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
 Useful Jellyfin plugins:
-+ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:9]
++ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:12]
 + [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
 
-Other potentially useful projects:[fn:10]
+Other potentially useful projects:[fn:13]
 + [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
 + [[https://github.com/Maintainerr/Maintainerr][GitHub - Maintainerr/Maintainerr: Looks and smells like Overseerr, does the opposite. Maintenance tool for the Plex ecosystem]]
   - See also the related [[https://github.com/Schaka/janitorr][GitHub - Schaka/janitorr: Cleans your Radarr, Sonarr, Jellyseerr and Jellyfin before you run out of space]]
@@ -1927,9 +1969,9 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
 
-[fn:9] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
+[fn:12] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
 
-[fn:10] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
+[fn:13] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
 **** Shoko: Better anime metadata retrieval
 
@@ -2423,7 +2465,7 @@ The ideal:
 4. High usable space relative to total drive space
 5. FOSS (no subscriptions or licenses)
 6. Resilient against a few drive failures
-The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:11] 3, 4, 6). The following solutions are inadequate:
+The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:14] 3, 4, 6). The following solutions are inadequate:
 + ZFS (fails 1, 2, 3)
 + RAID (fails 4)
 + unRAID (fails 5)
@@ -2437,9 +2479,9 @@ Useful resources:
   - Companion video series (partial): [[https://www.youtube.com/playlist?list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ][Perfect Media Server - YouTube]]
   - Short cousin guide, usin snapraid-btrfs: [[https://wiki.selfhosted.show/tools/snapraid-btrfs/][SnapRAID-BTRFS - Self-Hosted Show Wiki]]
 
-[fn:11] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
+[fn:14] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
 
-** BTRFS (The B-Tree File System): Flexible checksumming file-system useful forx home purposes
+** BTRFS (The B-Tree File System): Flexible checksumming file-system useful for home purposes
 
 I use btrfs for my external storage. Learn about setting up a btrfs file system:
 + RAID profiles:
@@ -2462,46 +2504,6 @@ Install some programs useful for introspecting a btrfs file system, including th
   "compsize"
   "lsof"
 #+end_src
-
-Mounting subvolumes specific to torrenting:
-#+begin_src scheme :noweb-ref system-helpers
-  (define file-system-media
-    (file-system
-      (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-      (mount-point "/home/krisbalintona/services/media")
-      (type "btrfs")
-      (flags '(no-atime))
-      (options "subvol=@media,compress=zstd")
-      (create-mount-point? #t)
-      (mount-may-fail? #t)))
-#+end_src
-#+begin_src scheme :noweb-ref system-filesystems
-  file-system-media
-  (file-system
-    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-    (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
-    (type "btrfs")
-    (flags '(no-atime))
-    ;; This subvolume is not mounted with "nodatacow," but it consists
-    ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
-    ;; option because btrfs subvolumes currently inherit the mount
-    ;; options of the first mounted subvolume.
-    (options "subvol=@torrents-incomplete,compress=zstd")
-    (mount-may-fail? #t)
-    (dependencies (list file-system-media)))
-#+end_src
-A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:12]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:13]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:14]
-
-2026-01-15:
-Although [[https://www.reddit.com/r/qBittorrent/comments/1ecdmfg/comment/lezmjyj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this comment]] suggests that fragmentation doesn't matter when seeding many torrents since in such a case random IO occurs anyway...
-
-I think the idea is this: if the file is complete, readahead makes it such that there are always reads queued as the drive seeks. So the seeking time isn't the bottleneck, the predictability of the reads (i.e., the "access pattern") is. Consequently, fragmentation doesn't affect the speed of reads and writes /for sequential reads (e.g., single file), as opposed to random (e.g., jumping between many files) reads/: seek speed is increased but is masked by the kernel's readahead.
-
-[fn:12] I learned about this from [[https://www.reddit.com/r/btrfs/comments/s7qz6d/torrenting_on_btrfs_fragmentation_and_drive/][several comments from this Reddit thread]].
-
-[fn:13] In this context, the trade off of a single copy of a large file is much smaller than the HDD seeking speed degradation we're trying to avoid (for large torrented binary files) due to high fragmentation.
-
-[fn:14] Additionally, since the first mounted subvolume's options are applied to all mounted subvolumes (see [[https://man.archlinux.org/man/btrfs.5#MOUNT_OPTIONS][btrfs(5) — Arch manual pages]]), one must use ~chattr +C /path/to/incomplete/downloads~ to make the specific directory NOCOW rather than the entire subvolume. (And to repeat, a separate subvolume is needed to exploit the trick of turning a NOCOW file into a COW one when moved into a COW subvolume.)
 
 * Home
 
