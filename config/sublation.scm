@@ -357,6 +357,13 @@
                          (options "subvol=@torrents-incomplete,compress=zstd")
                          (mount-may-fail? #t)
                          (dependencies (list file-system-media)))
+                       (file-system
+                         (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+                         (mount-point "/home/krisbalintona/services/immich/data")
+                         (type "btrfs")
+                         (flags '(no-atime))
+                         (options "subvol=@immich,compress=zstd")
+                         (mount-may-fail? #t))
                        %base-file-systems))
 
   (swap-devices

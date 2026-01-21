@@ -2230,6 +2230,17 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
            (respawn? #f)))))))
 #+end_src
 
+External storage:
+#+begin_src scheme :noweb-ref system-filesystems
+  (file-system
+    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
+    (mount-point "/home/krisbalintona/services/immich/data")
+    (type "btrfs")
+    (flags '(no-atime))
+    (options "subvol=@immich,compress=zstd")
+    (mount-may-fail? #t))
+#+end_src
+
 ** Monitoring
 
 *** Goaccess: Web log access analytics
