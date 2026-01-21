@@ -68,6 +68,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -941,6 +943,7 @@
          (oci-container-configuration
            (provision "renamarr")
            (image "ghcr.io/hollanbm/renamarr:latest")
+           (environment '("TZ=America/Chicago"))
            (network "gluetun-network")
            (volumes '(("/home/krisbalintona/services/renamarr/config" . "/config")))
            (auto-start? #t)
@@ -1030,6 +1033,91 @@
               ("/home/krisbalintona/services/media" . "/media")))
            ;; Additional argument set in the official documentation
            (extra-arguments '("--shm-size=256m"))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-yamtrack
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "yamtrack-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "yamtrack")
+           (image "ghcr.io/fuzzygrim/yamtrack")
+           (host-environment
+            (list
+             (cons "SECRET"
+                   (get-sops-secret '("yamtrack" "django" "secret-key")
+                                    #:file sops-sublation-secrets-file))
+             (cons "SOCIALACCOUNT_PROVIDERS"
+                   (format #f
+                           "{\"openid_connect\": {
+               \"OAUTH_PKCE_ENABLED\": true,
+               \"APPS\": [{
+                 \"provider_id\": \"PocketID\",
+                 \"name\": \"Pocket ID\",
+                 \"client_id\": \"~a\",
+                 \"secret\": \"~a\",
+                 \"settings\": {
+                   \"server_url\": \"https://pocket-id.kristofferbalintona.me/.well-known/openid-configuration\"
+                 }
+               }]
+             }}"
+                           (get-sops-secret '("yamtrack" "pocket-id" "client-id")
+                                            #:file sops-sublation-secrets-file)
+                           (get-sops-secret '("yamtrack" "pocket-id" "secret")
+                                            #:file sops-sublation-secrets-file)))
+             (cons "ANILIST_ID"
+                   (get-sops-secret '("yamtrack" "anilist" "api-id")
+                                    #:file sops-sublation-secrets-file))
+             
+             (cons "ANILIST_SECRET"
+                   (get-sops-secret '("yamtrack" "anilist" "api-secret")
+                                    #:file sops-sublation-secrets-file))))
+           ;; A list of all environment variables:
+           ;; https://github.com/FuzzyGrim/Yamtrack/wiki/Environment-Variables
+           (environment
+            `(;;; User and System Configuration
+              "TZ=America/Chicago"
+              "PUID=1000"
+              "PGID=1000"
+              "ACCOUNT_DEFAULT_HTTP_PROTOCOL=https"
+              ,(cons "ACCOUNT_LOGOUT_REDIRECT_URL"
+                     "https://yamtrack.kristofferbalintona.me/accounts/oidc/PocketID/logout/callback/")
+              "SOCIAL_PROVIDERS=allauth.socialaccount.providers.openid_connect"
+              "SOCIALACCOUNT_PROVIDERS"
+              "SOCIALACCOUNT_ONLY=true"
+              
+              ;;; Redis and Django Settings
+              "REDIS_URL=redis://yamtrack_redis:6379" ; Default redis port
+              "REDIS_PREFIX=yamtrack"
+              "URLS=https://yamtrack.kristofferbalintona.me"
+              "SECRET"
+              "REGISTRATION=true"
+              "ADMIN_ENABLED=true"
+    
+              ;;; Media sources
+              "TMDB_LANG=en-US"
+    
+              ;;; Media imports
+              ;;
+              ;; I have a public Anilist account but set up an API client
+              ;; in case in the future I decide to make it private
+              "ANILIST_ID"
+              "ANILIST_SECRET"))
+           (network "yamtrack-network")
+           (ports '("127.0.0.1:7878:8000"))
+           (volumes '(("/home/krisbalintona/services/yamtrack/data" . "/yamtrack/db")))
+           (auto-start? #t)
+           (respawn? #f))
+         (oci-container-configuration
+           (provision "yamtrack_redis")
+           (image "docker.io/library/redis:8-alpine")
+           (network "yamtrack-network")
+           (volumes '(("/home/krisbalintona/services/yamtrack/redis_data" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-goaccess

@@ -503,6 +503,14 @@ cleanuparr.home.kristofferbalintona.me {
 	import policy_private
 }
 
+# *** Seerr
+
+seerr.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:5055
+	import policy_public
+	import service-logs seerr
+}
+
 # ** Jellyfin
 
 jellyfin.kristofferbalintona.me {
@@ -510,11 +518,20 @@ jellyfin.kristofferbalintona.me {
 	import policy_public
 }
 
-# ** Seerr
+# ** Yamtrack
 
-seerr.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:5055
+
+yamtrack.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:7878
 	import policy_public
+	import service-logs yamtrack
+
+	# Only access admin page in local networks and my public IP
+	@admin {
+		path /admin*
+		not remote_ip private_ranges 99.113.24.207
+	}
+	error @admin 403
 }
 
 # ** Shoko
