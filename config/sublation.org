@@ -1497,8 +1497,9 @@ Other useful projects that integrate with the Arr stack and tools related to it.
 + [[https://github.com/StuffAnThings/qbit_manage/wiki][Home · StuffAnThings/qbit_manage Wiki · GitHub]]
 + See also [[https://www.reddit.com/r/radarr/comments/hbwnb2/a_list_of_all_companion_tools_and_software/][this Reddit post]]
 + "Awesome" lists:
-  - [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
   - [[https://github.com/Ravencentric/awesome-arr][GitHub - Ravencentric/awesome-arr: A collection of *arrs and related stuff]]
+  - Not an awesome list but an automated aggregator of *Arr projects: [[https://locatarr.github.io/][Locatarr | Locating *Arr services and aggregating them into a single list. Thus, Locatarr.]]
+  - Related: [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
 + [[https://github.com/aetaric/checkrr][GitHub - aetaric/checkrr: Checkrr Scans your library files for corrupt media and optionally replaces the files via sonarr and radarr]]
 + [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
 + [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
@@ -1886,6 +1887,7 @@ Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-
 Useful Jellyfin plugins:
 + [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:12]
 + [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
++ [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
 
 Other potentially useful projects:[fn:13]
 + [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
@@ -1898,8 +1900,9 @@ Other potentially useful projects:[fn:13]
 + [[https://github.com/dan-online/autopulse][GitHub - dan-online/autopulse: 💫 automated lightweight service that updates media servers like Plex and Jellyfin based on notifications from media organizers like Sonarr and Radarr]]
 + [[https://github.com/nullable-eth/labelarr][GitHub - nullable-eth/labelarr: Application that bridges your Plex media libraries with The Movie Database, adding relevant keywords as searchable labels or genres.]]
 + [[https://jfcovers.jan.run/][Jellyfin Cover Maker]]
++ [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
 
-See also these tangential projects:
+See also these competing projects:
 + Alternatives media servers, some wrapping Arr functionality:
   - [[https://github.com/maxdorninger/MediaManager][GitHub - maxdorninger/MediaManager: A modern selfhosted media management system for your media library]].
   - [[https://github.com/getmydia/mydia?tab=readme-ov-file][GitHub - getmydia/mydia: Your personal media companion, built with Phoenix LiveView]]
