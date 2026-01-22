@@ -2315,7 +2315,7 @@ External storage:
          (respawn? #f))))))
 #+end_src
 
-*** Gatus: Services monitor
+*** Gatus: Service uptime monitor
 
 A lightweight, simpler alternative to Uptime Kuma.
 
@@ -2340,6 +2340,78 @@ A lightweight, simpler alternative to Uptime Kuma.
             "/home/krisbalintona/services/gatus/data:/data"))
          (auto-start? #t)
          (respawn? #f))))))
+#+end_src
+
+*** Grafana: Metrics and monitoring visualizer
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-grafana
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "grafana-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "grafana")
+         (image "grafana/grafana:latest")
+         (container-user "1000")
+         (network "grafana-network")
+         (ports '("127.0.0.1:3000:3000"))
+         (environment
+          '("GF_SERVER_PROTOCOL=https"
+            "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
+            "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
+            "GF_SERVER_ENFORCE_DOMAIN=True"))
+         (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+*** Prometheus: Metrics aggregator
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-prometheus
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "prometheus")
+         (image "prom/prometheus:latest")
+         (container-user "1000")
+         (network "host")
+         (volumes
+          '(("/home/krisbalintona/services/prometheus/config" . "/etc/prometheus")
+            ("/home/krisbalintona/services/prometheus/data" . "/prometheus")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Node exporter
+
+Prometheus node exporter for my device.
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services monitoring)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (service prometheus-node-exporter-service-type
+    (prometheus-node-exporter-configuration
+      (web-listen-address "127.0.0.1:21005")))
 #+end_src
 
 * Backups

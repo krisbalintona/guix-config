@@ -511,7 +511,9 @@ seerr.kristofferbalintona.me {
 	import service-logs seerr
 }
 
-# ** Jellyfin
+# ** Media
+
+# *** Jellyfin
 
 jellyfin.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8096
@@ -519,7 +521,7 @@ jellyfin.kristofferbalintona.me {
 	import service-logs jellyfin
 }
 
-# ** Yamtrack
+# *** Yamtrack
 
 
 yamtrack.kristofferbalintona.me {
@@ -535,16 +537,32 @@ yamtrack.kristofferbalintona.me {
 	error @admin 403
 }
 
-# ** Immich
+# *** Immich
 
 immich.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:2283
 	import policy_private
 }
 
-# ** Shoko
+# *** Shoko
 
 shoko.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8111
+	import policy_private
+}
+
+# ** Monitoring and observing
+
+# *** Grafana
+
+grafana.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:3000
+	import policy_private
+}
+
+# *** Prometheus
+
+prometheus.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9090
 	import policy_private
 }

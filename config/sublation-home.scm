@@ -72,6 +72,10 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -1309,6 +1313,44 @@
             `(,(cons (string-append (dirname (current-filename)) "/files/gatus/config.yaml")
                      "/config/config.yaml")
               "/home/krisbalintona/services/gatus/data:/data"))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-grafana
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "grafana-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "grafana")
+           (image "grafana/grafana:latest")
+           (container-user "1000")
+           (network "grafana-network")
+           (ports '("127.0.0.1:3000:3000"))
+           (environment
+            '("GF_SERVER_PROTOCOL=https"
+              "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
+              "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
+              "GF_SERVER_ENFORCE_DOMAIN=True"))
+           (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-prometheus
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "prometheus")
+           (image "prom/prometheus:latest")
+           (container-user "1000")
+           (network "host")
+           (volumes
+            '(("/home/krisbalintona/services/prometheus/config" . "/etc/prometheus")
+              ("/home/krisbalintona/services/prometheus/data" . "/prometheus")))
            (auto-start? #t)
            (respawn? #f))))))
     (service home-restic-backup-service-type)

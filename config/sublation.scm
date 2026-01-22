@@ -17,6 +17,7 @@
              (gnu services dns)
              (gnu services vpn)
              (gnu services sysctl)
+             (gnu services monitoring)
              (gnu services linux)
              (gnu services sysctl)
              (gnu system file-systems))
@@ -292,6 +293,9 @@
     (simple-service 'sysctl-wireguard
         sysctl-service-type
       '(("net.ipv4.ip_forward" . "1")))
+    (service prometheus-node-exporter-service-type
+      (prometheus-node-exporter-configuration
+        (web-listen-address "127.0.0.1:21005")))
     (service zram-device-service-type
       (zram-device-configuration
         (size "3G")
