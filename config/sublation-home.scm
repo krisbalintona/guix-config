@@ -74,6 +74,7 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
              (gnu services backup)
@@ -1316,43 +1317,65 @@
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-grafana
-        home-oci-service-type
-      (oci-extension
+        home-podman-pods-service-type
+      (oci-pod-extension
+       (pods
+        (list
+         (oci-pod-configuration
+          (name "metrics-pod")
+          (network
+           (string-append "pasta:"
+                          "--tcp-ns,21005:21005")) ; Node (host) exporter
+          (ports
+           '("127.0.0.1:3000:3000"          ; Grafana web UI
+             "127.0.0.1:8428:8428")))))     ; VictoriaMetrics web UI
        (networks
         (list
          (oci-network-configuration
-          (name "grafana-network"))))
+          (name "grafana-network")
+          (subnet "10.89.13.0/24"))))
        (containers
         (list
-         (oci-container-configuration
-           (provision "grafana")
-           (image "grafana/grafana:latest")
-           (container-user "1000")
-           (network "grafana-network")
-           (ports '("127.0.0.1:3000:3000"))
-           (environment
-            '("GF_SERVER_PROTOCOL=https"
-              "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
-              "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
-              "GF_SERVER_ENFORCE_DOMAIN=True"))
-           (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
-           (auto-start? #t)
-           (respawn? #f))))))
-    (simple-service 'home-oci-prometheus
-        home-oci-service-type
-      (oci-extension
+         (oci-container-configuration/pod
+          (oci-container-configuration
+            (provision "grafana")
+            (image "grafana/grafana:latest")
+            (container-user "1000")
+            (environment
+             '("GF_SERVER_PROTOCOL=http" ; Keep HTTP; reverse proxy handles HTTPS
+               "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
+               "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
+               "GF_SERVER_ENFORCE_DOMAIN=True"))
+            (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+            (auto-start? #t)
+            (respawn? #f))
+          "metrics-pod")))))
+    (simple-service 'home-oci-victoria-metrics
+        home-podman-pods-service-type
+      (oci-pod-extension
        (containers
         (list
-         (oci-container-configuration
-           (provision "prometheus")
-           (image "prom/prometheus:latest")
-           (container-user "1000")
-           (network "host")
-           (volumes
-            '(("/home/krisbalintona/services/prometheus/config" . "/etc/prometheus")
-              ("/home/krisbalintona/services/prometheus/data" . "/prometheus")))
-           (auto-start? #t)
-           (respawn? #f))))))
+         (oci-container-configuration/pod
+          (oci-container-configuration
+            (provision "victoria-metrics")
+            (image "victoriametrics/victoria-metrics:latest")
+            (container-user "1000")
+            (volumes
+             '(("/home/krisbalintona/services/victoria-metrics/data" . "/data")
+               ("/home/krisbalintona/services/victoria-metrics/config" . "/config:ro")))
+            (command
+             '("-storageDataPath=/data"
+               "-promscrape.config=/config/scrape.yaml"
+               "-httpListenAddr=0.0.0.0:8428"       ; Default
+               "-retentionPeriod=6M"))
+            (auto-start? #t)
+            (respawn? #f))
+          ;; In this pod, forward host 127.0.0.1:21005 to container
+          ;; 127.0.0.1:21005.  Do this since the node exporter is on
+          ;; 127.0.0.1:21005.  See
+          ;; https://github.com/eriksjolund/podman-networking-docs?tab=readme-ov-file#outbound-tcpudp-connections-to-the-hosts-localhost
+          ;; for an explanation
+          "metrics-pod")))))
     (service home-restic-backup-service-type)
     (simple-service 'home-restic-vault
         home-restic-backup-service-type

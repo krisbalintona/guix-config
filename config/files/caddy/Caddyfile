@@ -561,9 +561,9 @@ grafana.home.kristofferbalintona.me {
 	import policy_private
 }
 
-# *** Prometheus
+# *** Victoria Metrics
 
-prometheus.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:9090
+victoria-metrics.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8428
 	import policy_private
 }
