@@ -567,3 +567,10 @@ victoria-metrics.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8428
 	import policy_private
 }
+
+# *** VMagent
+
+vmagent.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8429
+	import policy_private
+}
