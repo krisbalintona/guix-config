@@ -2509,13 +2509,14 @@ Lighter and more performant drop-in replacement for Prometheus. See a brief comp
          (image "quay.io/victoriametrics/vmagent:latest")
          (volumes
           '(("/home/krisbalintona/services/victoria-metrics/config" . "/config:ro")))
-         (network "host")
+         ;; Automatically forward all ports on host loopback to
+         ;; container loopback.  See
+         ;; https://passt.top/builds/latest/web/passt.1.html for
+         ;; information on why pasta options create that result
+         (network "pasta:--tcp-ns,auto")
+         (ports '("127.0.0.1:8429:8429"))
          (command
-          ;; FIXME 2026-01-24: Am I comfortable with --network host and
-          ;; relying just on -httpListenAddr=127.0.0.1:8429 to make sure
-          ;; this endpoint isn't reachable externally?  This makes the
-          ;; configuration less auditable IMO.
-          '("-httpListenAddr=127.0.0.1:8429"        ; Default
+          '("-httpListenAddr=0.0.0.0:8429" ; Default
             "-promscrape.config=/config/scrape.yaml"
             ;; Host + port + /api/v1/write of VictoriaMetrics
             "-remoteWrite.url=http://127.0.0.1:8428/api/v1/write"
