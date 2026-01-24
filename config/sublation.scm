@@ -18,6 +18,7 @@
              (gnu services vpn)
              (gnu services sysctl)
              (gnu services monitoring)
+             (gnu services monitoring)
              (gnu services linux)
              (gnu services sysctl)
              (gnu system file-systems))
@@ -296,6 +297,25 @@
     (service prometheus-node-exporter-service-type
       (prometheus-node-exporter-configuration
         (web-listen-address "127.0.0.1:21005")))
+    (simple-service 'home-oci-victoria-logs
+        home-oci-service-type
+      (oci-extension
+       ;; (networks
+       ;;  (list
+       ;;   (oci-network-configuration
+       ;;    (name "grafana-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "victoria-logs")
+           (image "grafana/grafana:latest")
+           (container-user "1000")
+           (environment '())
+           (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+           ;; (network "grafana-network")
+           ;; (ports '("127.0.0.1:3000:3000"))
+           (auto-start? #t)
+           (respawn? #f))))))
     (service zram-device-service-type
       (zram-device-configuration
         (size "3G")

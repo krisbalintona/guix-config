@@ -2515,6 +2515,9 @@ Lighter and more performant drop-in replacement for Prometheus. See a brief comp
          ;; information on why pasta options create that result
          (network "pasta:--tcp-ns,auto")
          (ports '("127.0.0.1:8429:8429"))
+         ;; See also the -remoteWrite.tmpDataPath option, which defaults
+         ;; to "vmagent-remotewrite-data" and is responsible for acting
+         ;; as a buffer for scraped data
          (command
           '("-httpListenAddr=0.0.0.0:8429" ; Default
             "-promscrape.config=/config/scrape.yaml"
@@ -2530,7 +2533,7 @@ Lighter and more performant drop-in replacement for Prometheus. See a brief comp
 
 **** Prometheus Node exporter
 
-Prometheus node exporter for my device.
+Prometheus node exporter for my machine.
 
 #+begin_src scheme :noweb-ref system-modules
   (gnu services monitoring)
@@ -2541,6 +2544,38 @@ Prometheus node exporter for my device.
     (prometheus-node-exporter-configuration
       (web-listen-address "127.0.0.1:21005")))
 #+end_src
+
+**** VictoriaLogs: 
+
+Lighter on resources, more performant, and more compact storage alternative to Loki. See [[https://www.truefoundry.com/blog/victorialogs-vs-loki][Victorialogs vs Loki - Benchmarking Results]].[fn:14] Prefer Loki only on edge cases where workflows are heavily label-driven; in every other case, where full-text search is needed and labels are not efficiently laid out, Loki is worse.
+
+#+begin_src scheme :noweb-ref system-modules
+  (gnu services monitoring)
+#+end_src
+
+#+begin_src scheme :noweb-ref system-services
+  (simple-service 'home-oci-victoria-logs
+      home-oci-service-type
+    (oci-extension
+     ;; (networks
+     ;;  (list
+     ;;   (oci-network-configuration
+     ;;    (name "grafana-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "victoria-logs")
+         (image "grafana/grafana:latest")
+         (container-user "1000")
+         (environment '())
+         (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+         ;; (network "grafana-network")
+         ;; (ports '("127.0.0.1:3000:3000"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+[fn:14] See also https://itnext.io/how-do-open-source-solutions-for-logs-work-elasticsearch-loki-and-victorialogs-9f7097ecbc2f for a technical overview comparing the engineering of Elesticsearch,Loki, and VictoriaLogs.
 
 * Backups
 
@@ -2679,7 +2714,7 @@ The ideal:
 4. High usable space relative to total drive space
 5. FOSS (no subscriptions or licenses)
 6. Resilient against a few drive failures
-The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:14] 3, 4, 6). The following solutions are inadequate:
+The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:15] 3, 4, 6). The following solutions are inadequate:
 + ZFS (fails 1, 2, 3)
 + RAID (fails 4)
 + unRAID (fails 5)
@@ -2693,7 +2728,7 @@ Useful resources:
   - Companion video series (partial): [[https://www.youtube.com/playlist?list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ][Perfect Media Server - YouTube]]
   - Short cousin guide, usin snapraid-btrfs: [[https://wiki.selfhosted.show/tools/snapraid-btrfs/][SnapRAID-BTRFS - Self-Hosted Show Wiki]]
 
-[fn:14] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
+[fn:15] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
 
 ** BTRFS (The B-Tree File System): Flexible checksumming file-system useful for home purposes
 

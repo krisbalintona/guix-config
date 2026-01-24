@@ -1436,6 +1436,9 @@
            ;; information on why pasta options create that result
            (network "pasta:--tcp-ns,auto")
            (ports '("127.0.0.1:8429:8429"))
+           ;; See also the -remoteWrite.tmpDataPath option, which defaults
+           ;; to "vmagent-remotewrite-data" and is responsible for acting
+           ;; as a buffer for scraped data
            (command
             '("-httpListenAddr=0.0.0.0:8429" ; Default
               "-promscrape.config=/config/scrape.yaml"
