@@ -80,6 +80,8 @@
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu services backup)
              (gnu home services backup))
 
@@ -430,7 +432,9 @@
                         (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
                                          #:file sops-sublation-secrets-file))))
            (network "crowdsec-network")
-           (ports '("127.0.0.1:7200:7200"))
+           (ports
+            '("127.0.0.1:7200:7200"         ; LAPI
+              "127.0.0.1:6060:6060"))       ; Prometheus metrics
            (volumes
             (list (cons "/home/krisbalintona/services/crowdsec/data/" "/var/lib/crowdsec/data/")
                   (cons "/home/krisbalintona/services/crowdsec/config/" "/etc/crowdsec")
@@ -1372,68 +1376,76 @@
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-grafana
-        home-podman-pods-service-type
-      (oci-pod-extension
-       (pods
-        (list
-         (oci-pod-configuration
-          (name "metrics-pod")
-          (network
-           (string-append "pasta:"
-                          (string-join
-                           '("--tcp-ns" "21005:21005" ; Node (host) exporter
-                             "--tcp-ns" "9882:9882")  ; Podman exporter
-                           ",")))
-          (ports
-           '("127.0.0.1:3000:3000"          ; Grafana web UI
-             "127.0.0.1:8428:8428")))))     ; VictoriaMetrics web UI
+        home-oci-service-type
+      (oci-extension
        (networks
         (list
          (oci-network-configuration
-          (name "grafana-network")
-          (subnet "10.89.13.0/24"))))
+          (name "grafana-network"))))
        (containers
         (list
-         (oci-container-configuration/pod
-          (oci-container-configuration
-            (provision "grafana")
-            (image "grafana/grafana:latest")
-            (container-user "1000")
-            (environment
-             '("GF_SERVER_PROTOCOL=http" ; Keep HTTP; reverse proxy handles HTTPS
-               "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
-               "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
-               "GF_SERVER_ENFORCE_DOMAIN=True"))
-            (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
-            (auto-start? #t)
-            (respawn? #f))
-          "metrics-pod")))))
+         (oci-container-configuration
+           (provision "grafana")
+           (image "grafana/grafana:latest")
+           (container-user "1000")
+           (environment
+            '("GF_SERVER_PROTOCOL=http" ; Keep HTTP; reverse proxy handles HTTPS
+              "GF_SERVER_DOMAIN=grafana.home.kristofferbalintona.me"
+              "GF_SERVER_ROOT_URL=https://grafana.home.kristofferbalintona.me/"
+              "GF_SERVER_ENFORCE_DOMAIN=True"))
+           (volumes '(("/home/krisbalintona/services/grafana/data" . "/var/lib/grafana")))
+           (network "grafana-network")
+           (ports '("127.0.0.1:3000:3000")) ; Grafana web UI
+           (auto-start? #t)
+           (respawn? #f))))))
     (simple-service 'home-oci-victoria-metrics
         home-podman-pods-service-type
       (oci-pod-extension
        (containers
         (list
-         (oci-container-configuration/pod
-          (oci-container-configuration
-            (provision "victoria-metrics")
-            (image "victoriametrics/victoria-metrics:latest")
-            (container-user "1000")
-            (volumes
-             '(("/home/krisbalintona/services/victoria-metrics/data" . "/data")
-               ("/home/krisbalintona/services/victoria-metrics/config" . "/config:ro")))
-            (command
-             '("-storageDataPath=/data"
-               "-promscrape.config=/config/scrape.yaml"
-               "-httpListenAddr=0.0.0.0:8428"       ; Default
-               "-retentionPeriod=6M"))
-            (auto-start? #t)
-            (respawn? #f))
-          ;; In this pod, forward host 127.0.0.1:21005 to container
-          ;; 127.0.0.1:21005.  Do this since the node exporter is on
-          ;; 127.0.0.1:21005.  See
-          ;; https://github.com/eriksjolund/podman-networking-docs?tab=readme-ov-file#outbound-tcpudp-connections-to-the-hosts-localhost
-          ;; for an explanation
-          "metrics-pod")))))
+         (oci-container-configuration
+           (provision "victoria-metrics")
+           (image "victoriametrics/victoria-metrics:latest")
+           (container-user "1000")
+           (volumes
+            '(("/home/krisbalintona/services/victoria-metrics/data" . "/data")
+              ("/home/krisbalintona/services/victoria-metrics/config" . "/config:ro")))
+           (network "grafana-network")
+           (ports '("127.0.0.1:8428:8428")) ; Web UI
+           ;; We scrape purely via vmagent, so we shouldn't specify
+           ;; -promscrape.config
+           (command
+            '("-storageDataPath=/data"
+              "-httpListenAddr=0.0.0.0:8428" ; Default
+              "-retentionPeriod=6M"))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-vmagent
+        home-podman-pods-service-type
+      (oci-pod-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "vmagent")
+           (image "quay.io/victoriametrics/vmagent:latest")
+           (volumes
+            '(("/home/krisbalintona/services/victoria-metrics/config" . "/config:ro")))
+           (network "host")
+           (command
+            ;; FIXME 2026-01-24: Am I comfortable with --network host and
+            ;; relying just on -httpListenAddr=127.0.0.1:8429 to make sure
+            ;; this endpoint isn't reachable externally?  This makes the
+            ;; configuration less auditable IMO.
+            '("-httpListenAddr=127.0.0.1:8429"        ; Default
+              "-promscrape.config=/config/scrape.yaml"
+              ;; Host + port + /api/v1/write of VictoriaMetrics
+              "-remoteWrite.url=http://127.0.0.1:8428/api/v1/write"
+              ;; In case I accidentally include lines in the scrape config
+              ;; that is incompatible with vmagent; see
+              ;; https://docs.victoriametrics.com/victoriametrics/vmagent/#unsupported-prometheus-config-sections
+              "-promscrape.config.strictParse=false"))
+           (auto-start? #t)
+           (respawn? #f))))))
     (service home-restic-backup-service-type)
     (simple-service 'home-restic-vault
         home-restic-backup-service-type
