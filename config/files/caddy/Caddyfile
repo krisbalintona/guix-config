@@ -364,6 +364,7 @@
 
 pihole.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7080
+	redir / /admin 301
 	import policy_private
 }
 
