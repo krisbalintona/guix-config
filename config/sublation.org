@@ -309,6 +309,12 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 
 The logs for all Shepherd-run (home) containers can be found at =$HOME/.local/state/shepherd/shepherd.log=. Thus, something like ~tail -f $HOME/.local/state/shepherd/shepherd.log~ can be used to monitor all logs simultaneously. This can be useful when, e.g., a given Shepherd service is not configured to log to file, and its service fails before the user can read any of the stdout logs from ~herd status SERVICE~.
 
+For a list of resources for learning how to network with Podman containers (some of this applies to Docker and networking in general, too):
++ [[https://www.redhat.com/en/blog/container-networking-podman][Configuring container networking with Podman]]
++ [[https://docs.oracle.com/en/learn/ol-podman-pasta-networking/index.html#next-steps][Use Pasta Networking with Podman on Oracle Linux]]
++ [[https://passt.top/passt/about/][passt - Plug A Simple Socket Transport]]
++ [[https://github.com/eriksjolund/podman-networking-docs?tab=readme-ov-file#outbound-tcpudp-connections-to-the-hosts-localhost][GitHub - eriksjolund/podman-networking-docs: rootless Podman networking documentation with examples]]
+
 #+begin_src scheme :noweb-ref system-modules
   (gnu services containers)
   (gnu services sysctl)
