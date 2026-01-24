@@ -17,6 +17,9 @@
              (gnu home services gnupg)
              (sops secrets)
              (sops home services sops)
+             (gnu packages containers)
+             (gnu services containers)
+             (gnu home services containers)
              (gnu home services ssh)
              (gnu services containers)
              (gnu home services containers)
@@ -104,6 +107,9 @@
 (define (get-sops-secret-path filename)
   (string-append "/run/user/" (number->string (getuid))
                  "/secrets/" filename))
+(define home-podman-socket
+  (string-append (getenv "XDG_RUNTIME_DIR")
+                 "/podman/podman.sock"))
 (define services-dir
   (string-append (getenv "HOME") "/services"))
 (define pocket-id-socket-dir
@@ -332,6 +338,55 @@
        (oci-configuration
         (runtime 'podman)                   ; Use podman instead of docker
         (verbose? #t))))
+    (simple-service 'podman-socket
+        home-shepherd-service-type
+      (list
+       (shepherd-service
+         (provision '(home-podman-socket))
+         (documentation
+          "Run 'podman system service --time 0', creating a podman socket at $XDG_RUNTIME_DIR.")
+         (start
+          #~(make-forkexec-constructor
+             (list #$(file-append podman "/bin/podman")
+                   "system" "service" "--time" "0")))
+         (stop
+          #~(make-kill-destructor)))))
+    (simple-service 'home-oci-prometheus-podman-exporter
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (let ((container-podman-socket "/run/podman/podman.sock"))
+           (oci-container-configuration
+             (provision "prometheus-podman-exporter")
+             (requirement '(home-podman-socket))
+             (image "quay.io/navidys/prometheus-podman-exporter:latest")
+             (environment
+              (list
+               (cons "CONTAINER_HOST"
+                     (string-append "unix://" container-podman-socket))))
+             (volumes
+              (list (cons home-podman-socket container-podman-socket)))
+             ;; See also
+             ;; https://github.com/containers/prometheus-podman-exporter?tab=readme-ov-file#usage-and-options
+             ;; for a list of other collectors available for enabling.  You
+             ;; can see which collectors are enabled from the startup logs
+             ;; of the container.  The default collector
+             ;; (collector.container) seems sufficient for all the data
+             ;; required by the podman-exporter Grafana dashboard I use:
+             ;; https://grafana.com/grafana/dashboards/21559-podman-exporter-dashboard/.
+             (extra-arguments
+              '(;; 2026-01-24: Instructed to include this if, I think, Using
+                ;; SELinux, which I'm not.  But I've left it here in the
+                ;; future in case I use SELinux.
+                "--security-opt" "label=disable"
+                ;; The podman socket is only readable by the host user, and
+                ;; we must make that socket readable by the container
+                ;; process
+                "--userns=keep-id:uid=65534"))
+             (ports '("127.0.0.1:9882:9882"))
+             (auto-start? #t)
+             (respawn? #f)))))))
     (service home-openssh-service-type
         (home-openssh-configuration
           (hosts
@@ -1325,7 +1380,10 @@
           (name "metrics-pod")
           (network
            (string-append "pasta:"
-                          "--tcp-ns,21005:21005")) ; Node (host) exporter
+                          (string-join
+                           '("--tcp-ns" "21005:21005" ; Node (host) exporter
+                             "--tcp-ns" "9882:9882")  ; Podman exporter
+                           ",")))
           (ports
            '("127.0.0.1:3000:3000"          ; Grafana web UI
              "127.0.0.1:8428:8428")))))     ; VictoriaMetrics web UI
