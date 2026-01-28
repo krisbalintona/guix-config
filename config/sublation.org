@@ -1530,6 +1530,12 @@ See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021
 
 ***** SABnzbd: A better maintained NZBGet
 
+Helpful links
++ Setup
+  - TRaSH guides
+    * [[https://trash-guides.info/Downloaders/SABnzbd/Basic-Setup/#bad-path-suggestion][Basic-Setup - TRaSH Guides]]
+    * [[https://trash-guides.info/Downloaders/SABnzbd/Paths-and-Categories/][Path and Categories - TRaSH Guides]]
+
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
   (gnu home services containers)
