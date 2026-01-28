@@ -1939,7 +1939,9 @@ Merges Overseerr and Jellyserr, the latter of the two being a successor of the f
 
 *** Media library
 
-**** On video encoding, decoding, and transcoding
+**** Video
+
+***** On video encoding, decoding, and transcoding
 
 + There is hardware encoding (GPU) and software encoding (CPU)
   - Hardware encoding is much faster with slighty worse compression and fewer knobs to configure but is worse quailty (usually: see [[https://www.reddit.com/r/homelab/comments/1pl1y0y/comment/ntpl2pb/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment by the maintainer of FileFlows]] explaining how hardware encoding can be made to equal CPU encoding's quality)
@@ -1967,7 +1969,7 @@ Other useful resources:
 
 [fn:11] From the developer of Huntarr.
   
-**** Jellyfin: Media streamer
+***** Jellyfin: Media streamer
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
@@ -2063,7 +2065,9 @@ To check if hardware acceleration is working, play a piece of media that should 
 
 [fn:13] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
-**** Shoko: Better anime metadata retrieval
+***** Anime
+
+****** Shoko: Better anime metadata retrieval
 
 Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/comment/maprg6j/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][Shoko is categorically a more robust metadata solution]] for anime.
 
@@ -2093,6 +2097,39 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
             ("/home/krisbalintona/services/media" . "/media")))
          ;; Additional argument set in the official documentation
          (extra-arguments '("--shm-size=256m"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+**** Music
+
+***** Yubal: YouTube Music downloader
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-yubal
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "yubal-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "yubal")
+         (image "ghcr.io/guillevc/yubal:latest")
+         (container-user "1000:1000")
+         (environment '("YUBAL_TZ=America/Chicago"))
+         (network "yubal-network")
+         (ports '("127.0.0.1:14130:8000"))
+         (volumes
+          '(("/home/krisbalintona/services/yubal/data" . "/app/data")
+            ("/home/krisbalintona/services/yubal/config" . "/app/config")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src

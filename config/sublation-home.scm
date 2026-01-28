@@ -77,6 +77,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -1099,6 +1101,27 @@
               ("/home/krisbalintona/services/media" . "/media")))
            ;; Additional argument set in the official documentation
            (extra-arguments '("--shm-size=256m"))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-yubal
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "yubal-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "yubal")
+           (image "ghcr.io/guillevc/yubal:latest")
+           (container-user "1000:1000")
+           (environment '("YUBAL_TZ=America/Chicago"))
+           (network "yubal-network")
+           (ports '("127.0.0.1:14130:8000"))
+           (volumes
+            '(("/home/krisbalintona/services/yubal/data" . "/app/data")
+              ("/home/krisbalintona/services/yubal/config" . "/app/config")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-yamtrack

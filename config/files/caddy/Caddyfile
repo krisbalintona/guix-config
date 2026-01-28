@@ -552,6 +552,13 @@ shoko.home.kristofferbalintona.me {
 	import policy_private
 }
 
+# *** Yubal
+
+yubal.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:14130
+	import policy_private
+}
+
 # ** Monitoring and observing
 
 # *** Grafana
