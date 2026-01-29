@@ -79,6 +79,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -1122,6 +1124,27 @@
            (volumes
             '(("/home/krisbalintona/services/yubal/data" . "/app/data")
               ("/home/krisbalintona/services/yubal/config" . "/app/config")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-navidrome
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "navidrome-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "navidrome")
+           (image "deluan/navidrome:latest")
+           (container-user "1000:1000")
+           (environment '("ND_LOGLEVEL=info"))
+           (network "navidrome-network")
+           (ports '("127.0.0.1:4533:4533"))
+           (volumes
+            '(("/home/krisbalintona/services/media/music" . "/music")
+              ("/home/krisbalintona/services/navidrome/data" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-yamtrack
