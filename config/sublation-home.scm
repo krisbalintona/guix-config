@@ -83,6 +83,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -767,7 +769,11 @@
                 "FIREWALL_INPUT_PORTS=6701")) ; qBittorrent web UI
              (network "gluetun-network")
              (ports '("127.0.0.1:9091:9091"   ; Transmission web UI
-                      "127.0.0.1:6701:6701")) ; qBittorrent web UI
+                      "127.0.0.1:6701:6701" ; qBittorrent web UI
+                      ;; Slskd
+                      "127.0.0.1:5030:5030"
+                      "127.0.0.1:5031:5031"
+                      "127.0.0.1:50300:50300"))
              (extra-arguments '("--device=/dev/net/tun:/dev/net/tun"
                                 "--cap-add=NET_ADMIN"
                                 "--cap-add=NET_RAW")) ; For UDP health checks
@@ -1130,6 +1136,63 @@
               ("/home/krisbalintona/services/media". "/media")))
            (auto-start? #t)
            (respawn? #f))))))
+    (simple-service 'home-oci-slskd
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (let ((slskd-username
+                (get-sops-secret '("slskd" "web" "username")
+                                 #:file sops-sublation-secrets-file))
+               (slskd-password
+                (get-sops-secret '("slskd" "web" "password")
+                                 #:file sops-sublation-secrets-file))
+               (slskd-api-key
+                (get-sops-secret '("slskd" "api-key")
+                                 #:file sops-sublation-secrets-file))
+               (slskd-slsk-username
+                (get-sops-secret '("slskd" "soulseek" "username")
+                                 #:file sops-sublation-secrets-file))
+               (slskd-slsk-password
+                (get-sops-secret '("slskd" "soulseek" "password")
+                                 #:file sops-sublation-secrets-file)))
+           (oci-container-configuration
+             (provision "slskd")
+             (image "slskd/slskd:latest")
+             (container-user "1000:1000")
+             (host-environment
+              (list (cons "SLSKD_USERNAME" slskd-username)
+                    (cons "SLSKD_PASSWORD" slskd-password)
+                    (cons "SLSKD_API_KEY" slskd-api-key)
+                    (cons "SLSKD_SLSK_USERNAME" slskd-slsk-username)
+                    (cons "SLSKD_SLSK_PASSWORD" slskd-slsk-password)))
+             ;; See
+             ;; https://github.com/slskd/slskd/blob/master/docs/config.md
+             ;; for a complete description of all configurable environment
+             ;; variables
+             (environment
+              '("SLSKD_REMOTE_CONFIGURATION=false"
+                "APP_DIR=/app"              ; Data directory for program
+                "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
+                "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
+                ;; "Seeding" directory
+                "SLSKD_SHARED_DIR=/media/music"
+                "SLSKD_SHARE_CACHE_RETENTION=60" ; Rescan interval in minutes
+                ;; Web UI credentials
+                "SLSKD_USERNAME"
+                "SLSKD_PASSWORD"
+                ;; API key for other applications
+                "SLSKD_API_KEY"
+                ;; Soulseek network credentials
+                "SLSKD_SLSK_USERNAME"
+                "SLSKD_SLSK_PASSWORD"))
+             (network "container:gluetun")
+             (ports '("127.0.0.1:8686:8686"))
+             (volumes
+              '(("/home/krisbalintona/services/slskd/data" . "/app")
+                ("/home/krisbalintona/services/media" . "/media")))
+             (auto-start? #t)
+             (respawn? #f)))))))
     (simple-service 'home-oci-yubal
         home-oci-service-type
       (oci-extension

@@ -1422,7 +1422,11 @@ I think the idea is this: if the file is complete, readahead makes it such that 
               "FIREWALL_INPUT_PORTS=6701")) ; qBittorrent web UI
            (network "gluetun-network")
            (ports '("127.0.0.1:9091:9091"   ; Transmission web UI
-                    "127.0.0.1:6701:6701")) ; qBittorrent web UI
+                    "127.0.0.1:6701:6701" ; qBittorrent web UI
+                    ;; Slskd
+                    "127.0.0.1:5030:5030"
+                    "127.0.0.1:5031:5031"
+                    "127.0.0.1:50300:50300"))
            (extra-arguments '("--device=/dev/net/tun:/dev/net/tun"
                               "--cap-add=NET_ADMIN"
                               "--cap-add=NET_RAW")) ; For UDP health checks
@@ -2107,8 +2111,12 @@ A brief overview of music-related projects.
 + Downloading
   - YouTube Music
     * [[https://github.com/guillevc/yubal][GitHub - guillevc/yubal: YouTube Music downloader with automatic metadata tagging.]]
+  - Spotify
+    * https://lavaforge.org/spotizerr/spotizerr
+      Can stream+download right from Spotify/Deezer and can monitor playlists and artists
 + Music management
   - [[https://lidarr.audio/][Lidarr]] (doesn't download; requires download client(s))
+    Main limitation: must download by album or artist, cannot download individual songs
     * [[https://github.com/blampe/hearring-aid][GitHub - blampe/hearring-aid: Hear what your LiDAR is missing]]
     * [[https://soularr.net/][Soularr.net]]
       "Soularr reads all of your “wanted” albums/artists from Lidarr and downloads them using Slskd."
@@ -2126,6 +2134,8 @@ A brief overview of music-related projects.
 
 Great resources:
 + Very good "big picture" overview with specific configuration details and some commentary on motivations and reasoning behind choices: [[https://blog.nfreak.tv/music-stack/][Replacing Music Streaming Services with a Self-hosted Stack]]
++ [[https://leshicodes.github.io/blog/spotify-migration][Why I Ditched Spotify, and How I Set Up My Own Music Stack | LeshiCodes]]
++ [[https://blog.0007823.xyz/posts/music/][Self-hosting and automating music with slskd, gonic, wrtag, traefik from scratch]]
   
 ***** Lidarr: Music management
 
@@ -2158,6 +2168,73 @@ Great resources:
             ("/home/krisbalintona/services/media". "/media")))
          (auto-start? #t)
          (respawn? #f))))))
+#+end_src
+
+***** Slskd: Soulseek daemon
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-slskd
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let ((slskd-username
+              (get-sops-secret '("slskd" "web" "username")
+                               #:file sops-sublation-secrets-file))
+             (slskd-password
+              (get-sops-secret '("slskd" "web" "password")
+                               #:file sops-sublation-secrets-file))
+             (slskd-api-key
+              (get-sops-secret '("slskd" "api-key")
+                               #:file sops-sublation-secrets-file))
+             (slskd-slsk-username
+              (get-sops-secret '("slskd" "soulseek" "username")
+                               #:file sops-sublation-secrets-file))
+             (slskd-slsk-password
+              (get-sops-secret '("slskd" "soulseek" "password")
+                               #:file sops-sublation-secrets-file)))
+         (oci-container-configuration
+           (provision "slskd")
+           (image "slskd/slskd:latest")
+           (container-user "1000:1000")
+           (host-environment
+            (list (cons "SLSKD_USERNAME" slskd-username)
+                  (cons "SLSKD_PASSWORD" slskd-password)
+                  (cons "SLSKD_API_KEY" slskd-api-key)
+                  (cons "SLSKD_SLSK_USERNAME" slskd-slsk-username)
+                  (cons "SLSKD_SLSK_PASSWORD" slskd-slsk-password)))
+           ;; See
+           ;; https://github.com/slskd/slskd/blob/master/docs/config.md
+           ;; for a complete description of all configurable environment
+           ;; variables
+           (environment
+            '("SLSKD_REMOTE_CONFIGURATION=false"
+              "APP_DIR=/app"              ; Data directory for program
+              "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
+              "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
+              ;; "Seeding" directory
+              "SLSKD_SHARED_DIR=/media/music"
+              "SLSKD_SHARE_CACHE_RETENTION=60" ; Rescan interval in minutes
+              ;; Web UI credentials
+              "SLSKD_USERNAME"
+              "SLSKD_PASSWORD"
+              ;; API key for other applications
+              "SLSKD_API_KEY"
+              ;; Soulseek network credentials
+              "SLSKD_SLSK_USERNAME"
+              "SLSKD_SLSK_PASSWORD"))
+           (network "container:gluetun")
+           (ports '("127.0.0.1:8686:8686"))
+           (volumes
+            '(("/home/krisbalintona/services/slskd/data" . "/app")
+              ("/home/krisbalintona/services/media" . "/media")))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 ***** Yubal: YouTube Music downloader
