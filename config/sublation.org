@@ -2103,6 +2103,63 @@ Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/
 
 **** Music
 
+A brief overview of music-related projects.
++ Downloading
+  - YouTube Music
+    * [[https://github.com/guillevc/yubal][GitHub - guillevc/yubal: YouTube Music downloader with automatic metadata tagging.]]
++ Music management
+  - [[https://lidarr.audio/][Lidarr]] (doesn't download; requires download client(s))
+    * [[https://github.com/blampe/hearring-aid][GitHub - blampe/hearring-aid: Hear what your LiDAR is missing]]
+    * [[https://soularr.net/][Soularr.net]]
+      "Soularr reads all of your “wanted” albums/artists from Lidarr and downloads them using Slskd."
++ Metadata
+  - [[https://github.com/beetbox/beets][GitHub - beetbox/beets: music library manager and MusicBrainz tagger]]
+    * [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
+      "Soulbeet is a modern, self-hosted music downloader and manager. It bridges the gap between Soulseek (via slskd) and your music library (managed by beets), providing a seamless flow from search to streaming-ready library."
++ Server/streaming
+  - [[https://www.navidrome.org/][Navidrome]]
++ Recommendations
++ https://soularr.net/
++ [[https://github.com/beetbox/beets][GitHub - beetbox/beets: music library manager and MusicBrainz tagger]]
++ [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
++ [[https://nicotine-plus.org/][Nicotine+ | Graphical client for Soulseek]]
+
+Great resources:
++ Very good "big picture" overview with specific configuration details and some commentary on motivations and reasoning behind choices: [[https://blog.nfreak.tv/music-stack/][Replacing Music Streaming Services with a Self-hosted Stack]]
+  
+***** Lidarr: Music management
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-lidarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "lidarr")
+         ;; Use the Nightly branch which supports plugins.  (See
+         ;; https://wiki.servarr.com/lidarr/plugins.) I use the
+         ;; Tubifarry plugin to integrate with Slskd and download from
+         ;; YouTube
+         (image "lscr.io/linuxserver/lidarr:nightly")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:8686:8686"))
+         (volumes
+          '(("/home/krisbalintona/services/lidarr/data" . "/config")
+            ("/home/krisbalintona/services/media". "/media")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
 ***** Yubal: YouTube Music downloader
 
 #+begin_src scheme :noweb-ref home-modules
