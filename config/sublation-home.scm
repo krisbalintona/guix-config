@@ -1135,7 +1135,7 @@
            (ports '("127.0.0.1:8686:8686"))
            (volumes
             '(("/home/krisbalintona/services/lidarr/data" . "/config")
-              ("/home/krisbalintona/services/media". "/media")))
+              ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-slskd
