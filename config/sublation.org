@@ -1491,6 +1491,7 @@ Non-obvious settings to adjust in qBittorrent's options menu:
 
 See also a few helpful resources:
 + [[https://www.reddit.com/r/qBittorrent/comments/1boqu5n/comment/kwrc328/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]]
++ Add more trackers to discover more peers: [[https://ngosang.github.io/trackerslist/][ngosang/trackerslist | trackerslist]]
       
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -2136,8 +2137,15 @@ Great resources:
 + Very good "big picture" overview with specific configuration details and some commentary on motivations and reasoning behind choices: [[https://blog.nfreak.tv/music-stack/][Replacing Music Streaming Services with a Self-hosted Stack]]
 + [[https://leshicodes.github.io/blog/spotify-migration][Why I Ditched Spotify, and How I Set Up My Own Music Stack | LeshiCodes]]
 + [[https://blog.0007823.xyz/posts/music/][Self-hosting and automating music with slskd, gonic, wrtag, traefik from scratch]]
+
+Other potentially helpful resources:
++ [[https://gist.github.com/fuddl/e17aa687df6ac1c7cbee5650ccfbc889][YTMusic2listenbrainz.py · GitHub]]
   
 ***** Lidarr: Music management
+
+Resources:
++ [[https://wiki.servarr.com/lidarr/community-guide][Davo's Community Lidarr Guide | Servarr Wiki]]
+  The "TRaSH Guides" for Lidarr
 
 #+begin_src scheme :noweb-ref home-modules
   (gnu services containers)
@@ -2264,6 +2272,68 @@ Great resources:
          (volumes
           '(("/home/krisbalintona/services/yubal/data" . "/app/data")
             ("/home/krisbalintona/services/yubal/config" . "/app/config")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+***** Wrtag: Music tagging and post-processing tool
+
+Alternatives:
++ Beets
++ MusicBrainz Picard
++ [[https://www.jthink.net/songkong/][SongKong Music Tagger]]
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-wrtag
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "wrtag-network"))))
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "wrtag")
+         ;; 2026-01-31: Pre-release container image, shared by
+         ;; https://github.com/sentriz/wrtag/issues/165#issuecomment-3774590850.
+         ;; For the .Media template; use the official image once it is
+         ;; released
+         (image "ghcr.io/jee-r/wrtag:0.30.0")
+         (host-environment
+          (list
+           (cons "WRTAG_WEB_API_KEY"
+                 (get-sops-secret '("wrtag" "web-api-key")
+                                  #:file sops-sublation-secrets-file))))
+         (environment
+          `("PUID=1000"
+            "PGID=1000"
+            "WRTAG_LOG_LEVEL=debug"       ; INFO isn't very informative
+            "WRTAG_WEB_PUBLIC_URL=https://wrtag.home.kristofferbalintona.me"
+            "WRTAG_WEB_LISTEN_ADDR=:7373"
+            "WRTAG_WEB_API_KEY"
+            "WRTAG_WEB_DB_PATH=/data/wrtag.db"
+            ,(cons "WRTAG_PATH_FORMAT"
+                   (string-append
+                    "'/media/music-wrtag/"
+                    "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
+                    "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
+                    "{{ .Release.Title | safepath }}"
+                    "{{ if not (eq .ReleaseDisambiguation \"\") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}"
+                    "/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} "
+                    "{{ if .IsCompilation}}{{ artistsString .Track.Artists | safepath }} - {{ end }}"
+                    "{{ .Track.Title | safepath }}{{ .Ext }}'"))))
+         (network "wrtag-network")
+         (ports '("127.0.0.1:7373:7373"))
+         (volumes
+          '(;; Optional.  Used when I specify WRTAG_WEB_DB_PATH above
+            ("/home/krisbalintona/services/wrtag/data" . "/data")
+            ("/home/krisbalintona/services/media" . "/media")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src

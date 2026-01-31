@@ -85,6 +85,8 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -1212,6 +1214,53 @@
            (volumes
             '(("/home/krisbalintona/services/yubal/data" . "/app/data")
               ("/home/krisbalintona/services/yubal/config" . "/app/config")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-wrtag
+        home-oci-service-type
+      (oci-extension
+       (networks
+        (list
+         (oci-network-configuration
+          (name "wrtag-network"))))
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "wrtag")
+           ;; 2026-01-31: Pre-release container image, shared by
+           ;; https://github.com/sentriz/wrtag/issues/165#issuecomment-3774590850.
+           ;; For the .Media template; use the official image once it is
+           ;; released
+           (image "ghcr.io/jee-r/wrtag:0.30.0")
+           (host-environment
+            (list
+             (cons "WRTAG_WEB_API_KEY"
+                   (get-sops-secret '("wrtag" "web-api-key")
+                                    #:file sops-sublation-secrets-file))))
+           (environment
+            `("PUID=1000"
+              "PGID=1000"
+              "WRTAG_LOG_LEVEL=debug"       ; INFO isn't very informative
+              "WRTAG_WEB_PUBLIC_URL=https://wrtag.home.kristofferbalintona.me"
+              "WRTAG_WEB_LISTEN_ADDR=:7373"
+              "WRTAG_WEB_API_KEY"
+              "WRTAG_WEB_DB_PATH=/data/wrtag.db"
+              ,(cons "WRTAG_PATH_FORMAT"
+                     (string-append
+                      "'/media/music-wrtag/"
+                      "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
+                      "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
+                      "{{ .Release.Title | safepath }}"
+                      "{{ if not (eq .ReleaseDisambiguation \"\") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}"
+                      "/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} "
+                      "{{ if .IsCompilation}}{{ artistsString .Track.Artists | safepath }} - {{ end }}"
+                      "{{ .Track.Title | safepath }}{{ .Ext }}'"))))
+           (network "wrtag-network")
+           (ports '("127.0.0.1:7373:7373"))
+           (volumes
+            '(;; Optional.  Used when I specify WRTAG_WEB_DB_PATH above
+              ("/home/krisbalintona/services/wrtag/data" . "/data")
+              ("/home/krisbalintona/services/media" . "/media")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-navidrome
