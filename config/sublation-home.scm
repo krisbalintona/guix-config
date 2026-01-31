@@ -1208,12 +1208,14 @@
            (provision "yubal")
            (image "ghcr.io/guillevc/yubal:latest")
            (container-user "1000:1000")
-           (environment '("YUBAL_TZ=America/Chicago"))
+           (environment
+            '("YUBAL_TZ=America/Chicago"
+              "YUBAL_DATA=/media"))
            (network "yubal-network")
            (ports '("127.0.0.1:14130:8000"))
            (volumes
-            '(("/home/krisbalintona/services/yubal/data" . "/app/data")
-              ("/home/krisbalintona/services/yubal/config" . "/app/config")))
+            '(("/home/krisbalintona/services/yubal/config" . "/app/config")
+              ("/home/krisbalintona/services/media" . "/media")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-wrtag
