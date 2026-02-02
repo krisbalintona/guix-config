@@ -2115,6 +2115,7 @@ A brief overview of music-related projects.
   - Spotify
     * https://lavaforge.org/spotizerr/spotizerr
       Can stream+download right from Spotify/Deezer and can monitor playlists and artists
+  - [[https://github.com/bransoned/octo-fiestarr][GitHub - bransoned/octo-fiestarr: A Subsonic API proxy server that focuses on integrating SquidWTF as an external music source for Navidrome.]]
 + Music management
   - [[https://lidarr.audio/][Lidarr]] (doesn't download; requires download client(s))
     Main limitation: must download by album or artist, cannot download individual songs
