@@ -2117,23 +2117,24 @@ A brief overview of music-related projects.
       Can stream+download right from Spotify/Deezer and can monitor playlists and artists
   - [[https://github.com/bransoned/octo-fiestarr][GitHub - bransoned/octo-fiestarr: A Subsonic API proxy server that focuses on integrating SquidWTF as an external music source for Navidrome.]]
   - [[https://squid.wtf/][SQUID.WTF - Home]]
+  - [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
 + Music management
   - [[https://lidarr.audio/][Lidarr]] (doesn't download; requires download client(s))
     Main limitation: must download by album or artist, cannot download individual songs
+    * https://soularr.net/
     * [[https://github.com/blampe/hearring-aid][GitHub - blampe/hearring-aid: Hear what your LiDAR is missing]]
     * [[https://soularr.net/][Soularr.net]]
       "Soularr reads all of your “wanted” albums/artists from Lidarr and downloads them using Slskd."
+  - [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
 + Metadata
   - [[https://github.com/beetbox/beets][GitHub - beetbox/beets: music library manager and MusicBrainz tagger]]
     * [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
       "Soulbeet is a modern, self-hosted music downloader and manager. It bridges the gap between Soulseek (via slskd) and your music library (managed by beets), providing a seamless flow from search to streaming-ready library."
 + Server/streaming
   - [[https://www.navidrome.org/][Navidrome]]
-+ Recommendations
-+ https://soularr.net/
-+ [[https://github.com/beetbox/beets][GitHub - beetbox/beets: music library manager and MusicBrainz tagger]]
-+ [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
-+ [[https://nicotine-plus.org/][Nicotine+ | Graphical client for Soulseek]]
++ Music discovery
+  - [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
+  - [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
 
 Great resources:
 + Very good "big picture" overview with specific configuration details and some commentary on motivations and reasoning behind choices: [[https://blog.nfreak.tv/music-stack/][Replacing Music Streaming Services with a Self-hosted Stack]]
