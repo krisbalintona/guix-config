@@ -1268,10 +1268,6 @@
     (simple-service 'home-oci-navidrome
         home-oci-service-type
       (oci-extension
-       (networks
-        (list
-         (oci-network-configuration
-          (name "navidrome-network"))))
        (containers
         (list
          (oci-container-configuration
@@ -1279,7 +1275,7 @@
            (image "deluan/navidrome:latest")
            (container-user "1000:1000")
            (environment '("ND_LOGLEVEL=info"))
-           (network "navidrome-network")
+           (network "gluetun-network")
            (ports '("127.0.0.1:4533:4533"))
            (volumes
             '(("/home/krisbalintona/services/media/music" . "/music")
