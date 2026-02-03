@@ -85,8 +85,6 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
-             (gnu services containers)
-             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -1113,29 +1111,6 @@
               ("/home/krisbalintona/services/media" . "/media")))
            ;; Additional argument set in the official documentation
            (extra-arguments '("--shm-size=256m"))
-           (auto-start? #t)
-           (respawn? #f))))))
-    (simple-service 'home-oci-lidarr
-        home-oci-service-type
-      (oci-extension
-       (containers
-        (list
-         (oci-container-configuration
-           (provision "lidarr")
-           ;; Use the Nightly branch which supports plugins.  (See
-           ;; https://wiki.servarr.com/lidarr/plugins.) I use the
-           ;; Tubifarry plugin to integrate with Slskd and download from
-           ;; YouTube
-           (image "lscr.io/linuxserver/lidarr:nightly")
-           (environment
-            '("TZ=America/Chicago"
-              "PUID=1000"
-              "PGID=1000"))
-           (network "gluetun-network")
-           (ports '("127.0.0.1:8686:8686"))
-           (volumes
-            '(("/home/krisbalintona/services/lidarr/data" . "/config")
-              ("/home/krisbalintona/services/media" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-slskd

@@ -2144,7 +2144,7 @@ Great resources:
 Other potentially helpful resources:
 + [[https://gist.github.com/fuddl/e17aa687df6ac1c7cbee5650ccfbc889][YTMusic2listenbrainz.py · GitHub]]
   
-***** Lidarr: Music management
+***** COMMENT Lidarr: Music management
 
 Resources:
 + [[https://wiki.servarr.com/lidarr/community-guide][Davo's Community Lidarr Guide | Servarr Wiki]]
