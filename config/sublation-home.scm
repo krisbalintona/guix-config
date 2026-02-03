@@ -1157,8 +1157,9 @@
                 "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
                 "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
                 ;; "Seeding" directory
-                "SLSKD_SHARED_DIR=/media/music/music-albums"
                 "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
+                "SLSKD_SHARED_DIR=[music]/media/music/music-albums"
+                "SLSKD_SHARE_FILTER=\\.sqlite$"
                 ;; Web UI credentials
                 "SLSKD_USERNAME"
                 "SLSKD_PASSWORD"
