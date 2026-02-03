@@ -85,6 +85,10 @@
              (gnu home services containers)
              (gnu services containers)
              (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
+             (gnu services containers)
+             (gnu home services containers)
              (krisb services containers)
              (gnu services containers)
              (gnu home services containers)
@@ -1153,7 +1157,7 @@
                 "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
                 "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
                 ;; "Seeding" directory
-                "SLSKD_SHARED_DIR=/media/music"
+                "SLSKD_SHARED_DIR=/media/music/music-albums"
                 "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
                 ;; Web UI credentials
                 "SLSKD_USERNAME"
@@ -1224,7 +1228,7 @@
               "WRTAG_WEB_DB_PATH=/data/wrtag.db"
               ,(cons "WRTAG_PATH_FORMAT"
                      (string-append
-                      "'/media/music-wrtag/"
+                      "'/media/music/music-albums/"
                       "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
                       "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
                       "{{ .Release.Title | safepath }}"
@@ -1238,6 +1242,22 @@
             '(;; Optional.  Used when I specify WRTAG_WEB_DB_PATH above
               ("/home/krisbalintona/services/wrtag/data" . "/data")
               ("/home/krisbalintona/services/media" . "/media")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-resonance
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "resonance")
+           (image "ghcr.io/jordojordo/resonance:latest")
+           (network "gluetun-network")
+           (ports '("127.0.0.1:1250:8080"))
+           (volumes
+            '(;; The config file holds all the configuration
+              ("/home/krisbalintona/services/resonance/data" . "/config")
+              ("/home/krisbalintona/services/media/music/music-albums" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-navidrome
@@ -1255,6 +1275,43 @@
            (volumes
             '(("/home/krisbalintona/services/media/music" . "/music")
               ("/home/krisbalintona/services/navidrome/data" . "/data")))
+           (auto-start? #t)
+           (respawn? #f))))))
+    (simple-service 'home-oci-gonic
+        home-oci-service-type
+      (oci-extension
+       (containers
+        (list
+         (oci-container-configuration
+           (provision "gonic")
+           (image "sentriz/gonic:latest")
+           (container-user "1000:1000")
+           ;; Documentation for all available environment variables found
+           ;; here: https://github.com/sentriz/gonic.
+           (environment
+            '("TZ=America/Chicago"
+              "GONIC_LISTEN_ADDR=0.0.0.0:4747"
+              
+              "GONIC_MUSIC_PATH=/music-albums"
+              "GONIC_PLAYLISTS_PATH=/playlists"
+              "GONIC_CACHE_PATH=/cache"
+              
+              "GONIC_MULTI_VALUE_GENRE=multi"
+              "GONIC_MULTI_VALUE_ARTIST=multi"
+              "GONIC_MULTI_VALUE_ALBUM_ARTIST=multi"
+    
+              "GONIC_SCAN_AT_START_ENABLED=true"
+              "GONIC_SCAN_WATCHER_ENABLED=true"
+              "GONIC_SCAN_EMBEDDED_COVER_ENABLED=true"))
+           (network "gluetun-network")
+           (ports '("127.0.0.1:4747:4747"))
+           (volumes
+            '(("/home/krisbalintona/services/gonic/data" . "/data")
+              ("gonic_cache" . "/cache")
+              ("/home/krisbalintona/services/media/music/music-albums" . "/music-albums:ro")
+              ("/home/krisbalintona/services/media/music/playlists" . "/playlists")))
+           (extra-arguments
+            '("--device=/dev/snd:/dev/snd"))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-yamtrack

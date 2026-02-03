@@ -2144,43 +2144,6 @@ Great resources:
 Other potentially helpful resources:
 + [[https://gist.github.com/fuddl/e17aa687df6ac1c7cbee5650ccfbc889][YTMusic2listenbrainz.py · GitHub]]
   
-***** COMMENT Lidarr: Music management
-
-Resources:
-+ [[https://wiki.servarr.com/lidarr/community-guide][Davo's Community Lidarr Guide | Servarr Wiki]]
-  The "TRaSH Guides" for Lidarr
-
-#+begin_src scheme :noweb-ref home-modules
-  (gnu services containers)
-  (gnu home services containers)
-#+end_src
-
-#+begin_src scheme :noweb-ref home-services
-  (simple-service 'home-oci-lidarr
-      home-oci-service-type
-    (oci-extension
-     (containers
-      (list
-       (oci-container-configuration
-         (provision "lidarr")
-         ;; Use the Nightly branch which supports plugins.  (See
-         ;; https://wiki.servarr.com/lidarr/plugins.) I use the
-         ;; Tubifarry plugin to integrate with Slskd and download from
-         ;; YouTube
-         (image "lscr.io/linuxserver/lidarr:nightly")
-         (environment
-          '("TZ=America/Chicago"
-            "PUID=1000"
-            "PGID=1000"))
-         (network "gluetun-network")
-         (ports '("127.0.0.1:8686:8686"))
-         (volumes
-          '(("/home/krisbalintona/services/lidarr/data" . "/config")
-            ("/home/krisbalintona/services/media" . "/data")))
-         (auto-start? #t)
-         (respawn? #f))))))
-#+end_src
-
 ***** Slskd: Soulseek daemon
 
 #+begin_src scheme :noweb-ref home-modules
@@ -2229,7 +2192,7 @@ Resources:
               "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
               "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
               ;; "Seeding" directory
-              "SLSKD_SHARED_DIR=/media/music"
+              "SLSKD_SHARED_DIR=/media/music/music-albums"
               "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
               ;; Web UI credentials
               "SLSKD_USERNAME"
@@ -2325,7 +2288,7 @@ Alternatives:
             "WRTAG_WEB_DB_PATH=/data/wrtag.db"
             ,(cons "WRTAG_PATH_FORMAT"
                    (string-append
-                    "'/media/music-wrtag/"
+                    "'/media/music/music-albums/"
                     "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
                     "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
                     "{{ .Release.Title | safepath }}"
@@ -2339,6 +2302,72 @@ Alternatives:
           '(;; Optional.  Used when I specify WRTAG_WEB_DB_PATH above
             ("/home/krisbalintona/services/wrtag/data" . "/data")
             ("/home/krisbalintona/services/media" . "/media")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+***** Resonance: Music discovery and Slskd download glue
+
+Alternatives:
++ [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-resonance
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "resonance")
+         (image "ghcr.io/jordojordo/resonance:latest")
+         (network "gluetun-network")
+         (ports '("127.0.0.1:1250:8080"))
+         (volumes
+          '(;; The config file holds all the configuration
+            ("/home/krisbalintona/services/resonance/data" . "/config")
+            ("/home/krisbalintona/services/media/music/music-albums" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+***** COMMENT Lidarr: Music management
+
+Resources:
++ [[https://wiki.servarr.com/lidarr/community-guide][Davo's Community Lidarr Guide | Servarr Wiki]]
+  The "TRaSH Guides" for Lidarr
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-lidarr
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "lidarr")
+         ;; Use the Nightly branch which supports plugins.  (See
+         ;; https://wiki.servarr.com/lidarr/plugins.) I use the
+         ;; Tubifarry plugin to integrate with Slskd and download from
+         ;; YouTube
+         (image "lscr.io/linuxserver/lidarr:nightly")
+         (environment
+          '("TZ=America/Chicago"
+            "PUID=1000"
+            "PGID=1000"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:8686:8686"))
+         (volumes
+          '(("/home/krisbalintona/services/lidarr/data" . "/config")
+            ("/home/krisbalintona/services/media" . "/data")))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src
@@ -2366,6 +2395,53 @@ Alternatives:
          (volumes
           '(("/home/krisbalintona/services/media/music" . "/music")
             ("/home/krisbalintona/services/navidrome/data" . "/data")))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+***** Gonic: Filesystem-as-data music server (and other differences)
+
+#+begin_src scheme :noweb-ref home-modules
+  (gnu services containers)
+  (gnu home services containers)
+#+end_src
+
+#+begin_src scheme :noweb-ref home-services
+  (simple-service 'home-oci-gonic
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (oci-container-configuration
+         (provision "gonic")
+         (image "sentriz/gonic:latest")
+         (container-user "1000:1000")
+         ;; Documentation for all available environment variables found
+         ;; here: https://github.com/sentriz/gonic.
+         (environment
+          '("TZ=America/Chicago"
+            "GONIC_LISTEN_ADDR=0.0.0.0:4747"
+            
+            "GONIC_MUSIC_PATH=/music-albums"
+            "GONIC_PLAYLISTS_PATH=/playlists"
+            "GONIC_CACHE_PATH=/cache"
+            
+            "GONIC_MULTI_VALUE_GENRE=multi"
+            "GONIC_MULTI_VALUE_ARTIST=multi"
+            "GONIC_MULTI_VALUE_ALBUM_ARTIST=multi"
+
+            "GONIC_SCAN_AT_START_ENABLED=true"
+            "GONIC_SCAN_WATCHER_ENABLED=true"
+            "GONIC_SCAN_EMBEDDED_COVER_ENABLED=true"))
+         (network "gluetun-network")
+         (ports '("127.0.0.1:4747:4747"))
+         (volumes
+          '(("/home/krisbalintona/services/gonic/data" . "/data")
+            ("gonic_cache" . "/cache")
+            ("/home/krisbalintona/services/media/music/music-albums" . "/music-albums:ro")
+            ("/home/krisbalintona/services/media/music/playlists" . "/playlists")))
+         (extra-arguments
+          '("--device=/dev/snd:/dev/snd"))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src

@@ -554,13 +554,6 @@ shoko.home.kristofferbalintona.me {
 
 # *** Music
 
-# **** Lidarr
-
-lidarr.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:8686
-	import policy_private
-}
-
 # **** Slskd
 
 slskd.home.kristofferbalintona.me {
@@ -579,6 +572,27 @@ yubal.home.kristofferbalintona.me {
 
 wrtag.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7373
+	import policy_private
+}
+
+# **** Resonance
+
+resonance.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:1250
+	import policy_private
+}
+
+# **** Lidarr
+
+lidarr.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8686
+	import policy_private
+}
+
+# **** Gonic
+
+gonic.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:4747
 	import policy_private
 }
 
