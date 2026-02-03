@@ -1179,7 +1179,7 @@
                 "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
                 ;; "Seeding" directory
                 "SLSKD_SHARED_DIR=/media/music"
-                "SLSKD_SHARE_CACHE_RETENTION=60" ; Rescan interval in minutes
+                "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
                 ;; Web UI credentials
                 "SLSKD_USERNAME"
                 "SLSKD_PASSWORD"
