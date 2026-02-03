@@ -1213,15 +1213,14 @@
            ;; For the .Media template; use the official image once it is
            ;; released
            (image "ghcr.io/jee-r/wrtag:0.30.0")
+           (container-user "1000:1000")
            (host-environment
             (list
              (cons "WRTAG_WEB_API_KEY"
                    (get-sops-secret '("wrtag" "web-api-key")
                                     #:file sops-sublation-secrets-file))))
            (environment
-            `("PUID=1000"
-              "PGID=1000"
-              "WRTAG_LOG_LEVEL=debug"       ; INFO isn't very informative
+            `("WRTAG_LOG_LEVEL=debug"       ; INFO isn't very informative
               "WRTAG_WEB_PUBLIC_URL=https://wrtag.home.kristofferbalintona.me"
               "WRTAG_WEB_LISTEN_ADDR=:7373"
               "WRTAG_WEB_API_KEY"
