@@ -1228,14 +1228,14 @@
               "WRTAG_WEB_DB_PATH=/data/wrtag.db"
               ,(cons "WRTAG_PATH_FORMAT"
                      (string-append
-                      "'/media/music/music-albums/"
+                      "/media/music/music-albums/"
                       "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
                       "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
                       "{{ .Release.Title | safepath }}"
                       "{{ if not (eq .ReleaseDisambiguation \"\") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}"
                       "/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} "
                       "{{ if .IsCompilation}}{{ artistsString .Track.Artists | safepath }} - {{ end }}"
-                      "{{ .Track.Title | safepath }}{{ .Ext }}'"))))
+                      "{{ .Track.Title | safepath }}{{ .Ext }}"))))
            (network "wrtag-network")
            (ports '("127.0.0.1:7373:7373"))
            (volumes
