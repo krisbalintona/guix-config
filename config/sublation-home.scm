@@ -1159,7 +1159,6 @@
                 ;; "Seeding" directory
                 "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
                 "SLSKD_SHARED_DIR=[music]/media/music/music-albums"
-                "SLSKD_SHARE_FILTER=\\.sqlite$"
                 ;; Web UI credentials
                 "SLSKD_USERNAME"
                 "SLSKD_PASSWORD"
@@ -1254,10 +1253,17 @@
            (provision "resonance")
            (image "ghcr.io/jordojordo/resonance:latest")
            (network "gluetun-network")
+           ;; 2026-02-03: See all available environment variables here:
+           ;; https://github.com/jordojordo/resonance/blob/master/docs/configuration.md#environment-variables
+           (environment
+            '("RESONANCE_DB_FILE=/config/resonance.sqlite"
+              "LOG_LEVEL=debug"
+              "LOG_TO_FILE=true"
+              "LOG_DIR=/log"))
            (ports '("127.0.0.1:1250:8080"))
            (volumes
-            '(;; The config file holds all the configuration
-              ("/home/krisbalintona/services/resonance/data" . "/config")
+            '(("/home/krisbalintona/services/resonance/data" . "/config")
+              ("/home/krisbalintona/services/resonance/log" . "/log")
               ("/home/krisbalintona/services/media/music/music-albums" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
