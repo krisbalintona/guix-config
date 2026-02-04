@@ -1298,7 +1298,7 @@
             '("TZ=America/Chicago"
               "GONIC_LISTEN_ADDR=0.0.0.0:4747"
               
-              "GONIC_MUSIC_PATH=/music-albums"
+              "GONIC_MUSIC_PATH=Library->/music-albums"
               "GONIC_PLAYLISTS_PATH=/playlists"
               "GONIC_CACHE_PATH=/cache"
               
