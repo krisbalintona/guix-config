@@ -2130,6 +2130,9 @@ A brief overview of music-related projects.
   - [[https://github.com/beetbox/beets][GitHub - beetbox/beets: music library manager and MusicBrainz tagger]]
     * [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
       "Soulbeet is a modern, self-hosted music downloader and manager. It bridges the gap between Soulseek (via slskd) and your music library (managed by beets), providing a seamless flow from search to streaming-ready library."
+  - Cover art
+    * wrtag
+    * [[https://github.com/desbma/sacad][GitHub - desbma/sacad: Smart Automatic Cover Art Downloader]]
 + Server/streaming
   - [[https://www.navidrome.org/][Navidrome]]
 + Music discovery
