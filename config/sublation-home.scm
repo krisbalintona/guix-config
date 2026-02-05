@@ -427,15 +427,13 @@
            (environment
             (list '("TZ" . "America/Chicago")
                   '("LOCAL_API_URL" . "http://127.0.0.1:7200")
-                  (string-append "'"
-                                 "COLLECTIONS="
+                  (string-append "COLLECTIONS="
                                  (string-join '("crowdsecurity/linux"
                                                 "crowdsecurity/sshd"
                                                 "crowdsecurity/whitelist-good-actors"
                                                 "crowdsecurity/base-http-scenarios"
                                                 "crowdsecurity/caddy")
-                                              " ")
-                                 "'")
+                                              " "))
                   ;; Enable Write-Ahead Logging with SQLite.  Disable if
                   ;; using a filesystem over the network, e.g., NAS
                   '("USE_WAL" . "true")
