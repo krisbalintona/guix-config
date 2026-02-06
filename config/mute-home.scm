@@ -90,7 +90,6 @@
                 ;; Fish shell
                 "grc"           ; For oh-my-fish/plugin-grc fish plugin
                 ;; Emacs
-                "emacs-master"
                 "emacs-guix"
                 "emacs-arei" "guile-next" "guile-ares-rs"
                 "jujutsu"               ; From the Abbe channel
