@@ -2241,7 +2241,11 @@ Other potentially helpful resources:
          (container-user "1000:1000")
          (environment
           '("YUBAL_TZ=America/Chicago"
-            "YUBAL_DATA=/media"))
+            "YUBAL_LOG_LEVEL=debug"
+            "YUBAL_DATA=/media"
+            "YUBAL_SCHEDULER_ENABLED=false"
+            "YUBAL_SCHEDULER_CRON=0 0 */3 * *"
+            "YUBAL_FETCH_LYRICS=true"))
          (network "yubal-network")
          (ports '("127.0.0.1:14130:8000"))
          (volumes
