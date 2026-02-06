@@ -1156,7 +1156,7 @@
                 "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
                 ;; "Seeding" directory
                 "SLSKD_SHARE_CACHE_RETENTION=7200" ; Rescan every 5 days
-                "SLSKD_SHARED_DIR=[music]/media/music/music-albums"
+                "SLSKD_SHARED_DIR=[full-albums]/media/music/full-albums"
                 ;; Web UI credentials
                 "SLSKD_USERNAME"
                 "SLSKD_PASSWORD"
@@ -1191,7 +1191,7 @@
            (network "yubal-network")
            (ports '("127.0.0.1:14130:8000"))
            (volumes
-            '(("/home/krisbalintona/services/yubal/config" . "/app/config")
+            '(("/home/krisbalintona/services/yubal/data" . "/app/config")
               ("/home/krisbalintona/services/media" . "/media")))
            (auto-start? #t)
            (respawn? #f))))))
@@ -1225,7 +1225,7 @@
               "WRTAG_WEB_DB_PATH=/data/wrtag.db"
               ,(cons "WRTAG_PATH_FORMAT"
                      (string-append
-                      "/media/music/music-albums/"
+                      "/media/music/full-albums/"
                       "{{ artists .Release.Artists | sort | join \"; \" | safepath }}"
                       "/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) "
                       "{{ .Release.Title | safepath }}"
@@ -1261,7 +1261,7 @@
            (volumes
             '(("/home/krisbalintona/services/resonance/data" . "/config")
               ("/home/krisbalintona/services/resonance/log" . "/log")
-              ("/home/krisbalintona/services/media/music/music-albums" . "/data")))
+              ("/home/krisbalintona/services/media/music/full-albums" . "/data")))
            (auto-start? #t)
            (respawn? #f))))))
     (simple-service 'home-oci-navidrome
@@ -1293,11 +1293,15 @@
            ;; Documentation for all available environment variables found
            ;; here: https://github.com/sentriz/gonic.
            (environment
-            '("TZ=America/Chicago"
+            `("TZ=America/Chicago"
               "GONIC_LISTEN_ADDR=0.0.0.0:4747"
               
-              "GONIC_MUSIC_PATH=Library->/music-albums"
-              "GONIC_PLAYLISTS_PATH=/playlists"
+              ,(cons"GONIC_MUSIC_PATH"
+                    (string-join
+                     '("Full albums->/music/full-albums"
+                       "Partial albums->/music/partial-albums")
+                     ","))
+              "GONIC_PLAYLISTS_PATH=/music/playlists"
               "GONIC_CACHE_PATH=/cache"
               
               "GONIC_MULTI_VALUE_GENRE=multi"
@@ -1312,8 +1316,7 @@
            (volumes
             '(("/home/krisbalintona/services/gonic/data" . "/data")
               ("gonic_cache" . "/cache")
-              ("/home/krisbalintona/services/media/music/music-albums" . "/music-albums:ro")
-              ("/home/krisbalintona/services/media/music/playlists" . "/playlists")))
+              ("/home/krisbalintona/services/media/music" . "/music")))
            (extra-arguments
             '("--device=/dev/snd:/dev/snd"))
            (auto-start? #t)
