@@ -2142,6 +2142,7 @@ A brief overview of music-related projects.
 + Music discovery
   - [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
   - [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
+  - [[https://github.com/Dodelidoo-Labs/sonobarr][GitHub - Dodelidoo-Labs/sonobarr: Music discovery tool that integrates with Lidarr and provides recommendations using Last.fm]]
 
 Great resources:
 + Very good "big picture" overview with specific configuration details and some commentary on motivations and reasoning behind choices: [[https://blog.nfreak.tv/music-stack/][Replacing Music Streaming Services with a Self-hosted Stack]]
