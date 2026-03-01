@@ -2128,6 +2128,7 @@ A brief overview of music-related projects.
       + [[https://soularr.net/][Soularr.net]]
         "Soularr reads all of your “wanted” albums/artists from Lidarr and downloads them using Slskd."
       + [[https://github.com/Angrido/Lidarr-YouTube-Downloader][GitHub - Angrido/Lidarr-YouTube-Downloader: Seamlessly bridge Lidarr and YouTube. Automatically fetch missing albums, download them as fully tagged MP3s, and trigger instant Lidarr imports to complete your music library.]]
+      + [[https://github.com/HVR88/Limbo][GitHub - HVR88/Limbo: Limbo MusicBrainz Server and Lidarr Tools]]
     * [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
     * [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
 + Metadata
