@@ -1,9 +1,10 @@
 SHELL := $(shell printenv SHELL) # Run in user's shell
 _GUIX = guix
 GUIX = time $(_GUIX)
-GUIX_LOCKED = $(GUIX) time-machine --channels=$(LOCKFILE) --
+GUIX_LOCKED = $(GUIX) time-machine --channels=$(CHANNELS_LOCK_FILE) --
 ENV_DIR = ./env
-CHANNELS = $(ENV_DIR)/channels.scm
+CHANNELS_FILE = $(ENV_DIR)/channels.scm
+CHANNELS_LOCK_FILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
 
 # * Machines
 
@@ -32,25 +33,27 @@ $(MACHINES):
 
 .PHONY: pull
 pull:
-	$(GUIX) pull -C $(CHANNELS)
+	$(GUIX) pull -C $(CHANNELS_FILE)
+
+pull-lock:
+	$(GUIX) pull -C $(CHANNELS_LOCK_FILE)
 
 .PHONY: upgrade
 upgrade: pull lock
 
 # ** Channel lock files
 
-LOCKFILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
-
 # Create a lock target but also make each lock file be their own
 # target (so that other targets can depend on them)
 #
 # We define the phony FORCE target and add it as a dependent target
-# for LOCKFILE to force its regeneration (otherwise, most of the time
-# Make will think the lockfile is up-to-date and not regenerate it).
+# for CHANNELS_LOCK_FILE to force its regeneration (otherwise, most of
+# the time Make will think the CHANNELS_LOCK_FILE is up-to-date and
+# not regenerate it).
 .PHONY: lock FORCE
-lock: $(LOCKFILE)
-$(LOCKFILE): $(CHANNELS) FORCE
-	$(GUIX) describe --format=channels $(CHANNELS) > $@
+lock: $(CHANNELS_LOCK_FILE)
+$(CHANNELS_LOCK_FILE): $(CHANNELS_FILE) FORCE
+	$(GUIX) describe --format=CHANNELS_FILE $(CHANNELS_FILE) > $@
 	@echo "Created $@"
 
 # ** System
@@ -75,7 +78,7 @@ system system-build:
 		config/$(MACHINE).scm
 
 .PHONY: system-lock
-system-lock: $(LOCKFILE)
+system-lock: $(CHANNELS_LOCK_FILE)
 	$(GUIX_LOCKED) system reconfigure \
 		-L src \
 		$(SYSTEM_EXTRA_FLAGS) \
@@ -139,7 +142,7 @@ repl: repl
 
 .PHONY: doctor status
 doctor status:
-	@echo "Machine			: $(MACHINE)"
-	@echo "Hostname		: $(HOSTNAME)"
-	@echo "Lockfile		: $(LOCKFILE)"
-	@echo "Existing lockfiles	: $(shell ls env/channels-lock-*.scm 2>/dev/null | xargs -n1 basename || echo None)"
+	@echo "Machine              : $(MACHINE)"
+	@echo "Hostname             : $(HOSTNAME)"
+	@echo "CHANNELS_LOCK_FILE   : $(CHANNELS_LOCK_FILE)"
+	@echo "Existing lockfiles   : $(shell ls env/channels-lock-*.scm 2>/dev/null | xargs -n1 basename || echo None)"
