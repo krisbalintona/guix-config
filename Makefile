@@ -5,6 +5,7 @@ GUIX_LOCKED = $(GUIX) time-machine --channels=$(CHANNELS_LOCK_FILE) --
 ENV_DIR = ./env
 CHANNELS_FILE = $(ENV_DIR)/channels.scm
 CHANNELS_LOCK_FILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
+FAST_BUILD_ARGS = -c 0 -M 3
 
 # * Machines
 
@@ -74,6 +75,7 @@ endif
 system system-build:
 	$(GUIX) system $(SYSTEM_ACTION) \
 		-L src \
+		${FAST_BUILD_ARGS} \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
 
@@ -81,6 +83,7 @@ system system-build:
 system-lock: $(CHANNELS_LOCK_FILE)
 	$(GUIX_LOCKED) system reconfigure \
 		-L src \
+		${FAST_BUILD_ARGS} \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
 
@@ -96,6 +99,7 @@ ifeq ($(MACHINE),wsl)
 endif
 	$(GUIX) home ${HOME_ACTION} \
 		-L src \
+		${FAST_BUILD_ARGS} \
 		config/$(MACHINE)-home.scm
 
 .PHONY: home-lock
