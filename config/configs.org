@@ -1,4 +1,4 @@
-#+TITLE: Sublation
+#+TITLE: All my configuration files
 #+PROPERTY: header-args :noweb yes
 
 #  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty Sonarr Radarr
@@ -9,7 +9,7 @@
 
 ** Base environment
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'common-environment-variables
       home-environment-variables-service-type
     '(("PATH" . "$HOME/.local/bin:$PATH")
@@ -18,11 +18,11 @@
 
 ** Bash
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu home services shells)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-bash-service-type
     (home-bash-configuration
       (bashrc
@@ -40,12 +40,12 @@
 
 ** Fish
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu packages shells)
   (gnu home services shells)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-fish-service-type
     (home-fish-configuration
       (config
@@ -60,7 +60,7 @@
 ** Common CLI tools
 
 System monitoring packages:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "btop"
   "glances"
   "nmon"
@@ -69,7 +69,7 @@ System monitoring packages:
 See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
 
 Build systems and programming languages:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "git"
   "make"
   "cmake"
@@ -77,7 +77,7 @@ Build systems and programming languages:
 #+end_src
 
 File searching, visualization, and transfer:
-  #+begin_src scheme :noweb-ref home-packages
+  #+begin_src scheme :noweb-ref sublation-home-packages
     "tree"
     "ripgrep"
     "fd"
@@ -86,7 +86,7 @@ File searching, visualization, and transfer:
   #+end_src
 
 Partition management:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "parted"
 #+end_src
 
@@ -96,15 +96,15 @@ Partition management:
 
 Configurable. Options include output with syntax highlighting, line numbers, and automatic piping to ~less~.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (abbe packages rust)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "bat"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-fish-bat
       home-fish-service-type
     (home-fish-extension
@@ -121,11 +121,11 @@ Configurable. Options include output with syntax highlighting, line numbers, and
 
 *** Zoxide: A DWIM ~cd~
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (krisb services shells)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-zoxide-service-type
     (home-zoxide-configuration
       (zoxide (@ (abbe packages rust) zoxide))))
@@ -133,11 +133,11 @@ Configurable. Options include output with syntax highlighting, line numbers, and
 
 *** Procs: Fancier ~ps~
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "procs"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-fish-procs
       home-fish-service-type
     (home-fish-extension
@@ -146,21 +146,21 @@ Configurable. Options include output with syntax highlighting, line numbers, and
 
 ** Control machine
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "brightnessctl"
 #+end_src
 
 ** Jujutsu: Distributed VCS
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (abbe packages rust)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "jujutsu"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'krisb-symlink-jj-config-files-service-type
         home-xdg-configuration-files-service-type
       `(("jj/config.toml"
@@ -168,7 +168,7 @@ Configurable. Options include output with syntax highlighting, line numbers, and
 #+end_src
 
 Compatibility with the fish shell:
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'fish-vcs-jj
         home-xdg-configuration-files-service-type
       `(("fish/functions/fish_jj_prompt.fish"
@@ -179,18 +179,18 @@ Compatibility with the fish shell:
 
 ** FZF: Generic fuzzy matching interface
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu packages terminals)                ; fzf
   (gnu packages rust-apps)                ; fd
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "fzf"
   "fd"
 #+end_src
 
 Bespoke integration with Fish. The initial inspiration for this was [[https://github.com/gazorby/fifc][gazorby/fifc]].
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'fish-fzf-packages
       home-profile-service-type
     (list fd fzf))                        ; Function dependencies
@@ -210,11 +210,11 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 # TODO 2026-01-04: Consider self-hosting a sync server. See
 # https://docs.atuin.sh/cli/self-hosting/server-setup/
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (krisb services shells)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-atuin-service-type
     (home-atuin-configuration
       (atuin-fish-flags '("--disable-up-arrow"))
@@ -227,15 +227,15 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 
 ** Tools for video and audio codecs
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu home services dotfiles)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "ffmpeg"                          ; Diagnose video info (e.g., codecs)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-dotfiles-service-type
     (home-dotfiles-configuration
       (layout 'plain)
@@ -246,27 +246,27 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 
 ** GnuPG
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu packages gnupg)
   (gnu home services gnupg)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "gnupg"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-gpg-agent-service-type)
 #+end_src
 
 ** SOPS-Guix: Secrets management in Guix
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (sops secrets)
   (sops home services sops)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define sops-sublation-secrets-file
     (string-append (dirname (current-filename)) "/files/sops/sublation.yaml"))
 
@@ -293,17 +293,17 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
                    "/secrets/" filename))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "age"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
       (config (local-file "files/sops/sops.yaml" "sops.yaml"))
       (secrets
        (list
-        <<home-sops-secrets>>))))
+        <<sublation-home-sops-secrets>>))))
 #+end_src
 
 * Podman: Containers
@@ -317,16 +317,16 @@ For a list of resources for learning how to network with Podman containers (some
 + Passt and pasta manual page: [[https://passt.top/builds/latest/web/passt.1.html?utm_source=chatgpt.com][passt(1)]]
 + [[https://github.com/eriksjolund/podman-networking-docs?tab=readme-ov-file#outbound-tcpudp-connections-to-the-hosts-localhost][GitHub - eriksjolund/podman-networking-docs: rootless Podman networking documentation with examples]]
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services containers)
   (gnu services sysctl)
 #+end_src
 
-#+begin_src scheme :noweb-ref supplementary-groups
+#+begin_src scheme :noweb-ref sublation-supplementary-groups
   "cgroup"
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   ;; Rootless podman also needs 'iptables-service-type' specifically for
   ;; its (non-internal) networks; 'nftables-service-type' will not
   ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
@@ -345,7 +345,7 @@ For a list of resources for learning how to network with Podman containers (some
 #+end_src
 
 Use Podman by default for ~home-oci-service-type~.
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-oci-service-type
     (for-home
      (oci-configuration
@@ -354,15 +354,15 @@ Use Podman by default for ~home-oci-service-type~.
 #+end_src
 
 Create a podman socket. Necessary for services that make API calls to podman.
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu packages containers)
 #+end_src
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define home-podman-socket
     (string-append (getenv "XDG_RUNTIME_DIR")
                    "/podman/podman.sock"))
 #+end_src
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'podman-socket
       home-shepherd-service-type
     (list
@@ -380,12 +380,12 @@ Create a podman socket. Necessary for services that make API calls to podman.
 
 ** Prometheus podman exporter
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-prometheus-podman-exporter
       home-oci-service-type
     (oci-extension
@@ -426,19 +426,19 @@ Create a podman socket. Necessary for services that make API calls to podman.
 
 * OpenSSH
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services ssh)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service openssh-service-type)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu home services ssh)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-openssh-service-type
       (home-openssh-configuration
         (hosts
@@ -450,7 +450,7 @@ Create a podman socket. Necessary for services that make API calls to podman.
                         (forward-x11-trusted? #t))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref system-fail2ban-jails
+#+begin_src scheme :noweb-ref sublation-system-fail2ban-jails
   (simple-service 'fail2ban-openssh
       fail2ban-service-type
     (list
@@ -464,7 +464,7 @@ Create a podman socket. Necessary for services that make API calls to podman.
 
 * Self-hosting
 
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define services-dir
     (string-append (getenv "HOME") "/services"))
 #+end_src
@@ -510,14 +510,14 @@ Informative articles on security principles:
 
 I minimize the number of ports I have open and I route all internet traffic through my reverse proxy. (See also [[#h:20251227T085128.494786][Principles and guidelines]].)
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu packages linux)
   (gnu services networking)
   (ice-9 textual-ports)                   ; For 'get-string-all'
   (krisb packages networking)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service nftables-service-type
     (nftables-configuration
       (ruleset
@@ -528,24 +528,24 @@ I minimize the number of ports I have open and I route all internet traffic thro
 
 Doing something like ~sudo fail2ban-client status --all~ shows the ban activity for all fail2ban jails.
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services security)
 #+end_src
 
 Several of my services integrate with ~fail2ban-service-type~.
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service fail2ban-service-type)
-  <<system-fail2ban-jails>>
+  <<sublation-system-fail2ban-jails>>
 #+end_src
 
 *** CrowdSec: Security based on client behavioral patterns
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-crowdsec
       home-oci-service-type
     (oci-extension
@@ -594,7 +594,7 @@ Several of my services integrate with ~fail2ban-service-type~.
          (respawn? #f))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-restic-backup-jobs
+#+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
   (simple-service 'home-restic-crowdsec
       home-restic-backup-service-type
     (list
@@ -606,12 +606,12 @@ Several of my services integrate with ~fail2ban-service-type~.
 
 *** Pocket ID: An out-of-the-box OIDC-compliant IdP provider
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define pocket-id-socket-dir
       (string-append (getenv "XDG_RUNTIME_DIR")
                      "/pocket-id"))
@@ -620,14 +620,14 @@ Several of my services integrate with ~fail2ban-service-type~.
     (string-append pocket-id-socket-dir "/pocket-id.sock"))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("pocket-id-encryption-key"))
     (file (local-file "files/sops/sublation.yaml"))
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-pocket-id-socket
       home-shepherd-service-type
     (list
@@ -692,7 +692,7 @@ Several of my services integrate with ~fail2ban-service-type~.
            (respawn? #f)))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-restic-backup-jobs
+#+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
   (simple-service 'home-restic-pocket-id
       home-restic-backup-service-type
     (list
@@ -705,13 +705,13 @@ Several of my services integrate with ~fail2ban-service-type~.
 ** Networking
 
 Some useful tooling:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "bind:utils"
 #+end_src
 
 *** Network-related packages
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "curl"
   "wget"
   ;; Port scanning
@@ -728,11 +728,11 @@ Some useful tooling:
 
 I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS filter]]) with Unbound being my DNS resolver.
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services dns)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   ;; I use Unbound with Pihole.  For an explanation of why (and a guide
   ;; on how to do so) I pair Unbound with the latter, see
   ;; https://docs.pi-hole.net/guides/dns/unbound/
@@ -867,7 +867,7 @@ I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS f
           private-address: 2001:db8::/32")))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "unbound"
 #+end_src
 
@@ -880,19 +880,19 @@ I use Pihole as a DNS forwarder, setting the only upstream DNS server to be my s
 
 Regarding monitoring: aside from the webserver UI, uers can also do something like ~podman exec -it <name of pihole container> padd~ for an ncurses (i.e., CLI) UI that shows an abbreviated version of the statistics shown in the webserver UI. And logs can be viewed in the CLI via ~podman exec -it <name of pihole container> pihole tail~ (or just regular ~tail -F~ on any log file).
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("pihole-webserver-password"))
     (file (local-file "files/sops/sublation.yaml"))
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-pihole
       home-oci-service-type
     (oci-extension
@@ -934,7 +934,7 @@ Regarding monitoring: aside from the webserver UI, uers can also do something li
 
 # TODO 2026-01-03: I haven't found a way to have Pihole's files be owned (or at least readable by)
 # the host user
-# #+begin_src scheme :noweb-ref home-restic-backup-jobs
+# #+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
 #   (simple-service 'home-restic-pihole
 #       home-restic-backup-service-type
 #     (list
@@ -959,13 +959,13 @@ Other notes:
 
 **** Caddy: Reverse proxy
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (krisb packages networking)
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("caddy" "netlify-access-token"))
     (file (local-file "files/sops/sublation.yaml"))
@@ -984,11 +984,11 @@ Other notes:
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "caddy-security-netlify-crowdsec-coraza-maxmind"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-caddy
       home-oci-service-type
     (oci-extension
@@ -1058,7 +1058,7 @@ Other notes:
            (respawn? #f)))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref system-fail2ban-jails
+#+begin_src scheme :noweb-ref sublation-system-fail2ban-jails
   (simple-service 'fail2ban-caddy
       fail2ban-service-type
     (list 
@@ -1075,7 +1075,7 @@ Other notes:
           (name "nginx-botsearch"))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-restic-backup-jobs
+#+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
   (simple-service 'home-restic-caddy
       home-restic-backup-service-type
     (list
@@ -1087,12 +1087,12 @@ Other notes:
 
 **** Wireguard: VPN
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services vpn)
   (gnu services sysctl)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service wireguard-service-type
     (wireguard-configuration
       (shepherd-requirement '(nftables))
@@ -1136,7 +1136,7 @@ Other notes:
     '(("net.ipv4.ip_forward" . "1")))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("wireguard-private-key"))
     (file (local-file "files/sops/sublation.yaml"))
@@ -1147,13 +1147,13 @@ Other notes:
 
 *** Copyparty: Fast and simple file server
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services shepherd)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define copyparty-socket-dir
     (string-append (getenv "XDG_RUNTIME_DIR")
                    "/copyparty"))
@@ -1162,7 +1162,7 @@ Other notes:
     (string-append copyparty-socket-dir "/copyparty.sock"))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-copyparty-socket
       home-shepherd-service-type
     (list
@@ -1200,7 +1200,7 @@ Other notes:
          (respawn? #f))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-restic-backup-jobs
+#+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
   (simple-service 'home-restic-copyparty
       home-restic-backup-service-type
     (list
@@ -1212,12 +1212,12 @@ Other notes:
 
 *** Vaultwarden: Self-hosted password manager
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("vaultwarden" "push-installation-id"))
     (file (local-file "files/sops/sublation.yaml"))
@@ -1228,7 +1228,7 @@ Other notes:
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-vaultwarden
       home-oci-service-type
     (oci-extension
@@ -1276,7 +1276,7 @@ Other notes:
          (respawn? #f))))))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-restic-backup-jobs
+#+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
   (simple-service 'home-restic-vaultwarden
       home-restic-backup-service-type
     (list
@@ -1293,7 +1293,7 @@ Other notes:
 ***** External storage
 
 Mounting subvolumes specific to torrenting:
-#+begin_src scheme :noweb-ref system-helpers
+#+begin_src scheme :noweb-ref sublation-system-helpers
   (define file-system-media
     (file-system
       (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
@@ -1304,7 +1304,7 @@ Mounting subvolumes specific to torrenting:
       (create-mount-point? #t)
       (mount-may-fail? #t)))
 #+end_src
-#+begin_src scheme :noweb-ref system-filesystems
+#+begin_src scheme :noweb-ref sublation-system-filesystems
   file-system-media
   (file-system
     (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
@@ -1334,12 +1334,12 @@ I think the idea is this: if the file is complete, readahead makes it such that 
 
 ***** Gluetun: Bind all torrent client traffic to a VPN
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("gluetun" "wireguard_private_key"))
     (file (local-file "files/sops/sublation.yaml"))
@@ -1350,7 +1350,7 @@ I think the idea is this: if the file is complete, readahead makes it such that 
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-gluetun
       home-oci-service-type
     (oci-extension
@@ -1436,12 +1436,12 @@ I think the idea is this: if the file is complete, readahead makes it such that 
 
 ***** Transmission: Lightweight torrent client
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-transmission
       home-oci-service-type
     (oci-extension
@@ -1491,12 +1491,12 @@ See also a few helpful resources:
 + [[https://www.reddit.com/r/qBittorrent/comments/1boqu5n/comment/kwrc328/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]]
 + Add more trackers to discover more peers: [[https://ngosang.github.io/trackerslist/][ngosang/trackerslist | trackerslist]]
       
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-qbittorrent
       home-oci-service-type
     (oci-extension
@@ -1539,12 +1539,12 @@ Helpful links
     * [[https://trash-guides.info/Downloaders/SABnzbd/Basic-Setup/#bad-path-suggestion][Basic-Setup - TRaSH Guides]]
     * [[https://trash-guides.info/Downloaders/SABnzbd/Paths-and-Categories/][Path and Categories - TRaSH Guides]]
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-sabnzbd
       home-oci-service-type
     (oci-extension
@@ -1616,12 +1616,12 @@ The Trash guides are great. A few pages that have been useful to me:
 Other useful projects:
 + [[https://github.com/p-hueber/prefetcharr?tab=readme-ov-file][GitHub - p-hueber/prefetcharr: Let Sonarr fetch episodes on demand for a show you are watching on Jellyfin/Emby/Plex.]]
   
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-sonarr
       home-oci-service-type
     (oci-extension
@@ -1649,12 +1649,12 @@ Other useful projects:
 
 **** Radarr: Get movies
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-radarr
       home-oci-service-type
     (oci-extension
@@ -1692,12 +1692,12 @@ Good resources:
 Other projects:
 + [[https://github.com/lingarr-translate/lingarr][GitHub - lingarr-translate/lingarr: Lingarr is an application that supports both local and SaaS translation services to translate subtitle files into a specified target language. With automated translation options, Lingarr simplifies translating subtitles.]]
     
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-bazarr
       home-oci-service-type
     (oci-extension
@@ -1727,12 +1727,12 @@ Alternative databases:
 + [[https://github.com/Dumpstarr/Dumpstarr?tab=readme-ov-file][GitHub - Dumpstarr/Dumpstarr: Profilarr database based on TRaSH Guides and Dictionarry]]
 + [[https://github.com/Dictionarry-Hub/database][GitHub - Dictionarry-Hub/database: Database configurations for Dictionarry]]
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-profilarr
       home-oci-service-type
     (oci-extension
@@ -1759,12 +1759,12 @@ Alternative databases:
 
 See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on connecting to indexers via your public IP versus through your VPN. TL;DR: prowlarr is only needed behind a VPN in countries where searching for torrents (e.g., accessing indexers) is illegal, or when those sites are blocked by ISPs.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-prowlarr
       home-oci-service-type
     (oci-extension
@@ -1791,12 +1791,12 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
 
 ***** Byparr: Bypass Cloudflare challenges
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-byparr
       home-oci-service-type
     (oci-extension
@@ -1821,12 +1821,12 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
 
 **** Huntarr: Systematically and incrementally upgrade media
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-huntarr
       home-oci-service-type
     (oci-extension
@@ -1852,12 +1852,12 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
 
 See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][How it works | Cleanuparr]].
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-cleanuparr
       home-oci-service-type
     (oci-extension
@@ -1887,12 +1887,12 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
 
 Files in Sonarr and Radarr are renamed on first import. However, if the file metadata has since changed (e.g., the show or movie data has been updated on TMDB), then the file name gets out of sync with the actual metadata of the media. Renamarr addresses that by renaming files whose file name metadata differs from the actual metadata.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-renamarr
       home-oci-service-type
     (oci-extension
@@ -1912,12 +1912,12 @@ Files in Sonarr and Radarr are renamed on first import. However, if the file met
 
 Merges Overseerr and Jellyserr, the latter of the two being a successor of the former.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-seerr
       home-oci-service-type
     (oci-extension
@@ -2003,12 +2003,12 @@ See also these competing projects:
 + [[https://kometa.wiki/en/latest/#example-usage][Home - Kometa Wiki]]
 + [[https://github.com/jaypyles/anirra][GitHub - jaypyles/anirra: Anirra is a completely self-hosted anime watchlist, search, and recommendations app. It allows anime enthusiasts to manage their watchlists, discover new anime, and receive personalized recommendations, all from a single platform.]]
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-jellyfin
       home-oci-service-type
     (oci-extension
@@ -2057,7 +2057,7 @@ See also these competing projects:
 #+end_src
 
 My device's CPU is Intel. To enable hardware acceleration, which greatly boosts the performance of transcoding and decreases the load on the system, the maintainer of my specific Jellyfin image (=linuxserver/jellyfin=) has provided instructions [[https://github.com/linuxserver/docker-jellyfin?tab=readme-ov-file#hardware-acceleration-enhancements][on their README]]. It involves, among other things (see the container configuration), enabling the following kernel module:
-#+begin_src scheme :noweb-ref system-kernel-arguments
+#+begin_src scheme :noweb-ref sublation-system-kernel-arguments
   ;; Enable the kernel module corresponding to step 2 in
   ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel/#configure-and-verify-lp-mode-on-linux
   "i915.enable_guc=3"
@@ -2074,12 +2074,12 @@ To check if hardware acceleration is working, play a piece of media that should 
 
 Good explanation for why [[https://www.reddit.com/r/selfhosted/comments/1igavwe/comment/maprg6j/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][Shoko is categorically a more robust metadata solution]] for anime.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-shoko
       home-oci-service-type
     (oci-extension
@@ -2155,12 +2155,12 @@ Other potentially helpful resources:
   
 ***** Slskd: Soulseek daemon
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-slskd
       home-oci-service-type
     (oci-extension
@@ -2222,12 +2222,12 @@ Other potentially helpful resources:
 
 ***** Yubal: YouTube Music downloader
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-yubal
       home-oci-service-type
     (oci-extension
@@ -2264,12 +2264,12 @@ Alternatives:
 + MusicBrainz Picard
 + [[https://www.jthink.net/songkong/][SongKong Music Tagger]]
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-wrtag
       home-oci-service-type
     (oci-extension
@@ -2323,12 +2323,12 @@ Alternatives:
 Alternatives:
 + [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-resonance
       home-oci-service-type
     (oci-extension
@@ -2360,12 +2360,12 @@ Resources:
 + [[https://wiki.servarr.com/lidarr/community-guide][Davo's Community Lidarr Guide | Servarr Wiki]]
   The "TRaSH Guides" for Lidarr
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-lidarr
       home-oci-service-type
     (oci-extension
@@ -2393,12 +2393,12 @@ Resources:
 
 ***** Navidrome: Well-supported music server
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-navidrome
       home-oci-service-type
     (oci-extension
@@ -2420,12 +2420,12 @@ Resources:
 
 ***** Gonic: Filesystem-as-data music server (and other differences)
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-gonic
       home-oci-service-type
     (oci-extension
@@ -2470,12 +2470,12 @@ Resources:
 
 *** Yamtrack: Track watch, read, played, etc. progress of many types of media
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-yamtrack
       home-oci-service-type
     (oci-extension
@@ -2568,12 +2568,12 @@ Resources:
 
 *** Immich: Photo and video management
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-immich
       home-oci-service-type
     (let* ((immich-network-subnet "10.89.12.0/24")
@@ -2692,7 +2692,7 @@ Resources:
 #+end_src
 
 External storage:
-#+begin_src scheme :noweb-ref system-filesystems
+#+begin_src scheme :noweb-ref sublation-system-filesystems
   (file-system
     (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
     (mount-point "/home/krisbalintona/services/immich/data")
@@ -2709,12 +2709,12 @@ External storage:
 :CUSTOM_ID: h:20251222T054114.716045
 :END:
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-goaccess
       home-oci-service-type
     (oci-extension
@@ -2777,12 +2777,12 @@ External storage:
 
 A lightweight, simpler alternative to Uptime Kuma.
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-gatus
       home-oci-service-type
     (oci-extension
@@ -2802,13 +2802,13 @@ A lightweight, simpler alternative to Uptime Kuma.
 
 *** Grafana: Metrics and monitoring visualizer
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
   (krisb services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-grafana
       home-oci-service-type
     (oci-extension
@@ -2838,12 +2838,12 @@ A lightweight, simpler alternative to Uptime Kuma.
 
 Lighter and more performant drop-in replacement for Prometheus. See a brief comparison list [[https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/][here]].
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-victoria-metrics
       home-podman-pods-service-type
     (oci-pod-extension
@@ -2870,12 +2870,12 @@ Lighter and more performant drop-in replacement for Prometheus. See a brief comp
 
 **** VMagent: Forwarder and relay for VM
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services containers)
   (gnu home services containers)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-vmagent
       home-podman-pods-service-type
     (oci-pod-extension
@@ -2912,25 +2912,25 @@ Lighter and more performant drop-in replacement for Prometheus. See a brief comp
 
 Prometheus node exporter for my machine.
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services monitoring)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service prometheus-node-exporter-service-type
     (prometheus-node-exporter-configuration
       (web-listen-address "127.0.0.1:21005")))
 #+end_src
 
-**** VictoriaLogs: 
+**** VictoriaLogs: Log ingestion
 
 Lighter on resources, more performant, and more compact storage alternative to Loki. See [[https://www.truefoundry.com/blog/victorialogs-vs-loki][Victorialogs vs Loki - Benchmarking Results]].[fn:14] Prefer Loki only on edge cases where workflows are heavily label-driven; in every other case, where full-text search is needed and labels are not efficiently laid out, Loki is worse.
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services monitoring)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (simple-service 'home-oci-victoria-logs
       home-oci-service-type
     (oci-extension
@@ -2958,12 +2958,12 @@ Lighter on resources, more performant, and more compact storage alternative to L
 
 ** Restic: Dead-simple and reliable CLI-based backups
 
-#+begin_src scheme :noweb-ref home-modules
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu services backup)
   (gnu home services backup)
 #+end_src
 
-#+begin_src scheme :noweb-ref home-helpers
+#+begin_src scheme :noweb-ref sublation-home-helpers
   (define* (restic-job/defaults
             #:key
             (restic (@ (abbe packages golang) restic)) ; More up-to-date Restic
@@ -2995,11 +2995,11 @@ Lighter on resources, more performant, and more compact storage alternative to L
       (verbose? verbose?)))
 #+end_src
 
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "restic"
 #+end_src
 
-#+begin_src scheme :noweb-ref home-services
+#+begin_src scheme :noweb-ref sublation-home-services
   (service home-restic-backup-service-type)
   (simple-service 'home-restic-vault
       home-restic-backup-service-type
@@ -3008,10 +3008,10 @@ Lighter on resources, more performant, and more compact storage alternative to L
       #:name "restic-vault"
       #:schedule "0 7-22/3 * * *"
       #:files (list (string-append (getenv "HOME") "/vault")))))
-  <<home-restic-backup-jobs>>
+  <<sublation-home-restic-backup-jobs>>
 #+end_src
 
-#+begin_src scheme :noweb-ref home-sops-secrets
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
   (sops-secret
     (key '("restic-backup-password"))
     (file (local-file "files/sops/sublation.yaml"))
@@ -3028,12 +3028,12 @@ Learning about memory management in servers:
 Helpful articles:
 + [[https://linuxblog.io/linux-performance-almost-always-add-swap-part2-zram/][Linux Performance: Almost Always Add Swap Space - Part 2: ZRAM]]
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services linux)
   (gnu services sysctl)
 #+end_src
 
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   (service zram-device-service-type
     (zram-device-configuration
       (size "3G")
@@ -3043,7 +3043,7 @@ Helpful articles:
 #+end_src
 
 See also the specific advice to increase =vm.swappiness= to something between 100 and 200 here [[https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram][zram - ArchWiki]].
-#+begin_src scheme :noweb-ref system-services
+#+begin_src scheme :noweb-ref sublation-system-services
   ;; Based on the settings recommended here
   ;; https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
   ;; (follow the links there recursively for some reasoning)
@@ -3059,11 +3059,11 @@ See also the specific advice to increase =vm.swappiness= to something between 10
 
 In informative article for swap spaces in servers: [[https://linuxblog.io/linux-performance-almost-always-add-swap-space/][Linux Performance: Almost Always Add Swap Space]].
 
-#+begin_src scheme :noweb-ref system-modules
+#+begin_src scheme :noweb-ref sublation-system-modules
   (gnu system file-systems)
 #+end_src
 
-#+begin_src scheme :noweb-ref swap-spaces
+#+begin_src scheme :noweb-ref sublation-swap-spaces
   (swap-space
     (target "/swapfile")
     (dependencies
@@ -3075,7 +3075,7 @@ In informative article for swap spaces in servers: [[https://linuxblog.io/linux-
 * Hardware and file systems
 
 Common file system and drive tools for introspection, monitoring, and management:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "smartmontools"            ; For smartctl
 #+end_src
 
@@ -3125,13 +3125,21 @@ Learn about maintaining a btrfs file system:
 + https://wiki.tnonline.net/w/Btrfs/Scrub
 
 Install some programs useful for introspecting a btrfs file system, including the main =btrfs= program itself:
-#+begin_src scheme :noweb-ref home-packages
+#+begin_src scheme :noweb-ref sublation-home-packages
   "btrfs-progs"
   "compsize"
   "lsof"
 #+end_src
 
-* Home
+* Machines
+
+** Mute
+
+*** Home
+
+** Sublation
+
+*** Home
 
 #+begin_src scheme :tangle sublation-home.scm
   (use-modules (guix gexp)
@@ -3139,9 +3147,9 @@ Install some programs useful for introspecting a btrfs file system, including th
                (gnu system shadow)        ; For user-group 
                (gnu home services)
                (gnu home services shepherd)
-               <<home-modules>>)
+               <<sublation-home-modules>>)
 
-  <<home-helpers>>
+  <<sublation-home-helpers>>
 
   (home-environment
     (packages
@@ -3152,11 +3160,11 @@ Install some programs useful for introspecting a btrfs file system, including th
        "neovim"
        "emacs"
        ;; Other packages
-       <<home-packages>>)))
+       <<sublation-home-packages>>)))
     
     (services
      (cons*
-      <<home-services>>
+      <<sublation-home-services>>
       
       (simple-service 'krisb-symlink-git-config-files-service-type
           home-xdg-configuration-files-service-type
@@ -3174,7 +3182,7 @@ Install some programs useful for introspecting a btrfs file system, including th
       %base-home-services)))
 #+end_src
 
-* System
+*** System
 
 #+begin_src scheme :tangle sublation.scm
   (use-modules (gnu)
@@ -3185,9 +3193,9 @@ Install some programs useful for introspecting a btrfs file system, including th
                (gnu services xorg)
                (nongnu packages linux)
                (nongnu system linux-initrd)
-               <<system-modules>>)
+               <<sublation-system-modules>>)
 
-  <<system-helpers>>
+  <<sublation-system-helpers>>
 
   (operating-system
     ;; Use Linux kernel.  See also the (nonguix transformations) module
@@ -3198,7 +3206,7 @@ Install some programs useful for introspecting a btrfs file system, including th
     (firmware (list linux-firmware))
     (kernel-arguments
      (cons*
-      <<system-kernel-arguments>>
+      <<sublation-system-kernel-arguments>>
       %default-kernel-arguments))
     (initrd microcode-initrd)
 
@@ -3218,7 +3226,7 @@ Install some programs useful for introspecting a btrfs file system, including th
                     ;; (shell (file-append fish "/bin/fish"))
                     (supplementary-groups '("wheel" "netdev"
                                             "audio" "video"
-                                            <<supplementary-groups>>)))
+                                            <<sublation-supplementary-groups>>)))
                   %base-user-accounts))
 
     (packages
@@ -3231,7 +3239,7 @@ Install some programs useful for introspecting a btrfs file system, including th
     ;; services, run 'guix system search KEYWORD' in a terminal.
     (services
      (cons*
-      <<system-services>>
+      <<sublation-system-services>>
       (service network-manager-service-type)
       (service wpa-supplicant-service-type)
       (service ntp-service-type)
@@ -3269,10 +3277,11 @@ Install some programs useful for introspecting a btrfs file system, including th
                            (device (uuid "8D5D-5605"
                                          'fat32))
                            (type "vfat"))
-                         <<system-filesystems>>
+                         <<sublation-system-filesystems>>
                          %base-file-systems))
 
     (swap-devices
      (list
-      <<swap-spaces>>)))
+      <<sublation-swap-spaces>>)))
 #+end_src
+
