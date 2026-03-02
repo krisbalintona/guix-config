@@ -184,11 +184,6 @@ Compatibility with the fish shell:
   (gnu packages rust-apps)                ; fd
 #+end_src
 
-#+begin_src scheme :noweb-ref sublation-home-packages
-  "fzf"
-  "fd"
-#+end_src
-
 Bespoke integration with Fish. The initial inspiration for this was [[https://github.com/gazorby/fifc][gazorby/fifc]].
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'fish-fzf-packages

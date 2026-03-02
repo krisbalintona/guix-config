@@ -195,8 +195,6 @@
      "procs"
      "brightnessctl"
      "jujutsu"
-     "fzf"
-     "fd"
      "ffmpeg"                          ; Diagnose video info (e.g., codecs)
      "gnupg"
      "age"
