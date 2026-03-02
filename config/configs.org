@@ -295,7 +295,6 @@ Bespoke integration with Fish. The initial inspiration for this was [[https://gi
 #+begin_src scheme :noweb-ref sublation-home-services
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
-      (config (local-file "files/sops/sops.yaml" "sops.yaml"))
       (secrets
        (list
         <<sublation-home-sops-secrets>>))))

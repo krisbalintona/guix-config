@@ -294,7 +294,6 @@
     (service home-gpg-agent-service-type)
     (service home-sops-secrets-service-type
       (home-sops-service-configuration
-        (config (local-file "files/sops/sops.yaml" "sops.yaml"))
         (secrets
          (list
           (sops-secret
