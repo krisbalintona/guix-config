@@ -2,6 +2,7 @@ SHELL := $(shell printenv SHELL) # Run in user's shell
 _GUIX = guix
 GUIX = time $(_GUIX)
 GUIX_LOCKED = $(GUIX) time-machine --channels=$(CHANNELS_LOCK_FILE) --
+LOAD_PATHS = -L src
 ENV_DIR = ./env
 CHANNELS_FILE = $(ENV_DIR)/channels.scm
 CHANNELS_LOCK_FILE = $(ENV_DIR)/channels-lock-$(MACHINE).scm
@@ -74,15 +75,16 @@ endif
 .PHONY: system system-build
 system system-build:
 	$(GUIX) system $(SYSTEM_ACTION) \
-		-L src \
+		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
+		--keep-failed --verbosity=3 \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
 
 .PHONY: system-lock
 system-lock: $(CHANNELS_LOCK_FILE)
 	$(GUIX_LOCKED) system reconfigure \
-		-L src \
+		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
 		$(SYSTEM_EXTRA_FLAGS) \
 		config/$(MACHINE).scm
@@ -98,8 +100,9 @@ ifeq ($(MACHINE),wsl)
 	$(error The wsl has no home config.)
 endif
 	$(GUIX) home ${HOME_ACTION} \
-		-L src \
+		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
+		--keep-failed --verbosity=3 \
 		config/$(MACHINE)-home.scm
 
 .PHONY: home-lock
@@ -108,7 +111,7 @@ ifeq ($(MACHINE),wsl)
 	$(error The wsl has no home config.)
 endif
 	$(GUIX_LOCKED) home reconfigure \
-		-L src \
+		$(LOAD_PATHS) \
 		config/$(MACHINE)-home.scm
 
 # ** Development
@@ -131,15 +134,15 @@ endif
 
 .PHONY: build
 build:
-	$(GUIX) build -L src --keep-failed --log-file --verbosity=3 $(PACKAGES)
+	$(GUIX) build $(LOAD_PATHS) --keep-failed --log-file --verbosity=3 $(PACKAGES)
 
 .PHONY: shell
 shell:
-	$(GUIX) shell -L src $(PACKAGES)
+	$(GUIX) shell $(LOAD_PATHS) $(PACKAGES)
 
 .PHONY: repl
 repl: repl
-	guix repl -L src
+	guix repl $(LOAD_PATHS)
 
 
 # ** Other
