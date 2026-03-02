@@ -367,7 +367,6 @@
       (list
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
-           (config (local-file "files/sops/sops.yaml" "sops.yaml"))
            (secrets (list (sops-secret
                             (key '(".authinfo"))
                             (file
