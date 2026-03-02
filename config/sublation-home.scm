@@ -108,7 +108,7 @@
 
 (define* (get-sops-secret key #:key file (number? #f))
   (let* ((cmd (format #f "sops --decrypt --extract '~a' '~a'"
-                      (sanitize-sops-key key)
+                      (sops-list-key->sops-string-key key)
                       file))
          (port (open-input-pipe cmd))
          (secret (get-string-all port)))
