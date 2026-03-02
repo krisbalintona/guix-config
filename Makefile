@@ -53,7 +53,7 @@ upgrade: pull lock
 .PHONY: lock FORCE
 lock: $(CHANNELS_LOCK_FILE)
 $(CHANNELS_LOCK_FILE): $(CHANNELS_FILE) FORCE
-	$(GUIX) describe --format=CHANNELS_FILE $(CHANNELS_FILE) > $@
+	$(GUIX) describe --format=channels $(CHANNELS_FILE) > $@
 	@echo "Created $@"
 
 # ** System
