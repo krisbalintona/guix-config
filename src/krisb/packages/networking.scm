@@ -267,25 +267,26 @@ by WP-Statistics. Built from a pinned git commit.")
 
 (define caddy-security-netlify-crowdsec-coraza-maxmind
   (let ((pkg (caddy-custom
-              "2.10.2"
-              '("github.com/greenpau/caddy-security"
+              "2.11.2"
+              '(("github.com/greenpau/caddy-security" . "v1.1.43")
                 "github.com/caddy-dns/netlify"
                 ;; The next three modules are for
-                ;; caddy-crowdsec-bounder; the latter two are for
-                ;; optional features
+                ;; caddy-crowdsec-bounder
                 "github.com/hslatman/caddy-crowdsec-bouncer/http"
                 "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
                 "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
-                "github.com/corazawaf/coraza-caddy/v2"
-                "github.com/porech/caddy-maxmind-geolocation")
-              "0ds06c0hbwf6lpimvsp39v6b9dxifzikv29qij8zlq35f4jkxf6s"
-              "0x386sv2cw8fvix693zwqcz8d9ajrfm4gj8g932bn29c94j5dg92")))
+                ;; The next two packages are for optional features for
+                ;; caddy
+                "github.com/corazawaf/coraza-caddy/v2" ; Coraza WAF
+                "github.com/porech/caddy-maxmind-geolocation") ; MaxMind
+              "1h7av4h879yr0577svbxmg3lknkv7wijinwgnbsfl8h9r8gqfadi"
+              "0r5c3rd9i1h92vim2444053qb41dis7p36np3kw35z30im31kkp7")))
     (package/inherit pkg
       (name "caddy-security-netlify-crowdsec-coraza-maxmind")
       (arguments
        (substitute-keyword-arguments (package-arguments pkg)
          ((#:phases phases)
-          #~(modify-phases #$phases
+          #~(modify-phases #$phases 
               (add-after 'install 'link-geolite-dbs
                 ;; The city database is a superset of the country
                 ;; database, but we bundle both: users may choose
@@ -305,4 +306,4 @@ by WP-Statistics. Built from a pinned git commit.")
       (inputs
        (modify-inputs (package-inputs pkg)
          (append geolite2-country-mmdb geolite2-city-mmdb)))
-      (synopsis "Caddy with Netlify DNS, CrowdSec,Coraza WAF, MaxMind geoblocking, and Pocket ID authentication support"))))
+      (synopsis "Caddy with Netlify DNS, CrowdSec, Coraza WAF, MaxMind geoblocking, and Pocket ID authentication support"))))
