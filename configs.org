@@ -3087,11 +3087,11 @@ Mute restic backup jobs:
 
 * Syncthing: Bidirectionally sync files between devices
 
-#+begin_src scheme :noweb-ref sublation-home-modules
+#+begin_src scheme :noweb-ref mute-home-modules
   (gnu home services syncthing)
 #+end_src
 
-#+begin_src scheme :noweb-ref sublation-home-services
+#+begin_src scheme :noweb-ref mute-home-services
   (service home-syncthing-service-type
     (let* (;; Devices
            (wsl-arch-device
