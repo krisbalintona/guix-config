@@ -5,6 +5,11 @@
 #  LocalWords:  Prowlarr qBittorrent TRaSH Jellyfin codec bitrate transcode Transcoding HEVC Tdarr
 #  LocalWords:  VictoriaMetrics Symlinking Lieer Restic
 
+To learn more about Guix, check out:
++ [[https://guix.gnu.org/manual/1.5.0/en/index.html][GNU Guix Reference Manual]] (also available in the CLI with ~info guix~)
++ [[https://www.gnu.org/software/guile/manual/][GNU Guile Reference Manual]] (also available in the CLI with ~info guile~)
++ Various articles by Steve George at [[https://www.futurile.net/resources/guix/][futurile.net]]
+
 * Shells
 
 #+begin_src scheme :noweb-ref common-home-modules
