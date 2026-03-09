@@ -144,6 +144,7 @@
     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
     "mediainfo"
     "guile-readline"
+    "guile-colorized"
     "gnupg"
     "age"
     "keychain"

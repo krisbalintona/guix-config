@@ -373,14 +373,29 @@ The =~/.guile= file is the configuration file for the Guile REPL. It runs prior 
       home-files-service-type
     `((".guile" ,%default-dotguile)))
 #+end_src
+The default contents of =~/.guile= (~%default-dotguile~) use the [[#h:20260309T173615.569810][guile-readline]] and [[#h:20260309T173616.883707][guile-colorized]] modules then activate their functionality when they are available.
 
 *** Guile-readline
+:PROPERTIES:
+:CUSTOM_ID: h:20260309T173615.569810
+:END:
 
 Have GNU Readline bindings (typical terminal bindings and functionality) in the Guile REPL. See the =(guile) Readline Support= manual page for more information.
 #+begin_src scheme :noweb-ref common-home-packages
   "guile-readline"
 #+end_src
-The above installs the package, but one needs to either ~(use-modules (ice-9 readline))~ followed by ~(activate-readline)~ in a Guile REPL or do the equivalent in their =.guile= file. See [[#h:20260309T003748.583032][The =.guile= file]] for where I do this.
+The above installs the package, but one needs to either ~(use-modules (ice-9 readline))~ followed by ~(activate-readline)~ in a Guile/Guix REPL or do the equivalent in their =.guile= file. See [[#h:20260309T003748.583032][The =.guile= file]] for where I do this.
+
+*** Guile-colorized
+:PROPERTIES:
+:CUSTOM_ID: h:20260309T173616.883707
+:END:
+
+Colorize the output of the Guix and Guile REPL.
+#+begin_src scheme :noweb-ref common-home-packages
+  "guile-colorized"
+#+end_src
+The above installs the package, but one needs to either ~(use-modules (ice-9 colorized))~ followed by ~(activate-colorized)~ in a Guile/Guix REPL or do the equivalent in their =.guile= file. See [[#h:20260309T003748.583032][The =.guile= file]] for where I do this.
 
 * Authentication
 
