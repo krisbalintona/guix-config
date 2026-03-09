@@ -656,7 +656,7 @@ Mute SSH config:
 #+end_src
 
 For Bash:
-#+begin_src scheme :noweb-ref mute-home-services
+#+begin_src scheme :noweb-ref common-home-services
   (simple-service 'home-bash-keychain
       home-bash-service-type
     (home-bash-extension
@@ -664,7 +664,7 @@ For Bash:
 #+end_src
 
 For Fish:
-#+begin_src scheme :noweb-ref sublation-home-services
+#+begin_src scheme :noweb-ref common-home-services
   (simple-service 'home-fish-keychain
       home-fish-service-type
     (home-fish-extension

@@ -144,10 +144,6 @@
                            (user "krisbalintona")
                            (identity-file "~/.ssh/id_ed25519-sublation_backups")
                            (forward-agent? #t))))))
-       (simple-service 'home-bash-keychain
-           home-bash-service-type
-         (home-bash-extension
-           (bash-profile (list (local-file (config-files-path "bash/keychain.bash") "keychain.bash")))))
        (simple-service 'home-restic-emacs-repos
            home-restic-backup-service-type
          (list

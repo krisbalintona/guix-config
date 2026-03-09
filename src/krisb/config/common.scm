@@ -218,5 +218,14 @@
        (source-directory %config-files-dir)
        (layout 'plain)
        (directories (list "scripts"))))
+   (simple-service 'home-bash-keychain
+       home-bash-service-type
+     (home-bash-extension
+       (bash-profile (list (local-file (config-files-path "bash/keychain.bash") "keychain.bash")))))
+   (simple-service 'home-fish-keychain
+       home-fish-service-type
+     (home-fish-extension
+       (config
+        (list (local-file (config-files-path "fish/keychain.fish"))))))
    (service home-restic-backup-service-type) ; Need this service in order to extend it in other services
    ))
