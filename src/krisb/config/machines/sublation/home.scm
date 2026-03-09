@@ -580,30 +580,6 @@
                  `(("/home/krisbalintona/services/gluetun/data" . "/gluetun")))
                 (auto-start? #t)
                 (respawn? #f)))))))
-       (simple-service 'home-oci-transmission
-           home-oci-service-type
-         (oci-extension
-          (containers
-           (list
-            (oci-container-configuration
-              (provision "transmission")
-              (requirement '(gluetun))
-              ;; See https://github.com/linuxserver/docker-transmission for
-              ;; instructions on setting up Gluetun
-              (image "lscr.io/linuxserver/transmission:latest")
-              (environment
-               '("TZ=America/Chicago"
-                 "PUID=1000"
-                 "PGID=1000"))
-              ;; NOTE: The transmission web UI is exposed by the Gluetun
-              ;; container
-              (network "container:gluetun")
-              (volumes
-               '(("/home/krisbalintona/services/transmission/config" . "/config")
-                 ("/home/krisbalintona/services/transmission/watch" . "/watch")
-                 ("/home/krisbalintona/services/media/downloads/bittorrent" . "/downloads")))
-              (auto-start? #t)
-              (respawn? #f))))))
        (simple-service 'home-oci-qbittorrent
            home-oci-service-type
          (oci-extension

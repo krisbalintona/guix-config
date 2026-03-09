@@ -1660,7 +1660,7 @@ I think the idea is this: if the file is complete, readahead makes it such that 
            (respawn? #f)))))))
 #+end_src
 
-***** Transmission: Lightweight torrent client
+***** COMMENT Transmission: Lightweight torrent client
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-transmission
