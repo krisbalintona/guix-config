@@ -123,6 +123,7 @@
     "make"
     "cmake"
     "python"
+    "direnv"
     "tree"
     "ripgrep"
     "fd"

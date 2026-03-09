@@ -145,6 +145,7 @@ Build systems and programming languages:
   "make"
   "cmake"
   "python"
+  "direnv"
 #+end_src
 
 File searching, visualization, and transfer:
