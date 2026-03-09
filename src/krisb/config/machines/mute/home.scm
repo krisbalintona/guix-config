@@ -189,7 +189,6 @@
                    (devices (list wsl-arch-device mobile-device)))))
            (for-home
             (syncthing-configuration
-              (arguments (list "--no-default-folder"))
               (user "krisbalintona")
               (config-file
                (syncthing-config-file
