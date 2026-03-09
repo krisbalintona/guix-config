@@ -325,6 +325,14 @@ Atuin.  Don't forget to register then log in to sync history across machines; se
        ,(local-file (config-files-path "atuin/config.toml")))))
 #+end_src
 
+** Zellij: What fish is to zsh but for tmux
+
+A batteries-included tmux alternative.
+
+#+begin_src scheme :noweb-ref common-home-packages
+  "zellij"
+#+end_src
+
 ** Tools for video and audio codecs
 
 #+begin_src scheme :noweb-ref common-home-modules

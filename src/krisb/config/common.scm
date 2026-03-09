@@ -139,6 +139,7 @@
     "bat"
     "procs"
     "jujutsu"
+    "zellij"
     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
     "gnupg"
     "age"
