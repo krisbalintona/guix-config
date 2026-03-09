@@ -200,14 +200,13 @@
                 (auto-start? #t)
                 (respawn? #f)))))))
        (service home-openssh-service-type
-           (home-openssh-configuration
-             (hosts
-              (list
-               (openssh-host (name "WindowsG14")
-                             (host-name "192.168.4.138")
-                             (user "krisbalintona")
-                             (forward-x11? #t)
-                             (forward-x11-trusted? #t))))))
+         (home-openssh-configuration
+           (hosts
+            (list
+             (openssh-host
+               (name "codeberg.org")
+               (user "git")
+               (identity-file "~/.ssh/2026-git-forges"))))))
        (simple-service 'home-fish-keychain
            home-fish-service-type
          (home-fish-extension
