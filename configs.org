@@ -351,6 +351,31 @@ A batteries-included tmux alternative.
       (directories (list "scripts"))))
 #+end_src
 
+** Guile and Guix
+
+*** The =.guile= file
+:PROPERTIES:
+:CUSTOM_ID: h:20260309T003748.583032
+:END:
+
+The =~/.guile= file is the configuration file for the Guile REPL. It runs prior to every new Guile REPL instance. It is the equivalent of =~/.bashrc=.
+#+begin_src scheme :noweb-ref common-home-modules
+  (gnu system shadow)
+#+end_src
+#+begin_src scheme :noweb-ref common-home-services
+  (simple-service 'files-dotguile
+      home-files-service-type
+    `((".guile" ,%default-dotguile)))
+#+end_src
+
+*** Guile-readline
+
+Have GNU Readline bindings (typical terminal bindings and functionality) in the Guile REPL. See the =(guile) Readline Support= manual page for more information.
+#+begin_src scheme :noweb-ref common-home-packages
+  "guile-readline"
+#+end_src
+The above installs the package, but one needs to either ~(use-modules (ice-9 readline))~ followed by ~(activate-readline)~ in a Guile REPL or do the equivalent in their =.guile= file. See [[#h:20260309T003748.583032][The =.guile= file]] for where I do this.
+
 * Authentication
 
 ** GnuPG
@@ -3675,11 +3700,9 @@ Configuration helpers for my machines.
         common-home-services
         (cons*
          <<sublation-home-services>>
-         
-         (service home-files-service-type
-           `((".guile" ,%default-dotguile)
-             (".Xdefaults" ,%default-xdefaults)))
-
+         (simple-service files-Xdefaults
+             home-files-service-type
+           `((".Xdefaults" ,%default-xdefaults)))
          (service home-xdg-configuration-files-service-type
            `(("gdb/gdbinit" ,%default-gdbinit)
              ("nano/nanorc" ,%default-nanorc)))

@@ -1538,11 +1538,9 @@
            #:repository sops-sublation-repository-path
            #:schedule "0 0 * * *"
            #:files (list (string-append services-dir "/vaultwarden")))))
-       
-       (service home-files-service-type
-         `((".guile" ,%default-dotguile)
-           (".Xdefaults" ,%default-xdefaults)))
-
+       (simple-service files-Xdefaults
+           home-files-service-type
+         `((".Xdefaults" ,%default-xdefaults)))
        (service home-xdg-configuration-files-service-type
          `(("gdb/gdbinit" ,%default-gdbinit)
            ("nano/nanorc" ,%default-nanorc)))

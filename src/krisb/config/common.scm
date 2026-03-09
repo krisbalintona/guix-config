@@ -17,6 +17,7 @@
   #:use-module (gnu packages rust-apps)                ; fd
   #:use-module (krisb services shells)
   #:use-module (gnu home services dotfiles)
+  #:use-module (gnu system shadow)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
@@ -141,6 +142,7 @@
     "jujutsu"
     "zellij"
     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+    "guile-readline"
     "gnupg"
     "age"
     "keychain"
@@ -220,6 +222,9 @@
        (source-directory %config-files-dir)
        (layout 'plain)
        (directories (list "scripts"))))
+   (simple-service 'files-dotguile
+       home-files-service-type
+     `((".guile" ,%default-dotguile)))
    (simple-service 'home-bash-keychain
        home-bash-service-type
      (home-bash-extension
