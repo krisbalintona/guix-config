@@ -142,6 +142,7 @@
     "jujutsu"
     "zellij"
     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+    "mediainfo"
     "guile-readline"
     "gnupg"
     "age"

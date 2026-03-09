@@ -341,6 +341,7 @@ A batteries-included tmux alternative.
 
 #+begin_src scheme :noweb-ref common-home-packages
   "ffmpeg"                          ; Diagnose video info (e.g., codecs)
+  "mediainfo"
 #+end_src
 
 #+begin_src scheme :noweb-ref common-home-services
