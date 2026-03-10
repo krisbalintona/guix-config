@@ -58,6 +58,7 @@ notmuch tag +sub +productivity -- from:@flourishedhope.com
 notmuch tag +sub +writing -- from:thehighpony@buttondown.email
 notmuch tag +sub +writing -- from:newoldtraditions@gmail.com
 notmuch tag +sub +conspire_creative -- from:"The Profitable Author from Conspire Creative" or subject:"Your ABC Nudge, vol."
+notmuch tag +sub +conspire_creative +client -- from:"straightouttaskokie@"
 notmuch tag +sub +crc -- from:"Brown University Curricular Resource Center"
 notmuch tag +sub +productivity -- from:dinigroup@kouroshdini.com
 notmuch tag +sub -- from:"Medium Daily Digest <noreply@medium.com>"
@@ -72,6 +73,9 @@ notmuch tag +job_search +sub -- from:"Indeed <donotreply@match.indeed.com>"
 notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
 notmuch tag +job_search +sub -- from:alert@email.nexxt.com
 notmuch tag +job_search +sub -- from:"Nexxt <TopJob@email.nexxt.com>"
+
+# * Work
+notmuch tag +conspire_creative +client -- from:"Al Krockey"
 
 # * Parents
 notmuch tag +parents -- 'from:christine.balintona@ascension.org or to:christine.balintona@ascension.org'
