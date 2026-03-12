@@ -2020,7 +2020,9 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
          (respawn? #f))))))
 #+end_src
 
-**** Huntarr: Systematically and incrementally upgrade media
+**** COMMENT Huntarr: Systematically and incrementally upgrade media
+
+The repository was found to have several critical security failures. Upon the community discovering this, the author deleted the repository, Discord, and subreddit. Read more about the incident [[https://piunikaweb.com/2026/02/24/huntarr-security-vulnerability-arr-api-keys-exposed/][here]].
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-huntarr

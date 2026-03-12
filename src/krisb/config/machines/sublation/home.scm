@@ -750,22 +750,6 @@
               (volumes '(("/home/krisbalintona/services/byparr/venv" . "/app/.venv")))
               (auto-start? #t)
               (respawn? #f))))))
-       (simple-service 'home-oci-huntarr
-           home-oci-service-type
-         (oci-extension
-          (containers
-           (list
-            (oci-container-configuration
-              (provision "huntarr")
-              (image "huntarr/huntarr:latest")
-              (environment '("TZ=America/Chicago"))
-              (network "gluetun-network")
-              (ports '("127.0.0.1:9705:9705"))
-              (volumes
-               '(("/home/krisbalintona/services/huntarr/data" . "/config")
-                 ("/home/krisbalintona/services/huntarr/log" . "/config/logs")))
-              (auto-start? #t)
-              (respawn? #f))))))
        (simple-service 'home-oci-cleanuparr
            home-oci-service-type
          (oci-extension
