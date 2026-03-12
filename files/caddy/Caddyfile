@@ -413,6 +413,18 @@ vault.home.kristofferbalintona.me {
 	error @admin 403
 }
 
+# ** Syncthing GUI
+# See https://docs.syncthing.net/users/reverseproxy.html for
+# instructions on using Syncthing behind a reverse proxy
+
+syncthing.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:8384 {
+		header_up Host {upstream_hostport}
+	}
+	import policy_private
+	import service-logs syncthing
+}
+
 # ** Gatus
 
 gatus.home.kristofferbalintona.me {
