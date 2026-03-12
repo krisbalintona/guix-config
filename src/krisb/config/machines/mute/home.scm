@@ -161,28 +161,21 @@
            #:schedule "30 2 * * *"
            #:files (list (string-append (getenv "HOME") "/Documents/emails")))))
        (service home-syncthing-service-type
-         (let* (;; Devices
-                (wsl-arch-device
-                 (syncthing-device
-                   (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
-                   (name "G14 2024 Arch WSL")))
-                (mobile-device
-                 (syncthing-device
-                   (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
-                   (name "OnePlus 7 Pro")))
-                ;; Folders
+         (let* (;; Folders
                 (agenda-folder
                  (syncthing-folder
                    (id "k4vqh-rny7b")
                    (label "Agenda")
                    (path "~/Documents/org-database/agenda/")
-                   (devices (list wsl-arch-device mobile-device))))
+                   (devices
+                    (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device))))
                 (notes-folder
                  (syncthing-folder
                    (id "qtuzy-ufufb")
                    (label "Notes")
                    (path "~/Documents/org-database/notes")
-                   (devices (list wsl-arch-device mobile-device)))))
+                   (devices
+                    (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device)))))
            (for-home
             (syncthing-configuration
               (user "krisbalintona")

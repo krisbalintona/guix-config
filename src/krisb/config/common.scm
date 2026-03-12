@@ -25,6 +25,7 @@
   #:use-module (sops home services sops)
   #:use-module (gnu services backup)
   #:use-module (gnu home services backup)
+  #:use-module (gnu home services syncthing)
   #:use-module (krisb packages lieer)
   )
 
@@ -102,6 +103,33 @@
     (extra-flags extra-flags)
     (verbose? verbose?)))
 (export restic-job/defaults)
+;; Devices
+(define-public syncthing-sublation-arch-device
+  (syncthing-device
+    (id "IEIGZYX-QJGTCMC-LTWQ6S4-2RB77GM-WOXUBMM-J26I7LO-KIROD5R-XP7LXAT")
+    (name "Sublation (laptop server, Guix)")))
+
+(define-public syncthing-guix-arch-device
+  (syncthing-device
+    (id "UIVVWP3-XZ2GV2F-7N3RMXC-FRIKYXP-Y2MAXNA-JMGD45T-AZYZZJC-FBFSQQ5")
+    (name "Mute (G14 2024, Guix in Arch))")))
+
+(define-public syncthing-wsl-arch-device
+  (syncthing-device
+    (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
+    (name "G14 2024 Arch WSL")))
+
+(define-public syncthing-one-plus-7-pro-device
+  (syncthing-device
+    (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
+    (name "OnePlus 7 Pro")))
+
+;; Folder IDs
+(define-public syncthing-notes-folder-id "qtuzy-ufufb")
+
+(define-public syncthing-agenda-folder-id "k4vqh-rny7b")
+
+(define-public syncthing-biblio-folder-id "kjtm2-zyajn")
 
 (define-public common-home-packages
   (specifications->packages

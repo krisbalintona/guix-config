@@ -25,6 +25,7 @@
   #:use-module (gnu home services containers)
   #:use-module (krisb services containers)
   #:use-module (gnu home services backup)
+  #:use-module (gnu home services syncthing)
   )
 
 (define home-podman-socket
@@ -1514,6 +1515,21 @@
            #:repository sops-sublation-repository-path
            #:schedule "0 0 * * *"
            #:files (list (string-append services-dir "/vaultwarden")))))
+       (service home-syncthing-service-type
+         (let* (;; Folders
+                (biblio-folder
+                 (syncthing-folder
+                   (id syncthing-biblio-folder-id)
+                   (label "Biblio")
+                   (path "~/services/copyparty/data/biblio")
+                   (devices
+                    (list syncthing-one-plus-7-pro-device)))))
+           (for-home
+            (syncthing-configuration
+              (user "krisbalintona")
+              (config-file
+               (syncthing-config-file
+                 (folders (list biblio-folder))))))))
        (simple-service files-Xdefaults
            home-files-service-type
          `((".Xdefaults" ,%default-xdefaults)))

@@ -3141,34 +3141,83 @@ Mute restic backup jobs:
 
 * Syncthing: Bidirectionally sync files between devices
 
+My devices and folder IDs:
+#+begin_src scheme :noweb-ref common-home-modules
+  (gnu home services syncthing)
+#+end_src
+#+begin_src scheme :noweb-ref common-helpers
+  ;; Devices
+  (define-public syncthing-sublation-arch-device
+    (syncthing-device
+      (id "IEIGZYX-QJGTCMC-LTWQ6S4-2RB77GM-WOXUBMM-J26I7LO-KIROD5R-XP7LXAT")
+      (name "Sublation (laptop server, Guix)")))
+
+  (define-public syncthing-guix-arch-device
+    (syncthing-device
+      (id "UIVVWP3-XZ2GV2F-7N3RMXC-FRIKYXP-Y2MAXNA-JMGD45T-AZYZZJC-FBFSQQ5")
+      (name "Mute (G14 2024, Guix in Arch))")))
+
+  (define-public syncthing-wsl-arch-device
+    (syncthing-device
+      (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
+      (name "G14 2024 Arch WSL")))
+
+  (define-public syncthing-one-plus-7-pro-device
+    (syncthing-device
+      (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
+      (name "OnePlus 7 Pro")))
+
+  ;; Folder IDs
+  (define-public syncthing-notes-folder-id "qtuzy-ufufb")
+
+  (define-public syncthing-agenda-folder-id "k4vqh-rny7b")
+
+  (define-public syncthing-biblio-folder-id "kjtm2-zyajn")
+#+end_src
+
+For Sublation:
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (gnu home services syncthing)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-services
+  (service home-syncthing-service-type
+    (let* (;; Folders
+           (biblio-folder
+            (syncthing-folder
+              (id syncthing-biblio-folder-id)
+              (label "Biblio")
+              (path "~/services/copyparty/data/biblio")
+              (devices
+               (list syncthing-one-plus-7-pro-device)))))
+      (for-home
+       (syncthing-configuration
+         (user "krisbalintona")
+         (config-file
+          (syncthing-config-file
+            (folders (list biblio-folder))))))))
+#+end_src
+
+For Mute:
 #+begin_src scheme :noweb-ref mute-home-modules
   (gnu home services syncthing)
 #+end_src
-
 #+begin_src scheme :noweb-ref mute-home-services
   (service home-syncthing-service-type
-    (let* (;; Devices
-           (wsl-arch-device
-            (syncthing-device
-              (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
-              (name "G14 2024 Arch WSL")))
-           (mobile-device
-            (syncthing-device
-              (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
-              (name "OnePlus 7 Pro")))
-           ;; Folders
+    (let* (;; Folders
            (agenda-folder
             (syncthing-folder
               (id "k4vqh-rny7b")
               (label "Agenda")
               (path "~/Documents/org-database/agenda/")
-              (devices (list wsl-arch-device mobile-device))))
+              (devices
+               (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device))))
            (notes-folder
             (syncthing-folder
               (id "qtuzy-ufufb")
               (label "Notes")
               (path "~/Documents/org-database/notes")
-              (devices (list wsl-arch-device mobile-device)))))
+              (devices
+               (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device)))))
       (for-home
        (syncthing-configuration
          (user "krisbalintona")
