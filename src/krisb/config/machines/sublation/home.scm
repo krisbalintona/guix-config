@@ -246,9 +246,9 @@
               (volumes
                (list (cons "/home/krisbalintona/services/crowdsec/data/" "/var/lib/crowdsec/data/")
                      (cons "/home/krisbalintona/services/crowdsec/config/" "/etc/crowdsec")
-                     (cons (string-append (dirname (current-filename)) "/files/crowdsec/config.yaml")
+                     (cons (config-files-path "/crowdsec/config.yaml")
                            "/etc/crowdsec/config.yaml")
-                     (cons (string-append (dirname (current-filename)) "/files/crowdsec/acquis.yaml")
+                     (cons (config-files-path "crowdsec/acquis.yaml")
                            "/etc/crowdsec/acquis.yaml")
                      ;; All Caddy logs
                      (cons "/home/krisbalintona/services/caddy/log" "/var/log/caddy")))
@@ -403,7 +403,7 @@
                 (volumes
                  (list (cons "/home/krisbalintona/services/caddy/data" "/data") ; Path of XDG_DATA_HOME
                        (cons "/home/krisbalintona/services/caddy/log" "/data/log")
-                       (cons (string-append (dirname (current-filename)) "/files/caddy/Caddyfile")
+                       (cons (config-files-path "caddy/Caddyfile")
                              "/config/Caddyfile")
                        ;; Goaccess real-time web page
                        (cons "goaccess_web" "/var/www/goaccess")
@@ -446,7 +446,7 @@
               (volumes
                `(("/home/krisbalintona/services/copyparty/data" . "/data")
                  ("/home/krisbalintona/services/copyparty/log" . "/var/log/copyparty")
-                 (,(string-append (dirname (current-filename)) "/files/copyparty/copyparty.conf")
+                 (,(config-files-path "copyparty/copyparty.conf")
                   . "/srv/copyparty.conf")
                  ,(cons copyparty-socket-dir copyparty-socket-dir)))
               (command '("-c" "/srv/copyparty.conf"
@@ -1368,7 +1368,7 @@
               (image "twinproduction/gatus:stable")
               (network "host")
               (volumes
-               `(,(cons (string-append (dirname (current-filename)) "/files/gatus/config.yaml")
+               `(,(cons (config-files-path "gatus/config.yaml")
                         "/config/config.yaml")
                  "/home/krisbalintona/services/gatus/data:/data"))
               (auto-start? #t)
