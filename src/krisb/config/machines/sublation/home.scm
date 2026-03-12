@@ -440,7 +440,7 @@
             (oci-container-configuration
               (provision "copyparty")
               (requirement '(home-oci-copyparty-socket))
-              (image "docker.io/copyparty/ac:1.19.21")
+              (image "docker.io/copyparty/ac:latest")
               ;; Have files mounted at /data and copyparty config + cache
               ;; files in /srv
               (volumes
