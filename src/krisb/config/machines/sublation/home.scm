@@ -1019,26 +1019,28 @@
                  ("/home/krisbalintona/services/media" . "/media")))
               (auto-start? #t)
               (respawn? #f))))))
-       (simple-service 'home-oci-resonance
+       (simple-service 'home-oci-deepcrate
            home-oci-service-type
          (oci-extension
           (containers
            (list
             (oci-container-configuration
-              (provision "resonance")
-              (image "ghcr.io/jordojordo/resonance:latest")
+              (provision "deepcrate")
+              (image "ghcr.io/jordojordo/deepcrate:latest")
               (network "gluetun-network")
               ;; 2026-02-03: See all available environment variables here:
-              ;; https://github.com/jordojordo/resonance/blob/master/docs/configuration.md#environment-variables
+              ;; https://jordojordo.github.io/deepcrate/guide/configuration.html#environment-variables.
+              ;; Users may also override config file values; see
+              ;; https://jordojordo.github.io/deepcrate/guide/configuration.html#override-config-values-via-environment
               (environment
-               '("RESONANCE_DB_FILE=/config/resonance.sqlite"
-                 "LOG_LEVEL=debug"
+               '("LOG_LEVEL=debug"
                  "LOG_TO_FILE=true"
-                 "LOG_DIR=/log"))
+                 "LOG_DIR=/log"
+       	  "DEEPCRATE_DB_FILE=/config/deepcrate.sqlite"))
               (ports '("127.0.0.1:1250:8080"))
               (volumes
-               '(("/home/krisbalintona/services/resonance/data" . "/config")
-                 ("/home/krisbalintona/services/resonance/log" . "/log")
+               '(("/home/krisbalintona/services/deepcrate/data" . "/config")
+                 ("/home/krisbalintona/services/deepcrate/log" . "/log")
                  ("/home/krisbalintona/services/media/music/full-albums" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))

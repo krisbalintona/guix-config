@@ -2301,7 +2301,7 @@ A brief overview of music-related projects.
       + [[https://github.com/Angrido/Lidarr-YouTube-Downloader][GitHub - Angrido/Lidarr-YouTube-Downloader: Seamlessly bridge Lidarr and YouTube. Automatically fetch missing albums, download them as fully tagged MP3s, and trigger instant Lidarr imports to complete your music library.]]
       + [[https://github.com/HVR88/Limbo][GitHub - HVR88/Limbo: Limbo MusicBrainz Server and Lidarr Tools]]
     * [[https://github.com/terry90/soulbeet?tab=readme-ov-file][GitHub - terry90/soulbeet: Automated music downloader and manager integrating Slskd and Beets.]]
-    * [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
+    * [[https://github.com/jordojordo/resonance][GitHub - jordojordo/deepcrate: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
 + Metadata
   - Lidarr
   - Wrtag
@@ -2313,7 +2313,7 @@ A brief overview of music-related projects.
   - [[https://www.navidrome.org/][Navidrome]]
 + Music discovery
   - [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
-  - [[https://github.com/jordojordo/resonance][GitHub - jordojordo/resonance: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
+  - [[https://github.com/jordojordo/resonance][GitHub - jordojordo/deepcrate: Self-hosted music discovery pipeline with Navidrome, ListenBrainz, and Slskd]]
   - [[https://github.com/Dodelidoo-Labs/sonobarr][GitHub - Dodelidoo-Labs/sonobarr: Music discovery tool that integrates with Lidarr and provides recommendations using Last.fm]]
 
 Great resources:
@@ -2474,32 +2474,34 @@ Alternatives:
          (respawn? #f))))))
 #+end_src
 
-***** Resonance: Music discovery and Slskd download glue
+***** DeepCrate: Music discovery and Slskd download glue
 
 Alternatives:
 + [[https://github.com/LumePart/Explo][GitHub - LumePart/Explo: Spotify's "Discover Weekly" for self-hosted music systems]]
 
 #+begin_src scheme :noweb-ref sublation-home-services
-  (simple-service 'home-oci-resonance
+  (simple-service 'home-oci-deepcrate
       home-oci-service-type
     (oci-extension
      (containers
       (list
        (oci-container-configuration
-         (provision "resonance")
-         (image "ghcr.io/jordojordo/resonance:latest")
+         (provision "deepcrate")
+         (image "ghcr.io/jordojordo/deepcrate:latest")
          (network "gluetun-network")
          ;; 2026-02-03: See all available environment variables here:
-         ;; https://github.com/jordojordo/resonance/blob/master/docs/configuration.md#environment-variables
+         ;; https://jordojordo.github.io/deepcrate/guide/configuration.html#environment-variables.
+         ;; Users may also override config file values; see
+         ;; https://jordojordo.github.io/deepcrate/guide/configuration.html#override-config-values-via-environment
          (environment
-          '("RESONANCE_DB_FILE=/config/resonance.sqlite"
-            "LOG_LEVEL=debug"
+          '("LOG_LEVEL=debug"
             "LOG_TO_FILE=true"
-            "LOG_DIR=/log"))
+            "LOG_DIR=/log"
+  	  "DEEPCRATE_DB_FILE=/config/deepcrate.sqlite"))
          (ports '("127.0.0.1:1250:8080"))
          (volumes
-          '(("/home/krisbalintona/services/resonance/data" . "/config")
-            ("/home/krisbalintona/services/resonance/log" . "/log")
+          '(("/home/krisbalintona/services/deepcrate/data" . "/config")
+            ("/home/krisbalintona/services/deepcrate/log" . "/log")
             ("/home/krisbalintona/services/media/music/full-albums" . "/data")))
          (auto-start? #t)
          (respawn? #f))))))
