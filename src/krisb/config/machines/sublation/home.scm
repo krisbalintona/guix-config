@@ -1530,7 +1530,7 @@
               (config-file
                (syncthing-config-file
                  (folders (list biblio-folder))))))))
-       (simple-service files-Xdefaults
+       (simple-service 'files-Xdefaults
            home-files-service-type
          `((".Xdefaults" ,%default-xdefaults)))
        (service home-xdg-configuration-files-service-type
