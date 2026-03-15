@@ -289,7 +289,7 @@
                 ;; shepherd service restart) I have to set up those
                 ;; permissions myself.  See https://pocket-id.org/d
                 ;; ocs/advanced/hardening
-                (image "ghcr.io/pocket-id/pocket-id:v2")
+                (image "ghcr.io/pocket-id/pocket-id:latest")
                 (environment
                  (list "PORT=3111"
                        "TRUST_PROXY=true"    ; Whether behind a reverse proxy
