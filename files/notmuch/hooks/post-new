@@ -32,7 +32,7 @@ notmuch tag +list +guix +emacs -- '"List:<~abcdw/rde-discuss.lists.sr.ht>" or to
 
 # * Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
-notmuch tag +list +humanities +writing -- from:"amugofinsights@substack.com" or from:"a-mug-of-insights@ghost.io"
+notmuch tag +sub +humanities +writing -- from:"amugofinsights@substack.com" or from:"a-mug-of-insights@ghost.io"
 notmuch tag +sub +writing -- from:poem-a-day@poets.org
 notmuch tag +sub +news -- from:nytdirect@nytimes.com
 notmuch tag +sub -- from:early-modern-world@brown.edu
