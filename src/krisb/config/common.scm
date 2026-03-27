@@ -152,7 +152,6 @@
     "make"
     "cmake"
     "python"
-    "direnv"
     "tree"
     "ripgrep"
     "fd"
@@ -169,6 +168,7 @@
     "procs"
     "jujutsu"
     "zellij"
+    "direnv"
     "ffmpeg"                          ; Diagnose video info (e.g., codecs)
     "mediainfo"
     "guile-readline"
@@ -247,6 +247,14 @@
        home-xdg-configuration-files-service-type
      `(("atuin/config.toml"
         ,(local-file (config-files-path "atuin/config.toml")))))
+   (simple-service 'home-fish-direnv
+       home-fish-service-type
+     (home-fish-extension
+       (config (list (plain-file "direnv_setup.fish" "direnv hook fish | source")))))
+   (simple-service 'home-bash-direnv
+     home-bash-service-type
+     (home-bash-extension
+       (bashrc (list (plain-file "direnv_setup.bash" "eval \"$(direnv hook bash)\"")))))
    (service home-dotfiles-service-type
      (home-dotfiles-configuration
        (source-directory %config-files-dir)

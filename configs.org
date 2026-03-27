@@ -150,7 +150,6 @@ Build systems and programming languages:
   "make"
   "cmake"
   "python"
-  "direnv"
 #+end_src
 
 File searching, visualization, and transfer:
@@ -336,6 +335,28 @@ A batteries-included tmux alternative.
 
 #+begin_src scheme :noweb-ref common-home-packages
   "zellij"
+#+end_src
+
+** Direnv: Directory-local environments
+
+  #+begin_src scheme :noweb-ref common-home-packages
+  "direnv"
+  #+end_src
+
+Setup for Fish shell:
+  #+begin_src scheme :noweb-ref common-home-services
+    (simple-service 'home-fish-direnv
+        home-fish-service-type
+      (home-fish-extension
+        (config (list (plain-file "direnv_setup.fish" "direnv hook fish | source")))))
+  #+end_src
+
+Setup for Bash shell:
+  #+begin_src scheme :noweb-ref common-home-services
+    (simple-service 'home-bash-direnv
+      home-bash-service-type
+      (home-bash-extension
+        (bashrc (list (plain-file "direnv_setup.bash" "eval \"$(direnv hook bash)\"")))))
 #+end_src
 
 ** Tools for video and audio codecs
