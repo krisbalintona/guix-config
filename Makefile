@@ -72,6 +72,8 @@ ifeq ($(MACHINE),wsl)
 system system-lock: SYSTEM_EXTRA_FLAGS += --no-bootloader
 endif
 
+SYSTEM-EXPRESSION := '(@ (krisb config machines $(MACHINE) system) $(MACHINE)-operating-system)'
+
 .PHONY: system system-build
 system system-build:
 	$(GUIX) system $(SYSTEM_ACTION) \
@@ -79,7 +81,7 @@ system system-build:
 		${FAST_BUILD_ARGS} \
 		--keep-failed --verbosity=3 \
 		$(SYSTEM_EXTRA_FLAGS) \
-		config/$(MACHINE).scm
+		--expression=$(SYSTEM-EXPRESSION)
 
 .PHONY: system-lock
 system-lock: $(CHANNELS_LOCK_FILE)
@@ -87,12 +89,14 @@ system-lock: $(CHANNELS_LOCK_FILE)
 		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
 		$(SYSTEM_EXTRA_FLAGS) \
-		config/$(MACHINE).scm
+		--expression=$(SYSTEM-EXPRESSION)
 
 # ** Home
 
 home: HOME_ACTION = reconfigure
 home-build: HOME_ACTION = build
+
+HOME-EXPRESSION := '(@ (krisb config machines $(MACHINE) home) $(MACHINE)-home-environment)'
 
 .PHONY: home home-build
 home home-build:
@@ -103,7 +107,7 @@ endif
 		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
 		--keep-failed --verbosity=3 \
-		config/$(MACHINE)-home.scm
+		--expression=$(HOME-EXPRESSION)
 
 .PHONY: home-lock
 home-lock:
@@ -112,7 +116,7 @@ ifeq ($(MACHINE),wsl)
 endif
 	$(GUIX_LOCKED) home reconfigure \
 		$(LOAD_PATHS) \
-		config/$(MACHINE)-home.scm
+		--expression=$(HOME-EXPRESSION)
 
 # ** Development
 
