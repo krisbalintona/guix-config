@@ -71,6 +71,7 @@ notmuch tag +condo -- from:"Belmont Row HOA"
 # * Job search
 notmuch tag +job_search +sub -- from:"Indeed <donotreply@match.indeed.com>"
 notmuch tag +job_search +sub -- from:jobs-listings@linkedin.com
+notmuch tag +job_search +sub -- from:"LinkedIn Job Alerts"
 notmuch tag +job_search +sub -- from:alert@email.nexxt.com
 notmuch tag +job_search +sub -- from:"Nexxt <TopJob@email.nexxt.com>"
 
