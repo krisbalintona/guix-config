@@ -64,6 +64,8 @@ notmuch tag +sub +productivity -- from:dinigroup@kouroshdini.com
 notmuch tag +sub -- from:"Medium Daily Digest <noreply@medium.com>"
 notmuch tag +sub -- from:"Diane Callahan <subscriptions@medium.com>"
 notmuch tag +sub +philosophy -- from:"Joan Westenberg <subscriptions@medium.com>"
+notmuch tag +sub +authorship -- from:news@thebestsellingauthor.com
+notmuch tag +sub +note_taking -- from:"M.Z. Ahmad <subscriptions@medium.com>"
 
 # * Parents’ condo
 notmuch tag +condo -- from:"Belmont Row HOA"
