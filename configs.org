@@ -337,6 +337,13 @@ A batteries-included tmux alternative.
   "zellij"
 #+end_src
 
+#+begin_src scheme :noweb-ref common-home-services
+  (simple-service 'zellij-config-files-service-type
+      home-xdg-configuration-files-service-type
+    `(("zellij/config.kdl"
+       ,(local-file (config-files-path "zellij/config.kdl")))))
+#+end_src
+
 ** Direnv: Directory-local environments
 
   #+begin_src scheme :noweb-ref common-home-packages

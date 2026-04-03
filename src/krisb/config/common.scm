@@ -247,6 +247,10 @@
        home-xdg-configuration-files-service-type
      `(("atuin/config.toml"
         ,(local-file (config-files-path "atuin/config.toml")))))
+   (simple-service 'zellij-config-files-service-type
+       home-xdg-configuration-files-service-type
+     `(("zellij/config.kdl"
+        ,(local-file (config-files-path "zellij/config.kdl")))))
    (simple-service 'home-fish-direnv
        home-fish-service-type
      (home-fish-extension
