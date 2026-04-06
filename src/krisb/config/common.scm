@@ -190,6 +190,10 @@
 
 (define-public common-home-services
   (list
+   (simple-service 'common-environment-variables
+       home-environment-variables-service-type
+     '(("PATH" . "$HOME/.local/bin:$PATH")
+       ("PAGER" . "less -RKF")))
    (simple-service 'home-fish-bat
        home-fish-service-type
      (home-fish-extension

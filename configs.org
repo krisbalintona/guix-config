@@ -20,7 +20,7 @@ To learn more about Guix, check out:
 
 ** Base environment
 
-#+begin_src scheme :noweb-ref sublation-home-services
+#+begin_src scheme :noweb-ref common-home-services
   (simple-service 'common-environment-variables
       home-environment-variables-service-type
     '(("PATH" . "$HOME/.local/bin:$PATH")
