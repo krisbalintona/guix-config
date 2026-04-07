@@ -906,6 +906,7 @@
                 (environment
                  '("SLSKD_REMOTE_CONFIGURATION=false"
                    "APP_DIR=/app"              ; Data directory for program
+                   "SLSKD_DISK_LOGGER=true"    ; Log to disk
                    "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
                    "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
                    ;; "Seeding" directory
@@ -923,6 +924,7 @@
                 (ports '("127.0.0.1:8686:8686"))
                 (volumes
                  '(("/home/krisbalintona/services/slskd/data" . "/app")
+                   ("/home/krisbalintona/services/slskd/log" . "/logs")
                    ("/home/krisbalintona/services/media" . "/media")))
                 (auto-start? #t)
                 (respawn? #f)))))))
