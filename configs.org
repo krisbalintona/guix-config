@@ -1690,8 +1690,7 @@ I think the idea is this: if the file is complete, readahead makes it such that 
               ;; See
               ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/firewall.md
               ;; for all firewall options
-              "FIREWALL_INPUT_PORTS=9091"   ; Transmission web UI
-              "FIREWALL_INPUT_PORTS=6701")) ; qBittorrent web UI
+              "FIREWALL_INPUT_PORTS=9091,6701")) ; Transmission web UI, qBittorrent web UI
            (network "gluetun-network")
            (ports '("127.0.0.1:9091:9091"   ; Transmission web UI
                     "127.0.0.1:6701:6701" ; qBittorrent web UI
