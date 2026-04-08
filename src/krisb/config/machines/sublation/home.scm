@@ -974,11 +974,7 @@
            (list
             (oci-container-configuration
               (provision "wrtag")
-              ;; 2026-01-31: Pre-release container image, shared by
-              ;; https://github.com/sentriz/wrtag/issues/165#issuecomment-3774590850.
-              ;; For the .Media template; use the official image once it is
-              ;; released
-              (image "ghcr.io/jee-r/wrtag:0.30.0")
+              (image "ghcr.io/sentriz/wrtag:v0.30.0")
               (container-user "1000:1000")
               (host-environment
                (list
