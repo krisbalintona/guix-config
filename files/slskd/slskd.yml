@@ -1,0 +1,7 @@
+integration:
+  scripts:
+    wrtag:                    # Tag and import (move) music with wrtag
+      on:
+        - DownloadDirectoryComplete
+      run:
+        command: '/app/scripts/wrtag.sh' # Working directory is the scripts directory (/app/scripts)

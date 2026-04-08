@@ -868,6 +868,12 @@
               (extra-arguments '("--shm-size=256m"))
               (auto-start? #t)
               (respawn? #f))))))
+       (simple-service 'files-slskd
+           home-files-service-type
+         `(("services/slskd/data/slskd.yml"
+            ,(local-file (config-files-path "slskd/slskd.yml")))
+           ("services/slskd/scripts/wrtag.sh"
+            ,(local-file (config-files-path "slskd/wrtag.sh")))))
        (simple-service 'home-oci-slskd
            home-oci-service-type
          (oci-extension
@@ -887,6 +893,9 @@
                                     #:file sops-sublation-secrets-path))
                   (slskd-slsk-password
                    (get-sops-secret '("slskd" "soulseek" "password")
+                                    #:file sops-sublation-secrets-path))
+                  (wrtag-api-key
+                   (get-sops-secret '("wrtag" "web-api-key")
                                     #:file sops-sublation-secrets-path)))
               (oci-container-configuration
                 (provision "slskd")
@@ -897,7 +906,8 @@
                        (cons "SLSKD_PASSWORD" slskd-password)
                        (cons "SLSKD_API_KEY" slskd-api-key)
                        (cons "SLSKD_SLSK_USERNAME" slskd-slsk-username)
-                       (cons "SLSKD_SLSK_PASSWORD" slskd-slsk-password)))
+                       (cons "SLSKD_SLSK_PASSWORD" slskd-slsk-password)
+                       (cons "WRTAG_WEB_API_KEY" wrtag-api-key)))
                 ;; See
                 ;; https://github.com/slskd/slskd/blob/master/docs/config.md
                 ;; for a complete description of all configurable environment
@@ -918,7 +928,10 @@
                    "SLSKD_API_KEY"
                    ;; Soulseek network credentials
                    "SLSKD_SLSK_USERNAME"
-                   "SLSKD_SLSK_PASSWORD"))
+                   "SLSKD_SLSK_PASSWORD"
+                   ;; For wrtag import script
+                   "WRTAG_WEB_API_KEY"
+                   "WRTAG_WEB_URL=wrtag:7373"))
                 (network "container:gluetun")
                 (ports '("127.0.0.1:8686:8686"))
                 (volumes
@@ -957,10 +970,6 @@
        (simple-service 'home-oci-wrtag
            home-oci-service-type
          (oci-extension
-          (networks
-           (list
-            (oci-network-configuration
-             (name "wrtag-network"))))
           (containers
            (list
             (oci-container-configuration
@@ -997,7 +1006,7 @@
        	  ;; Genius lyrics provider, so I have excluded it.  See
        	  ;; https://github.com/sentriz/wrtag/issues/168
        	  "WRTAG_ADDON=lyrics lrclib musixmatch,replaygain true-peak"))
-              (network "wrtag-network")
+              (network "gluetun-network")
               (ports '("127.0.0.1:7373:7373"))
               (volumes
                '(;; Optional.  Used when I specify WRTAG_WEB_DB_PATH above
