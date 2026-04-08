@@ -913,8 +913,7 @@
                 ;; for a complete description of all configurable environment
                 ;; variables
                 (environment
-                 '("SLSKD_REMOTE_CONFIGURATION=false"
-                   "APP_DIR=/app"              ; Data directory for program
+                 '("APP_DIR=/app"              ; Data directory for program
                    "SLSKD_DISK_LOGGER=true"    ; Log to disk
                    "SLSKD_DOWNLOADS_DIR=/media/downloads/soulseek/complete"
                    "SLSKD_INCOMPLETE_DIR=/media/downloads/soulseek/incomplete"
@@ -924,6 +923,9 @@
                    ;; Web UI credentials
                    "SLSKD_USERNAME"
                    "SLSKD_PASSWORD"
+                   ;; Modifications remotely (from the web UI)
+                   "SLSKD_REMOTE_CONFIGURATION=false"
+                   "SLSKD_REMOTE_FILE_MANAGEMENT=true"
                    ;; API key for other applications
                    "SLSKD_API_KEY"
                    ;; Soulseek network credentials
