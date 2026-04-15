@@ -38,7 +38,7 @@ pull:
 	$(GUIX) pull -C $(CHANNELS_FILE)
 
 pull-lock:
-	$(GUIX) pull -C $(CHANNELS_LOCK_FILE)
+	$(GUIX) pull -C $(CHANNELS_LOCK_FILE) --allow-downgrades
 
 .PHONY: upgrade
 upgrade: pull lock
