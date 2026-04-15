@@ -188,6 +188,11 @@
     "fontconfig"
     )))
 
+(define-public common-system-services
+  (list
+   (service openssh-service-type)
+   ))
+
 (define-public common-home-services
   (list
    (simple-service 'common-environment-variables

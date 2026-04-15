@@ -3701,6 +3701,11 @@ Configuration helpers for my machines.
       <<common-home-packages>>
       )))
 
+  (define-public common-system-services
+    (list
+     <<common-system-services>>
+     ))
+
   (define-public common-home-services
     (list
      <<common-home-services>>
@@ -3875,19 +3880,21 @@ Configuration helpers for my machines.
       ;; Below is the list of system services.  To search for available
       ;; services, run 'guix system search KEYWORD' in a terminal.
       (services
-       (cons*
-        <<sublation-system-services>>
-        (service network-manager-service-type)
-        (service wpa-supplicant-service-type)
-        (service ntp-service-type)
-        (service elogind-service-type
-          (elogind-configuration
-            ;; Inhibit laptop sleeping and hibernation on lid close
-            (handle-lid-switch 'ignore)
-            (handle-lid-switch-docked 'ignore)
-            (handle-lid-switch-external-power 'ignore)
-            (lid-switch-ignore-inhibited? #t)))
-        %base-services))
+       (append
+        common-system-services
+        (cons*
+         <<sublation-system-services>>
+         (service network-manager-service-type)
+         (service wpa-supplicant-service-type)
+         (service ntp-service-type)
+         (service elogind-service-type
+           (elogind-configuration
+             ;; Inhibit laptop sleeping and hibernation on lid close
+             (handle-lid-switch 'ignore)
+             (handle-lid-switch-docked 'ignore)
+             (handle-lid-switch-external-power 'ignore)
+             (lid-switch-ignore-inhibited? #t)))
+         %base-services)))
       
       (bootloader (bootloader-configuration
                     (bootloader grub-efi-bootloader)
