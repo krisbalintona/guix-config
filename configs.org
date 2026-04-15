@@ -1580,8 +1580,7 @@ Mounting subvolumes specific to torrenting:
       (type "btrfs")
       (flags '(no-atime))
       (options "subvol=@media,compress=zstd")
-      (create-mount-point? #t)
-      (mount-may-fail? #t)))
+      (create-mount-point? #t)))
 #+end_src
 #+begin_src scheme :noweb-ref sublation-system-filesystems
   file-system-media
@@ -1595,7 +1594,6 @@ Mounting subvolumes specific to torrenting:
     ;; option because btrfs subvolumes currently inherit the mount
     ;; options of the first mounted subvolume.
     (options "subvol=@torrents-incomplete,compress=zstd")
-    (mount-may-fail? #t)
     (dependencies (list file-system-media)))
 #+end_src
 A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:3]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:4]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:5]
@@ -2903,8 +2901,7 @@ External storage:
     (mount-point "/home/krisbalintona/services/immich/data")
     (type "btrfs")
     (flags '(no-atime))
-    (options "subvol=@immich,compress=zstd")
-    (mount-may-fail? #t))
+    (options "subvol=@immich,compress=zstd"))
 #+end_src
 
 ** Monitoring
@@ -3951,8 +3948,7 @@ Configuration helpers for my machines.
                                       "7526f253-87d5-47d9-80f9-66c99c70bb8f"
                                       'ext4))
                              (type "ext4")
-                             (create-mount-point? #t)
-                             (mount-may-fail? #t))
+                             (create-mount-point? #t))
                            (file-system
                              (mount-point "/")
                              (device (uuid

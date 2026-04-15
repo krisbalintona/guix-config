@@ -31,8 +31,7 @@
     (type "btrfs")
     (flags '(no-atime))
     (options "subvol=@media,compress=zstd")
-    (create-mount-point? #t)
-    (mount-may-fail? #t)))
+    (create-mount-point? #t)))
 
 (define-public sublation-operating-system
   (operating-system
@@ -339,8 +338,7 @@
                                     "7526f253-87d5-47d9-80f9-66c99c70bb8f"
                                     'ext4))
                            (type "ext4")
-                           (create-mount-point? #t)
-                           (mount-may-fail? #t))
+                           (create-mount-point? #t))
                          (file-system
                            (mount-point "/")
                            (device (uuid
@@ -363,15 +361,13 @@
                            ;; option because btrfs subvolumes currently inherit the mount
                            ;; options of the first mounted subvolume.
                            (options "subvol=@torrents-incomplete,compress=zstd")
-                           (mount-may-fail? #t)
                            (dependencies (list file-system-media)))
                          (file-system
                            (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
                            (mount-point "/home/krisbalintona/services/immich/data")
                            (type "btrfs")
                            (flags '(no-atime))
-                           (options "subvol=@immich,compress=zstd")
-                           (mount-may-fail? #t))
+                           (options "subvol=@immich,compress=zstd"))
                          %base-file-systems))
 
     (swap-devices
