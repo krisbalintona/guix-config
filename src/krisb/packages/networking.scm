@@ -267,20 +267,24 @@ by WP-Statistics. Built from a pinned git commit.")
 
 (define caddy-security-netlify-crowdsec-coraza-maxmind
   (let ((pkg (caddy-custom
-              "2.11.2"
-              '(("github.com/greenpau/caddy-security" . "v1.1.43")
-                "github.com/caddy-dns/netlify"
-                ;; The next three modules are for
-                ;; caddy-crowdsec-bounder
+              "2.11.3"
+              ;; TODO 2026-04-15: I should pin the versions of the
+              ;; modules of the other Caddy packages defined in this
+              ;; file
+              '(("github.com/greenpau/caddy-security" . "v1.1.62")
+                ("github.com/caddy-dns/netlify" . "v1.1.0")
+                ;; The next three are directories from the
+                ;; caddy-crowdsec-bouncer module
+                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.13.1")
                 "github.com/hslatman/caddy-crowdsec-bouncer/http"
                 "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
                 "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
-                ;; The next two packages are for optional features for
+                ;; The next two packages are for optional features in
                 ;; caddy
-                "github.com/corazawaf/coraza-caddy/v2" ; Coraza WAF
-                "github.com/porech/caddy-maxmind-geolocation") ; MaxMind
-              "1h7av4h879yr0577svbxmg3lknkv7wijinwgnbsfl8h9r8gqfadi"
-              "0r5c3rd9i1h92vim2444053qb41dis7p36np3kw35z30im31kkp7")))
+                ("github.com/corazawaf/coraza-caddy/v2" . "v2.5.0") ; Coraza WAF
+                ("github.com/porech/caddy-maxmind-geolocation" . "v1.0.3")) ; MaxMind
+              "0kkpwrri02phr9czxi05vd9a1mrlwy8w3r9inr8hadzm5dffz2cn"
+              "1bz8sinzs5q89vb7azvfwhb023si1mm0pwj0r7mcdyz7ps1rp5ba")))
     (package/inherit pkg
       (name "caddy-security-netlify-crowdsec-coraza-maxmind")
       (arguments
