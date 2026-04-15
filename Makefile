@@ -100,7 +100,7 @@ home-build: HOME_ACTION = build
 home-preview: _GUIX = guix time-machine -C $(CHANNELS_FILE) --
 home-preview: HOME_ACTION = build
 
-HOME-EXPRESSION := '(@ (krisb config machines $(MACHINE) home) $(MACHINE)-home-environment)'
+HOME_EXPRESSION := '(@ (krisb config machines $(MACHINE) home) $(MACHINE)-home-environment)'
 
 .PHONY: home home-build home-preview
 home home-build home-preview:
@@ -111,7 +111,7 @@ endif
 		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
 		--keep-failed --verbosity=3 \
-		--expression=$(HOME-EXPRESSION)
+		--expression=$(HOME_EXPRESSION)
 
 .PHONY: home-lock
 home-lock:
@@ -120,7 +120,7 @@ ifeq ($(MACHINE),wsl)
 endif
 	$(GUIX_LOCKED) home reconfigure \
 		$(LOAD_PATHS) \
-		--expression=$(HOME-EXPRESSION)
+		--expression=$(HOME_EXPRESSION)
 
 # ** Development
 
