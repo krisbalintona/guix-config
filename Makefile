@@ -63,6 +63,8 @@ $(CHANNELS_LOCK_FILE): $(CHANNELS_FILE) FORCE
 system system-build system-lock: _GUIX = sudo guix
 system: SYSTEM_ACTION = reconfigure
 system-build: SYSTEM_ACTION = build
+system-preview: _GUIX = guix time-machine -C $(CHANNELS_FILE) --
+system-preview: SYSTEM_ACTION = build
 system system-lock: SYSTEM_EXTRA_FLAGS =
 
 # WSL should not be configured with a bootloader, since Windows does
@@ -74,8 +76,8 @@ endif
 
 SYSTEM-EXPRESSION := '(@ (krisb config machines $(MACHINE) system) $(MACHINE)-operating-system)'
 
-.PHONY: system system-build
-system system-build:
+.PHONY: system system-build system-preview
+system system-build system-preview:
 	$(GUIX) system $(SYSTEM_ACTION) \
 		$(LOAD_PATHS) \
 		${FAST_BUILD_ARGS} \
@@ -95,11 +97,13 @@ system-lock: $(CHANNELS_LOCK_FILE)
 
 home: HOME_ACTION = reconfigure
 home-build: HOME_ACTION = build
+home-preview: _GUIX = guix time-machine -C $(CHANNELS_FILE) --
+home-preview: HOME_ACTION = build
 
 HOME-EXPRESSION := '(@ (krisb config machines $(MACHINE) home) $(MACHINE)-home-environment)'
 
-.PHONY: home home-build
-home home-build:
+.PHONY: home home-build home-preview
+home home-build home-preview:
 ifeq ($(MACHINE),wsl)
 	$(error The wsl has no home config.)
 endif
