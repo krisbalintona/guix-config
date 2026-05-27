@@ -42,6 +42,8 @@
         "font-iosevka-term-ss11-nerd-font"
         "font-overpass-nerd-font"
         "font-jetbrains-mono-nerd-font"
+        "font-adobe-source-sans"
+        "font-adobe-source-serif"
         "nano"
         "neovim"
         "zotero"
