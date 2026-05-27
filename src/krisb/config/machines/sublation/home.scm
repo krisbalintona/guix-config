@@ -1037,23 +1037,6 @@
                  ("/home/krisbalintona/services/media/music/full-albums" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
-       (simple-service 'home-oci-navidrome
-           home-oci-service-type
-         (oci-extension
-          (containers
-           (list
-            (oci-container-configuration
-              (provision "navidrome")
-              (image "deluan/navidrome:latest")
-              (container-user "1000:1000")
-              (environment '("ND_LOGLEVEL=info"))
-              (network "gluetun-network")
-              (ports '("127.0.0.1:4533:4533"))
-              (volumes
-               '(("/home/krisbalintona/services/media/music" . "/music")
-                 ("/home/krisbalintona/services/navidrome/data" . "/data")))
-              (auto-start? #t)
-              (respawn? #f))))))
        (simple-service 'home-oci-gonic
            home-oci-service-type
          (oci-extension

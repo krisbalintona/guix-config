@@ -2582,7 +2582,7 @@ Resources:
          (respawn? #f))))))
 #+end_src
 
-***** Navidrome: Well-supported music server
+***** COMMENT Navidrome: Well-supported music server
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-navidrome
