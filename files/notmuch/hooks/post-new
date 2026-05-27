@@ -67,6 +67,7 @@ notmuch tag +sub +philosophy -- from:"Joan Westenberg <subscriptions@medium.com>
 notmuch tag +sub +authorship -- from:news@thebestsellingauthor.com
 notmuch tag +sub +note_taking -- from:"M.Z. Ahmad <subscriptions@medium.com>"
 notmuch tag +sub +authorship +writing -- from:"#amwriting podcast"
+notmuch tag +sub +grappling -- from:justin@jfloacademy.com
 
 # * Parents’ condo
 notmuch tag +condo -- from:"Belmont Row HOA"
