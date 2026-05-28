@@ -690,7 +690,7 @@
            (list
             (oci-container-configuration
               (provision "profilarr")
-              (image "santiagosayshey/profilarr:beta")
+              (image "ghcr.io/dictionarry-hub/profilarr:latest")
               (environment
                '("TZ=America/Chicago"
                  "PUID=1000"
