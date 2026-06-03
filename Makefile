@@ -142,7 +142,7 @@ endif
 
 .PHONY: build
 build:
-	$(GUIX) build $(LOAD_PATHS) --keep-failed --log-file --verbosity=3 $(PACKAGES)
+	$(GUIX) build $(LOAD_PATHS) --keep-failed --verbosity=3 $(PACKAGES)
 
 .PHONY: shell
 shell:
