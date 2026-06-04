@@ -789,19 +789,6 @@
                  ("/home/krisbalintona/services/media" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
-       (simple-service 'home-oci-renamarr
-           home-oci-service-type
-         (oci-extension
-          (containers
-           (list
-            (oci-container-configuration
-              (provision "renamarr")
-              (image "ghcr.io/hollanbm/renamarr:latest")
-              (environment '("TZ=America/Chicago"))
-              (network "gluetun-network")
-              (volumes '(("/home/krisbalintona/services/renamarr/config" . "/config")))
-              (auto-start? #t)
-              (respawn? #f))))))
        (simple-service 'home-oci-seerr
            home-oci-service-type
          (oci-extension
