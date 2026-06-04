@@ -141,6 +141,14 @@
              (sops-secret
                (key '("gluetun" "wireguard_preshared_key"))
                (file (local-file sops-sublation-secrets-path))
+               (permissions #o400))
+             (sops-secret
+               (key '("profilarr" "pocket-id" "client-id"))
+               (file (local-file sops-sublation-secrets-path))
+               (permissions #o400))
+             (sops-secret
+               (key '("profilarr" "pocket-id" "secret"))
+               (file (local-file sops-sublation-secrets-path))
                (permissions #o400))))))
        (service home-oci-service-type
          (for-home
@@ -685,24 +693,37 @@
               (respawn? #f))))))
        (simple-service 'home-oci-profilarr
            home-oci-service-type
-         (oci-extension
-          (containers
-           (list
-            (oci-container-configuration
-              (provision "profilarr")
-              (image "ghcr.io/dictionarry-hub/profilarr:latest")
-              (environment
-               '("TZ=America/Chicago"
-                 "PUID=1000"
-                 "PGID=1000"
-                 "UMASK=022"))
-              (network "gluetun-network")
-              (ports '("127.0.0.1:11200:6868"))
-              (volumes
-               '(("/home/krisbalintona/services/profilarr/data" . "/config")
-                 ("/home/krisbalintona/services/profilarr/log" . "/config/log")))
-              (auto-start? #t)
-              (respawn? #f))))))
+         (let ((oidc-client-id-secret-path
+                (get-sops-secret-path "profilarr/pocket-id/client-id"))
+               (oidc-client-secret-secret-path
+                (get-sops-secret-path "profilarr/pocket-id/secret")))
+           (oci-extension
+            (containers
+             (list
+              (oci-container-configuration
+                (provision "profilarr")
+                (image "ghcr.io/dictionarry-hub/profilarr:latest")
+                (environment
+                 `("TZ=America/Chicago"
+                   "PUID=1000"
+                   "PGID=1000"
+                   "UMASK=022"
+                   "ORIGIN=https://profilarr.home.kristofferbalintona.me" ; Because behind reverse proxy
+                   ;; Authentication method
+                   "AUTH=oidc"
+                   "OIDC_DISCOVERY_URL=https://pocket-id.kristofferbalintona.me/.well-known/openid-configuration"
+                   ,(cons "OIDC_CLIENT_ID_FILE" oidc-client-id-secret-path)
+                   ,(cons "OIDC_CLIENT_SECRET_FILE" oidc-client-secret-secret-path)))
+                (network "gluetun-network")
+                (ports '("127.0.0.1:11200:6868"))
+                (volumes
+                 `(("/home/krisbalintona/services/profilarr/data" . "/config")
+                   ("/home/krisbalintona/services/profilarr/log" . "/config/log")
+                   ;; Secrets
+                   ,(cons oidc-client-id-secret-path oidc-client-id-secret-path)
+                   ,(cons oidc-client-secret-secret-path oidc-client-secret-secret-path)))
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-oci-prowlarr
            home-oci-service-type
          (oci-extension
