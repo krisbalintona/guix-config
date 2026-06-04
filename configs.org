@@ -2127,7 +2127,9 @@ See how it works: [[https://cleanuparr.github.io/Cleanuparr/docs/how_it_works][H
          (respawn? #f))))))
 #+end_src
 
-**** Renamarr: Rename media files when they can be
+**** Renamarr: Rename media files when they can be :ARCHIVE:
+
+*2026-06-16 NOTE:* Renamarr is now obsolete for my setup now that Profilarr v2 fills this role.
 
 Files in Sonarr and Radarr are renamed on first import. However, if the file metadata has since changed (e.g., the show or movie data has been updated on TMDB), then the file name gets out of sync with the actual metadata of the media. Renamarr addresses that by renaming files whose file name metadata differs from the actual metadata.
 
