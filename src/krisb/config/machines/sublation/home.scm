@@ -959,6 +959,14 @@
                 (ports '("127.0.0.1:8686:8686"))
                 (volumes
                  '(("/home/krisbalintona/services/slskd/data" . "/app")
+                   ;; TODO 2026-06-20: Ideally we don't symlink the entire
+                   ;; Guix store, since this is another attack vector: it may
+                   ;; expose certain things that are plain-text in the store.
+                   ;;
+                   ;; slskd.yml is a symlink into the store, and bind-mounts
+                   ;; don't dereference symlinks.  So: mount the store itself
+                   ;; so the container can actually resolve where it points.
+                   "/gnu/store:/gnu/store:ro"
                    ("/home/krisbalintona/services/slskd/log" . "/logs")
                    ("/home/krisbalintona/services/media" . "/media")))
                 (auto-start? #t)
