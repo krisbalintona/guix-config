@@ -304,26 +304,9 @@
                           "echo 'Starting notmuch new...'" "&&"
                           notmuch-new "&&"
                           "echo 'All done!'")))))))
-       ;; REVIEW 2025-07-02: Don't remember if needed on Guix system or
-       ;; just a foreign distro.
-       ;; Certificates
-       (simple-service 'krisb-ssl-certs ; Requires nss-certs package
-           home-environment-variables-service-type
-         ;; NOTE: We install nss-certs via guix home, so SSL_CERT_DIR
-         ;; is relative to ~/.guix-home/.  If nss-certs is installed
-         ;; via e.g. guix install, then it would be relative to
-         ;; ~/.guix-profile/.
-         '(("SSL_CERT_DIR" . "$HOME/.guix-home/profile/etc/ssl/certs")
-           ("SSL_CERT_FILE" . "$SSL_CERT_DIR/ca-certificates.crt")
-           ("GIT_SSL_CAINFO" . "$SSL_CERT_FILE")
-           ("CURL_CA_BUNDLE" . "$SSL_CERT_FILE")))
        ;; WSL2-specific
-       (simple-service 'krisb-wslg-display-service-type
+       (simple-service 'wslg-display
            home-environment-variables-service-type
          '(("DISPLAY" . ":0")))
-       ;; Guix on a foreign distro
-       (simple-service 'krisb-foreign-distro
-           home-environment-variables-service-type
-         '(("GUIX_PROFILE" . "$HOME/.guix-profile")))
        ;; Base services
        %base-home-services)))))
