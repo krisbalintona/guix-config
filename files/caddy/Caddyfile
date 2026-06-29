@@ -219,13 +219,8 @@
 		# Referrer policy: don't show full URLs when referred
 		# to another side
 		Referrer-Policy "strict-origin-when-cross-origin"
-		# Cross-site scriptin (XSS) protection
-		X-XSS-Protection "1; mode=block"
 		# Remove server name
 		-Server
-		# Remove X-Powered-By though this shouldn't be an
-		# issue, but better safe than sorry
-		-X-Powered-By
 	}
 }
 
