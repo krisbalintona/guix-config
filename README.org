@@ -1,0 +1,7 @@
+#+title: Personal Guix configuration files
+
+This repository contains the configuration files for all machines that use Guix.
+
+All configuration files may be found under =src/krisb/config=. However, each configuration file is tangled from [[file:configs.org][configs.org]]---yes: all my Guix configuration files originate from a single Org file. My ultimate goal is to have relevant configuration blocks organized neatly and intelligibly in this Org file as alongside relevant, non-code information (e.g., design decisions, possible alternatives).
+
+All personally-packaged packages may be found under =src/krisb= (with the exception of =src/krisb/config=). (These are for my use; they are not guaranteed to be regularly updated nor high-quality (and likely won't!).)
