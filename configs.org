@@ -519,7 +519,17 @@ Helper functions:
                    "/secrets/" filename))
 #+end_src
 
-Sublation secrets:
+*** Sublation
+
+#+begin_src scheme :noweb-ref sublation-common-helpers
+  (define-public %sublation-sops-age-key-file
+    (let ((path "/home/krisbalintona/.config/sops/age/keys.txt"))
+      (if (file-exists? path)
+          path
+          (error "Age key file not found:" path))))
+#+end_src
+
+Home secrets:
 #+begin_src scheme :noweb-ref sublation-home-modules
   (sops secrets)
   (sops home services sops)
@@ -527,12 +537,29 @@ Sublation secrets:
 #+begin_src scheme :noweb-ref sublation-home-services
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
+      (age-key-file %sublation-sops-age-key-file)
       (secrets
        (list
         <<sublation-home-sops-secrets>>))))
 #+end_src
 
-Mute secrets:
+System secrets:
+#+begin_src scheme :noweb-ref sublation-system-modules
+  (sops secrets)
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-system-services
+  (service sops-secrets-service-type
+    (sops-service-configuration
+      (age-key-file %sublation-sops-age-key-file)
+      (secrets
+       (list
+        <<sublation-system-sops-secrets>>))))
+#+end_src
+
+*** Mute
+
+Home secrets:
 #+begin_src scheme :noweb-ref mute-home-modules
   (sops secrets)
   (sops home services sops)
@@ -1374,14 +1401,14 @@ Other notes:
   (gnu services sysctl)
 #+end_src
 
+Wireguard config:
 #+begin_src scheme :noweb-ref sublation-system-services
   (service wireguard-service-type
     (wireguard-configuration
       (shepherd-requirement '(nftables))
       (addresses '("10.0.0.1/24"))
       (port "53020")
-      ;; TODO 2025-12-21: Avoid hardcoding this
-      (private-key "/run/user/1000/secrets/wireguard-private-key")
+      (private-key (sops-secret->secret-file sops-secret-wireguard-private-key))
       (bootstrap-private-key? #f)
       ;; Network rules
       (pre-up
@@ -1418,11 +1445,16 @@ Other notes:
     '(("net.ipv4.ip_forward" . "1")))
 #+end_src
 
-#+begin_src scheme :noweb-ref sublation-home-sops-secrets
-  (sops-secret
-    (key '("wireguard-private-key"))
-    (file (local-file sops-sublation-secrets-path))
-    (permissions #o400))
+The private key for the Wireguard VPN:
+#+begin_src scheme :noweb-ref sublation-system-helpers
+  (define sops-secret-wireguard-private-key
+    (sops-secret
+      (key '("wireguard-private-key"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-system-sops-secrets
+  sops-secret-wireguard-private-key
 #+end_src
 
 ** Services
@@ -3800,11 +3832,22 @@ Configuration helpers for my machines.
 
 *** Sublation
 
+**** Common
+
+#+begin_src scheme :tangle "src/krisb/config/machines/sublation/common.scm"
+  (define-module (krisb config machines sublation common)
+    #:use-module (krisb config common)
+    )
+
+  <<sublation-common-helpers>>
+#+end_src
+
 **** Home
 
 #+begin_src scheme :tangle "src/krisb/config/machines/sublation/home.scm"
   (define-module (krisb config machines sublation home)
     #:use-module (krisb config common)
+    #:use-module (krisb config machines sublation common)
     #:use-module (guix gexp)
     #:use-module (gnu packages)
     #:use-module (gnu system shadow)      ; For user-group 
@@ -3850,6 +3893,7 @@ Configuration helpers for my machines.
 #+begin_src scheme :tangle "src/krisb/config/machines/sublation/system.scm"
   (define-module (krisb config machines sublation system)
     #:use-module (krisb config common)
+    #:use-module (krisb config machines sublation common)
     #:use-module (gnu)
     #:use-module (gnu system accounts)
     #:use-module (gnu services shepherd)

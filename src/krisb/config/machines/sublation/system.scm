@@ -1,5 +1,6 @@
 (define-module (krisb config machines sublation system)
   #:use-module (krisb config common)
+  #:use-module (krisb config machines sublation common)
   #:use-module (gnu)
   #:use-module (gnu system accounts)
   #:use-module (gnu services shepherd)
@@ -7,6 +8,8 @@
   #:use-module (gnu services xorg)
   #:use-module (nongnu packages linux)
   #:use-module (nongnu system linux-initrd)
+  #:use-module (sops secrets)
+  #:use-module (sops services sops)
   #:use-module (gnu services containers)
   #:use-module (gnu services sysctl)
   #:use-module (gnu services containers)
@@ -24,6 +27,11 @@
   #:use-module (gnu services sysctl)
   #:use-module (gnu system file-systems))
 
+(define sops-secret-wireguard-private-key
+  (sops-secret
+    (key '("wireguard-private-key"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
 (define file-system-media
   (file-system
     (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
@@ -80,6 +88,12 @@
      (append
       common-system-services
       (cons*
+       (service sops-secrets-service-type
+         (sops-service-configuration
+           (age-key-file %sublation-sops-age-key-file)
+           (secrets
+            (list
+             sops-secret-wireguard-private-key))))
        ;; Rootless podman also needs 'iptables-service-type' specifically for
        ;; its (non-internal) networks; 'nftables-service-type' will not
        ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
@@ -260,8 +274,7 @@
            (shepherd-requirement '(nftables))
            (addresses '("10.0.0.1/24"))
            (port "53020")
-           ;; TODO 2025-12-21: Avoid hardcoding this
-           (private-key "/run/user/1000/secrets/wireguard-private-key")
+           (private-key (sops-secret->secret-file sops-secret-wireguard-private-key))
            (bootstrap-private-key? #f)
            ;; Network rules
            (pre-up

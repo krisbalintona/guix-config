@@ -1,5 +1,6 @@
 (define-module (krisb config machines sublation home)
   #:use-module (krisb config common)
+  #:use-module (krisb config machines sublation common)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -96,6 +97,7 @@
        (service home-gpg-agent-service-type)
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
+           (age-key-file %sublation-sops-age-key-file)
            (secrets
             (list
              (sops-secret
@@ -120,10 +122,6 @@
                (permissions #o400))
              (sops-secret
                (key '("caddy" "crowdsec-bouncer" "api-key"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
-               (key '("wireguard-private-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
              (sops-secret
