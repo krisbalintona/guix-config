@@ -5,3 +5,20 @@ This repository contains the configuration files for all machines that use Guix.
 All configuration files may be found under =src/krisb/config=. However, each configuration file is tangled from [[file:configs.org][configs.org]]---yes: all my Guix configuration files originate from a single Org file. My ultimate goal is to have relevant configuration blocks organized neatly and intelligibly in this Org file as alongside relevant, non-code information (e.g., design decisions, possible alternatives).
 
 All personally-packaged packages may be found under =src/krisb= (with the exception of =src/krisb/config=). (These are for my use; they are not guaranteed to be regularly updated nor high-quality (and likely won't!).)
+
+All regularly done Guix commands for building, reconfiguring, and so on are standardized in [[file:Makefile][the Makefile]]. See especially these Make targets:
++ Upgrading channels
+  - ~pull~
+  - ~pull-lock~
+  - ~upgrade~
++ Building packages
+  - ~build~
++ Reconfigure
+  - ~home~
+  - ~system~
++ Check whether a system or home configuration will successfully build on the latest channel commits ~guix-pull~
+  - ~home-preview~
+  - ~system-preview~
+The above are not all the Make targets, only the most frequently used ones.
+
+Additionally, targets that are relevant only to a particular machine (e.g., ~home~, ~system~, ~pull~) are automatically specified to the current machine by parsing the output of the ~hostname~ CLI command.
