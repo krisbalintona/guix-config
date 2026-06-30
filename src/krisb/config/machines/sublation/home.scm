@@ -807,7 +807,7 @@
            (list
             (oci-container-configuration
               (provision "seerr")
-              (image "seerr/seerr:develop")
+              (image "ghcr.io/seerr-team/seerr:latest")
               (environment
                '("TZ=America/Chicago"
                  "PUID=1000"
