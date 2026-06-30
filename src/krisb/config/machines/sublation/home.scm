@@ -98,6 +98,7 @@
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
            (age-key-file %sublation-sops-age-key-file)
+           (verbose? #t)
            (secrets
             (list
              (sops-secret

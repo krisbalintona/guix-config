@@ -91,6 +91,7 @@
        (service sops-secrets-service-type
          (sops-service-configuration
            (age-key-file %sublation-sops-age-key-file)
+           (verbose? #t)
            (secrets
             (list
              sops-secret-wireguard-private-key))))

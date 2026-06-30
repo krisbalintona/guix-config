@@ -109,6 +109,7 @@
             (file-append pinentry "/bin/pinentry"))))
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
+           (verbose? #t)
            (secrets
             (list
              (sops-secret

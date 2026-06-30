@@ -538,6 +538,7 @@ Home secrets:
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
       (age-key-file %sublation-sops-age-key-file)
+      (verbose? #t)
       (secrets
        (list
         <<sublation-home-sops-secrets>>))))
@@ -552,6 +553,7 @@ System secrets:
   (service sops-secrets-service-type
     (sops-service-configuration
       (age-key-file %sublation-sops-age-key-file)
+      (verbose? #t)
       (secrets
        (list
         <<sublation-system-sops-secrets>>))))
@@ -567,6 +569,7 @@ Home secrets:
 #+begin_src scheme :noweb-ref mute-home-services
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
+      (verbose? #t)
       (secrets
        (list
         <<mute-home-sops-secrets>>))))
