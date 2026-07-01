@@ -1050,6 +1050,7 @@
             (oci-container-configuration
               (provision "deepcrate")
               (image "ghcr.io/jordojordo/deepcrate:latest")
+              (container-user "1000:1000")
               (network "gluetun-network")
               ;; 2026-02-03: See all available environment variables here:
               ;; https://jordojordo.github.io/deepcrate/guide/configuration.html#environment-variables.
