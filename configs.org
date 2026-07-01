@@ -2827,7 +2827,7 @@ Resources:
   (simple-service 'home-oci-immich
       home-oci-service-type
     (let* ((immich-network-subnet "10.89.12.0/24")
-           (immich-version "v2.4.1")
+           (immich-version "v2.7.5")
            ;; These Database (postgres) variables are the ones that I've
            ;; customized; they must be provided (as env vars inside the
            ;; container) to all Immich workers (i.e., the server and
@@ -2912,7 +2912,7 @@ Resources:
          ;; Helper containers
          (oci-container-configuration
            (provision "immich-redis")
-           (image "docker.io/valkey/valkey:9@sha256:fb8d272e529ea567b9bf1302245796f21a2672b8368ca3fcb938ac334e613c8f")
+           (image "docker.io/valkey/valkey:9@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9")
            (network "immich-network")
            (environment
             (cons*
