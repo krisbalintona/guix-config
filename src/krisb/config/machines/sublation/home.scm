@@ -65,6 +65,8 @@
         "unbound"
         "caddy-security-netlify-crowdsec-coraza-maxmind"
         "smartmontools"            ; For smartctl
+        "mergerfs"
+        "mergerfs-tools"
         "btrfs-progs"
         "compsize"
         "lsof"

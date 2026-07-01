@@ -3,7 +3,7 @@
 
 #  LocalWords:  CLI Atuin VCS FZF Zoxide Gluetun Torrenting Vaultwarden Copyparty Sonarr Radarr
 #  LocalWords:  Prowlarr qBittorrent TRaSH Jellyfin codec bitrate transcode Transcoding HEVC Tdarr
-#  LocalWords:  VictoriaMetrics Symlinking Lieer Restic
+#  LocalWords:  VictoriaMetrics Symlinking Lieer Restic MergerFS Immich torrenting
 
 To learn more about Guix, check out:
 + [[https://guix.gnu.org/manual/1.5.0/en/index.html][GNU Guix Reference Manual]] (also available in the CLI with ~info guix~)
@@ -1605,44 +1605,52 @@ The private key for the Wireguard VPN:
 **** Torrenting
 
 ***** External storage
+:PROPERTIES:
+:CUSTOM_ID: h:20260701T121643.382408
+:END:
 
-Mounting subvolumes specific to torrenting:
-#+begin_src scheme :noweb-ref sublation-system-helpers
-  (define file-system-media
+Create and mount MergerFS pools specific to torrenting:
+#+begin_src scheme :noweb-ref sublation-hardware-helpers
+  (define media-mount-point "/home/krisbalintona/services/media")
+#+end_src
+#+begin_src scheme :noweb-ref sublation-hardware-mergerfs-pools
+  (define-public mergerfs-pool-media
     (file-system
-      (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-      (mount-point "/home/krisbalintona/services/media")
-      (type "btrfs")
-      (flags '(no-atime))
-      (options "subvol=@media,compress=zstd")
-      (create-mount-point? #t)))
+      (device
+       (string-append hdd-1-mount-point-media ":" hdd-2-mount-point-media))
+      (mount-point media-mount-point)
+      (type "fuse.mergerfs")
+      ;; We set the "func.getattr=newest" option since some
+      ;; media-related services (e.g., Jellyfin) depend on mtimes for
+      ;; e.g., determining when to do scans.
+      (options "category.create=mfs,func.getattr=newest,minfreespace=10G")
+      (dependencies (list file-system-hdd-1-media file-system-hdd-2-media))))
+
+  (define-public mergerfs-pool-torrents-incomplete
+    (file-system
+      (device
+       (string-append hdd-1-mount-point-torrents-incomplete ":" hdd-2-mount-point-torrents-incomplete))
+      (mount-point (string-append media-mount-point "/downloads/bittorrent/incomplete"))
+      (type "fuse.mergerfs")
+      ;; The "epmfs" (existing path, most free space) policy is used for
+      ;; torrents because torrent clients expect a stable directory
+      ;; structure and should not have files scattered across different
+      ;; MergerFS branches for the same path.  This ensures downloads
+      ;; for a given torrent stay on a single disk while still allowing
+      ;; new torrents to be distributed across the pool based on
+      ;; available space, reducing fragmentation and avoiding cross-disk
+      ;; writes.
+      (options "category.create=epmfs,minfreespace=10G")
+      (dependencies
+       (list file-system-hdd-1-torrents-incomplete
+             file-system-hdd-2-torrents-incomplete
+             mergerfs-pool-media))))
 #+end_src
-#+begin_src scheme :noweb-ref sublation-system-filesystems
-  file-system-media
-  (file-system
-    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-    (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
-    (type "btrfs")
-    (flags '(no-atime))
-    ;; This subvolume is not mounted with "nodatacow," but it consists
-    ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
-    ;; option because btrfs subvolumes currently inherit the mount
-    ;; options of the first mounted subvolume.
-    (options "subvol=@torrents-incomplete,compress=zstd")
-    (dependencies (list file-system-media)))
-#+end_src
-A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:3]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:4]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:5]
-
-2026-01-15:
-Although [[https://www.reddit.com/r/qBittorrent/comments/1ecdmfg/comment/lezmjyj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this comment]] suggests that fragmentation doesn't matter when seeding many torrents since in such a case random IO occurs anyway...
-
-I think the idea is this: if the file is complete, readahead makes it such that there are always reads queued as the drive seeks. So the seeking time isn't the bottleneck, the predictability of the reads (i.e., the "access pattern") is. Consequently, fragmentation doesn't affect the speed of reads and writes /for sequential reads (e.g., single file), as opposed to random (e.g., jumping between many files) reads/: seek speed is increased but is masked by the kernel's readahead.
-
-[fn:3] I learned about this from [[https://www.reddit.com/r/btrfs/comments/s7qz6d/torrenting_on_btrfs_fragmentation_and_drive/][several comments from this Reddit thread]].
-
-[fn:4] In this context, the trade off of a single copy of a large file is much smaller than the HDD seeking speed degradation we're trying to avoid (for large torrented binary files) due to high fragmentation.
-
-[fn:5] Additionally, since the first mounted subvolume's options are applied to all mounted subvolumes (see [[https://man.archlinux.org/man/btrfs.5#MOUNT_OPTIONS][btrfs(5) — Arch manual pages]]), one must use ~chattr +C /path/to/incomplete/downloads~ to make the specific directory NOCOW rather than the entire subvolume. (And to repeat, a separate subvolume is needed to exploit the trick of turning a NOCOW file into a COW one when moved into a COW subvolume.)
+# TODO 2026-07-01: Multi-device devices are not supported by Guix's 'file-system'.  See https://codeberg.org/guix/guix/issues/7693.  Instead, we hand-roll Shepherd services to create then mount these MergerFS pools.
+# #+begin_src scheme :noweb-ref sublation-system-filesystems
+#   mergerfs-pool-media
+#   mergerfs-pool-torrents-incomplete
+# #+end_src
 
 ***** Gluetun: Bind all torrent client traffic to a VPN
 
@@ -1772,13 +1780,13 @@ I think the idea is this: if the file is complete, readahead makes it such that 
 ***** qBittorrent: Feature-full torrent client
 
 Non-obvious settings to adjust in qBittorrent's options menu:
-+ Disk IO type[fn:6] --- Relevant to RAM usage
++ Disk IO type[fn:3] --- Relevant to RAM usage
   *NOTE 2026-01-12: Not certain about the descriptions and advice below.*
   - Memory mapped files (mmap)
     * Assumes you have a lot of RAM
     * Doesn't work well with swap and zram
     * Better for read-only of few files (i.e., seeding a few potentially large files)
-  - Simple pread/pwrite --- Preferred for my use case[fn:7]
+  - Simple pread/pwrite --- Preferred for my use case[fn:4]
     * Better for large binary files
     * Better for many active files
     * Better for downloading (non-read-only) files
@@ -1821,9 +1829,9 @@ To "disable" the authentication page in the qBittorrent web UI, add the Gluetun 
 
 See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021955.674828][Cleanuparr: Keep download client queues tidy]] for managing download queues.
 
-[fn:6] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
+[fn:3] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
 
-[fn:7] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
+[fn:4] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
 
 **** Usenet
 
@@ -1862,7 +1870,7 @@ Helpful links
 
 The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
 
-Configuration creation/sync[fn:8] projects:
+Configuration creation/sync[fn:5] projects:
 + [[https://github.com/Notifiarr/notifiarr][GitHub - Notifiarr/notifiarr: Client for Notifiarr.com]]
   A notification client for the Arr stack. Does many things including syncing ones configuration files to TRaSH guide's settings---but requires a Patron donation.
 + [[https://github.com/recyclarr/recyclarr][GitHub - recyclarr/recyclarr: Automatically sync TRaSH Guides to your Sonarr and Radarr instances]]
@@ -1885,7 +1893,7 @@ Other useful projects that integrate with the Arr stack and tools related to it.
 + [[https://github.com/BassHous3/taggarr][GitHub - BassHous3/taggarr: Dub analysis & tagging.]]
 + [[https://github.com/Dark-Alex-17/managarr][GitHub - Dark-Alex-17/managarr: A TUI and CLI for managing *arr servers. Built with Love in Rust]]
 + [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]]
-  Although I prefer the design choices[fn:9] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
+  Although I prefer the design choices[fn:6] of [[https://github.com/GEngines/qbit-guard][GitHub - GEngines/qbit-guard: A zero-dependency Python guard for qBittorrent that blocks pre-air TV episodes (Sonarr), deletes ISO/BDMV-only torrents, and auto-blocklists bad releases in Sonarr/Radarr (with dedupe + queue failover). Runs on “torrent added”, fetches metadata safely, and logs everything to stdout.]], although it requires using qBittorrent as one's torrent download client.
 + [[https://github.com/Wizarrrr/wizarr][GitHub - wizarrrr/wizarr: Wizarr is an advanced user invitation and management system for Jellyfin, Plex, Emby etc.]]
 + [[https://github.com/arabcoders/watchstate][GitHub - arabcoders/watchstate: Self-hosted service to sync your plex, jellyfin and emby play state. without relying on 3rd-party external services.]]
 
@@ -1893,9 +1901,9 @@ Projects related to the Usenet:
 + [[https://github.com/sirrobot01/decypharr][GitHub - sirrobot01/decypharr: A Qbittorent Mock with Debrid Support]]
 + [[https://github.com/rix1337/Quasarr][GitHub - rix1337/Quasarr: Quasarr connects JDownloader with Radarr, Sonarr and LazyLibrarian. It also decrypts links protected by CAPTCHAs.]]
 
-[fn:8] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
+[fn:5] TRaSH guides has [[https://trash-guides.info/Guide-Sync/][a page dedicated]] to comparing configuration sync projects meant to sync with their guides.
 
-[fn:9] I prefer qbit-quard's event-based oeprations (swurApp uses timers), scope (qbit-guard is for both Radarr and Sonarr, whereas swurApp is only for Sonarr), and dislike that swurApp may remonitor skipped (unmonitored) episodes.
+[fn:6] I prefer qbit-quard's event-based oeprations (swurApp uses timers), scope (qbit-guard is for both Radarr and Sonarr, whereas swurApp is only for Sonarr), and dislike that swurApp may remonitor skipped (unmonitored) episodes.
 
 **** Sonarr: Get shows
 
@@ -2227,30 +2235,30 @@ Merges Overseerr and Jellyserr, the latter of the two being a successor of the f
 
 Projects for automatic transcoding of media:
 + [[https://github.com/Unmanic/unmanic][Unmanic]] :: Best for simplicity. Can distribute workload across machines (only 3 machines in the network in the non-Supporter tier.) Has "Supporter"-only features, but basically all of them are in the free, non-Supporter tier.
-+ [[https://github.com/HaveAGitGat/Tdarr][Tdarr]] :: Best if one values flexibility and customizability of transcoding options. Also good if one has multiple machines and would like to distribute the transcoding workload among them.[fn:10] (Though people complain about the UI; many of these users found FileFlows's UI much more understandable.)
++ [[https://github.com/HaveAGitGat/Tdarr][Tdarr]] :: Best if one values flexibility and customizability of transcoding options. Also good if one has multiple machines and would like to distribute the transcoding workload among them.[fn:7] (Though people complain about the UI; many of these users found FileFlows's UI much more understandable.)
 + [[https://fileflows.com/][FileFlows]] :: Can do more than just transcode. Use node graphs to represent encoding, transcoding, and decoding, etc. flows, supporting sophisticated pipelines. Not open source and has pricing tiers. Also has support for using multiple machines, although 2+ nodes is paywalled... ([[https://www.reddit.com/r/Tdarr/comments/v0c72p/comment/ifiape7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] summarizes the comparison to Tdarr well.) Some people report using FileFlows because they don't want to be finicky with Tdarr or Unmanic.
 
 Other useful resources:
 + See which codecs the current client supports: [[https://jellyfin.org/docs/general/clients/codec-support/][Codec Support | Jellyfin]]
-+ Guide for encoding to AV1 via Unraid + Tdarr:[fn:11] [[https://github.com/plexguide/Unraid_Intel-ARC_Deployment?tab=readme-ov-file][GitHub - plexguide/Unraid_Intel-ARC_Deployment: Unraid - Comprehensive Guide to Enabling AV1 Encoding, Plex Deployment & GPU Management with Tdarr on Unraid 7.0+]]
++ Guide for encoding to AV1 via Unraid + Tdarr:[fn:8] [[https://github.com/plexguide/Unraid_Intel-ARC_Deployment?tab=readme-ov-file][GitHub - plexguide/Unraid_Intel-ARC_Deployment: Unraid - Comprehensive Guide to Enabling AV1 Encoding, Plex Deployment & GPU Management with Tdarr on Unraid 7.0+]]
 + Sensible AV1 CPU encoding considering VMAF and grain: [[https://gitlab.com/g33kphr33k/av1conv.sh][g33kphr33k / av1conv.sh]]
 + Great advice specific to home media server hardware: [[https://www.youtube.com/watch?v=Lga0RcHnaMY&list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ&index=5][Perfect Media Server Part 2 - Hardware | Intel Quick Sync + Component Selection - YouTube]]
 + Summarized conclusions of a crowd-sourced hardware analysis of CPU and GPU video encoding: [[https://blog.ktz.me/the-best-media-server-cpu-in-the-world/][The Best Media Server CPU... in the world.]]
 
-[fn:10] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
+[fn:7] Although, I think Unmanic and FileFlows both support distributing work across multiple machines, so I'm not sure this upside is worth noting anymore. Although I don't know which of the three does it the best.
 
-[fn:11] From the developer of Huntarr.
+[fn:8] From the developer of Huntarr.
   
 ***** Jellyfin: Media streamer
 
 Jellyfin can integrate with Pocket ID via the [[https://github.com/9p4/jellyfin-plugin-sso][Jellyfin SSO plugin]]. For instructions on how to do this, see https://pocket-id.org/docs/client-examples/jellyfin.
 
 Useful Jellyfin plugins:
-+ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:12]
++ [[https://github.com/stenlan/JellyGuard][GitHub - stenlan/JellyGuard: Plugin aimed at hardening JellyFin, among other improvements]][fn:9]
 + [[https://github.com/CherryFloors/jellyfin-plugin-cinemamode][GitHub - CherryFloors/jellyfin-plugin-cinemamode: Enable Cinema Mode for Jellyfin]]
 + [[https://github.com/awesome-jellyfin/awesome-jellyfin?tab=readme-ov-file][GitHub - awesome-jellyfin/awesome-jellyfin: A Collection of Awesome Jellyfin Plugins, Themes, Guides and More!]]
 
-Other potentially useful projects:[fn:13]
+Other potentially useful projects:[fn:10]
 + [[https://github.com/connorgallopo/Tracearr][GitHub - connorgallopo/Tracearr: Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard.]]
 + [[https://github.com/Maintainerr/Maintainerr][GitHub - Maintainerr/Maintainerr: Looks and smells like Overseerr, does the opposite. Maintenance tool for the Plex ecosystem]]
   - See also the related [[https://github.com/Schaka/janitorr][GitHub - Schaka/janitorr: Cleans your Radarr, Sonarr, Jellyseerr and Jellyfin before you run out of space]]
@@ -2328,9 +2336,9 @@ My device's CPU is Intel. To enable hardware acceleration, which greatly boosts 
 #+end_src
 To check if hardware acceleration is working, play a piece of media that should cause hardware acceleration.Then check the container logs for lines like containing this: "MediaBrowser.MediaEncoding.Encoder.MediaEncoder:". Those lines should suggest that =ffmpeg= is utilizing your hardware decoder.
 
-[fn:12] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
+[fn:9] Not sure how much additional security this adds when already using an IdP like Pocket ID with something like Crowdsec (all behind a reverse proxy).
 
-[fn:13] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
+[fn:10] [[https://www.reddit.com/r/selfhosted/comments/1q7jbx1/comment/nyju400/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][This Reddit comment]] is a large compilation of *arr projects, grouped by tiers of usefulness.
 
 ***** Anime
 
@@ -2810,6 +2818,9 @@ Resources:
 #+end_src
 
 *** Immich: Photo and video management
+:PROPERTIES:
+:CUSTOM_ID: h:20260701T121922.577414
+:END:
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-immich
@@ -2929,15 +2940,21 @@ Resources:
            (respawn? #f)))))))
 #+end_src
 
-External storage:
-#+begin_src scheme :noweb-ref sublation-system-filesystems
-  (file-system
-    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-    (mount-point "/home/krisbalintona/services/immich/data")
-    (type "btrfs")
-    (flags '(no-atime))
-    (options "subvol=@immich,compress=zstd"))
+Create and mount MergerFS pool for Immich storage:
+#+begin_src scheme :noweb-ref sublation-hardware-mergerfs-pools
+  (define-public mergerfs-pool-immich
+    (file-system
+      (device
+       (string-append hdd-1-mount-point-immich ":" hdd-2-mount-point-immich))
+      (mount-point "/home/krisbalintona/services/immich/data")
+      (type "fuse.mergerfs")
+      (options "category.create=mfs,minfreespace=10G")
+      (dependencies (list file-system-hdd-1-immich file-system-hdd-2-immich))))
 #+end_src
+# TODO 2026-07-01: Multi-device devices are not supported by Guix's 'file-system'.  See https://codeberg.org/guix/guix/issues/7693.  Instead, we hand-roll Shepherd services to create then mount these MergerFS pools.
+# #+begin_src scheme :noweb-ref sublation-system-filesystems
+#   mergerfs-pool-immich
+# #+end_src
 
 ** Monitoring
 
@@ -3141,7 +3158,7 @@ Prometheus node exporter for my machine.
 
 **** VictoriaLogs: Log ingestion
 
-Lighter on resources, more performant, and more compact storage alternative to Loki. See [[https://www.truefoundry.com/blog/victorialogs-vs-loki][Victorialogs vs Loki - Benchmarking Results]].[fn:14] Prefer Loki only on edge cases where workflows are heavily label-driven; in every other case, where full-text search is needed and labels are not efficiently laid out, Loki is worse.
+Lighter on resources, more performant, and more compact storage alternative to Loki. See [[https://www.truefoundry.com/blog/victorialogs-vs-loki][Victorialogs vs Loki - Benchmarking Results]].[fn:11] Prefer Loki only on edge cases where workflows are heavily label-driven; in every other case, where full-text search is needed and labels are not efficiently laid out, Loki is worse.
 
 #+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services monitoring)
@@ -3169,7 +3186,7 @@ Lighter on resources, more performant, and more compact storage alternative to L
          (respawn? #f))))))
 #+end_src
 
-[fn:14] See also https://itnext.io/how-do-open-source-solutions-for-logs-work-elasticsearch-loki-and-victorialogs-9f7097ecbc2f for a technical overview comparing the engineering of Elesticsearch,Loki, and VictoriaLogs.
+[fn:11] See also https://itnext.io/how-do-open-source-solutions-for-logs-work-elasticsearch-loki-and-victorialogs-9f7097ecbc2f for a technical overview comparing the engineering of Elesticsearch,Loki, and VictoriaLogs.
 
 * Restic: Dead-simple and reliable CLI-based backups
 
@@ -3381,10 +3398,6 @@ See also the specific advice to increase =vm.swappiness= to something between 10
 
 In informative article for swap spaces in servers: [[https://linuxblog.io/linux-performance-almost-always-add-swap-space/][Linux Performance: Almost Always Add Swap Space]].
 
-#+begin_src scheme :noweb-ref sublation-system-modules
-  (gnu system file-systems)
-#+end_src
-
 #+begin_src scheme :noweb-ref sublation-swap-spaces
   (swap-space
     (target "/swapfile")
@@ -3405,6 +3418,9 @@ Resources:
 + Great hardware recommendations, especially specific to a home media server hardware: [[https://www.youtube.com/watch?v=Lga0RcHnaMY&list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ&index=5][Perfect Media Server Part 2 - Hardware | Intel Quick Sync + Component Selection - YouTube]]
 
 ** SnapRAID and MergerFS
+:PROPERTIES:
+:CUSTOM_ID: h:20260701T121721.253588
+:END:
 
 The ideal:
 1. No large upfront cost in drives
@@ -3413,10 +3429,11 @@ The ideal:
 4. High usable space relative to total drive space
 5. FOSS (no subscriptions or licenses)
 6. Resilient against a few drive failures
-The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:15] 3, 4, 6). The following solutions are inadequate:
+The combination of *SnapRAID with MergerFS* is perfect for the above requirements. MergerFS gives storage flexibility (1, 2, 3) while SnapRAID gives redundancy (2,[fn:12] 3, 4, 6). The following solutions are inadequate:
 + ZFS (fails 1, 2, 3)
 + RAID (fails 4)
 + unRAID (fails 5)
+See also [[https://perfectmediaserver.com/02-tech-stack/mergerfs/][mergerfs - Perfect Media Server]] for another person's justification of this decision in the same context.
 
 There are a few downsides of SnapRAID with MergerFS in comparison to the alternatives that I am comfortable with given my use case (media server):
 + SnapRAID parity is not real-time; it uses snapshots (~snapraid sync~), hence the name. This is fine with a media server where data is almost always static.
@@ -3427,7 +3444,120 @@ Useful resources:
   - Companion video series (partial): [[https://www.youtube.com/playlist?list=PLmaj94hXs3GEPq5h9hAOMhLMvuJTMDdGJ][Perfect Media Server - YouTube]]
   - Short cousin guide, usin snapraid-btrfs: [[https://wiki.selfhosted.show/tools/snapraid-btrfs/][SnapRAID-BTRFS - Self-Hosted Show Wiki]]
 
-[fn:15] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
+[fn:12] Although there is a single caveat: the parity space (either a dedicated drive or spread across multiple drives with split parity) must be at least as large as the largest drive in the array.
+
+*** MergerFS pools
+
+Maintenance and diagnostic CLI programs:
+#+begin_src scheme :noweb-ref sublation-home-packages
+  "mergerfs"
+  "mergerfs-tools"
+#+end_src
+
+Currently, multi-device devices are not supported by Guix's =file-system= (see also https://codeberg.org/guix/guix/issues/7693). Consequently, MergerFS cannot be mounted via an auto-generated =/etc/fstab= file. Instead, I define Shepherd services that do that work for me.
+#+begin_src scheme :noweb-ref sublation-hardware-modules
+  (gnu services shepherd)
+  (gnu packages file-systems)
+  (guix gexp)
+  (srfi srfi-13)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-hardware-mergerfs-pools
+  ;;; Mergerfs pools
+  ;;
+  ;; Guix's 'file-system' record only accepts a device that is a label,
+  ;; a UUID, or a /dev node (see (guix) File Systems).  Mergerfs's
+  ;; colon-separated branch syntax ("path1:path2") doesn't fit any of
+  ;; those, and Guix's device-resolution code (canonicalize-device-spec)
+  ;; has no case for it, so these pools cannot be declared as
+  ;; 'file-system' entries no matter what 'device'/'type'/'options' are
+  ;; set to.  Instead, each pool is started directly as an ordinary
+  ;; Shepherd service that execs the 'mergerfs' binary, the same way
+  ;; Guix itself starts any other daemon.
+
+  (define* (mergerfs-shepherd-service name branches mount-point mergerfs-options
+                                      #:optional (extra-requirement '()))
+    "Return a <shepherd-service> that mounts BRANCHES (a list of
+  directory name strings) at MOUNT-POINT via mergerfs, using
+  MERGERFS-OPTIONS (a comma-separated mount-options string).
+  EXTRA-REQUIREMENT is an extra list of Shepherd provision symbols to
+  depend on -- e.g. another mergerfs pool that MOUNT-POINT happens to
+  live underneath."
+    (with-imported-modules '((guix build utils))
+      (shepherd-service
+        (provision (list (symbol-append 'mergerfs- name)))
+        (requirement
+         (append
+          ;; Wait for each underlying btrfs branch mount.  Guix names
+          ;; the Shepherd service for a 'file-system' entry
+          ;; 'file-system-<mount-point>'.
+          (map (lambda (branch)
+                 (symbol-append 'file-system- (string->symbol branch)))
+               branches)
+          extra-requirement))
+        (documentation
+         (string-append "Mount the mergerfs pool at " mount-point "."))
+        (start
+         #~(lambda _
+             (mkdir-p #$mount-point)
+             ((make-forkexec-constructor
+               (list #$(file-append mergerfs "/bin/mergerfs")
+                     "-f"              ; Stay in foreground for Shepherd
+                     "-o" #$mergerfs-options
+                     #$(string-join branches ":")
+                     #$mount-point)))))
+        (stop #~(make-kill-destructor)))))
+
+  (define-public shepherd-service-mergerfs-media
+    (mergerfs-shepherd-service
+     'media
+     (list hdd-1-mount-point-media hdd-2-mount-point-media)
+     media-mount-point
+     ;; FIXME 2026-07-01: We set "allow_other" (here and in other pools)
+     ;; only because I'm currently on MergerFS version 2.33.5.
+     ;; According to the MergerFS documentation
+     ;; (https://trapexit.github.io/mergerfs/latest/config/deprecated_options/),
+     ;; MergerFS version 2.35.0 and above sets this automatically (when
+     ;; running as root).  Remove this mount option when MergerFS is
+     ;; upgraded to this version or above.
+     ;; 
+     ;; We set the "func.getattr=newest" option since some media-related
+     ;; services (e.g., Jellyfin) depend on mtimes for e.g., determining
+     ;; when to do scans.
+     "allow_other,category.create=mfs,func.getattr=newest,minfreespace=10G"))
+
+  (define-public shepherd-service-mergerfs-torrents-incomplete
+    (mergerfs-shepherd-service
+     'torrents-incomplete
+     (list hdd-1-mount-point-torrents-incomplete
+           hdd-2-mount-point-torrents-incomplete)
+     (string-append media-mount-point "/downloads/bittorrent/incomplete")
+     ;; The "epmfs" (existing path, most free space) policy is used for
+     ;; torrents because torrent clients expect a stable directory
+     ;; structure and should not have files scattered across different
+     ;; MergerFS branches for the same path.  This ensures downloads for
+     ;; a given torrent stay on a single disk while still allowing new
+     ;; torrents to be distributed across the pool based on available
+     ;; space, reducing fragmentation and avoiding cross-disk writes.
+     "allow_other,category.create=epmfs,minfreespace=10G"
+     ;; This mount point lives *inside* the media pool's mount point, so
+     ;; it must come up only after the media pool is already mounted.
+     '(mergerfs-media)))
+
+  (define-public shepherd-service-mergerfs-immich
+    (mergerfs-shepherd-service
+     'immich
+     (list hdd-1-mount-point-immich hdd-2-mount-point-immich)
+     "/home/krisbalintona/services/immich/data"
+     "allow_other,category.create=mfs,minfreespace=10G"))
+#+end_src
+Instantiate the Shepherd services above:
+#+begin_src scheme :noweb-ref sublation-system-services
+  (simple-service 'mergerfs-pools shepherd-root-service-type
+    (list shepherd-service-mergerfs-media
+          shepherd-service-mergerfs-torrents-incomplete
+          shepherd-service-mergerfs-immich))
+#+end_src
+Once upstream Guix supports multi-device devices, then the above may be removed.
 
 ** BTRFS (The B-Tree File System): Flexible checksumming file-system useful for home purposes
 
@@ -3452,6 +3582,126 @@ Install some programs useful for introspecting a btrfs file system, including th
   "compsize"
   "lsof"
 #+end_src
+
+** External storage
+
+#+begin_src scheme :noweb-ref sublation-hardware-helpers
+  ;; HDD 1
+  (define hdd-1-uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c")
+
+  (define hdd-1-mount-point "/mnt/media-hdd1")
+
+  (define hdd-1-mount-point-media (string-append hdd-1-mount-point "/media"))
+
+  (define hdd-1-mount-point-torrents-incomplete
+    (string-append hdd-1-mount-point "/torrents-incomplete"))
+
+  (define hdd-1-mount-point-immich (string-append hdd-1-mount-point "/immich"))
+
+  ;; HDD 2
+  (define hdd-2-uuid "949d6370-7963-44cf-8668-53a3fe81e06c")
+
+  (define hdd-2-mount-point "/mnt/media-hdd2")
+
+  (define hdd-2-mount-point-media (string-append hdd-2-mount-point "/media"))
+
+  (define hdd-2-mount-point-torrents-incomplete
+    (string-append hdd-2-mount-point "/torrents-incomplete"))
+
+  (define hdd-2-mount-point-immich (string-append hdd-2-mount-point "/immich"))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-hardware-drives
+  ;; HDD 1
+  (define-public file-system-hdd-1-media
+    (file-system
+      (device (uuid hdd-1-uuid))
+      (mount-point hdd-1-mount-point-media)
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@media,compress=zstd")
+      (create-mount-point? #t)))
+
+  (define-public file-system-hdd-1-torrents-incomplete
+    (file-system
+      (device (uuid hdd-1-uuid))
+      (mount-point hdd-1-mount-point-torrents-incomplete)
+      (type "btrfs")
+      (flags '(no-atime))
+      ;; This subvolume is not mounted with "nodatacow," but it consists
+      ;; of one directory that is NOCOW.  I avoid setting NOCOW via
+      ;; mount option because btrfs subvolumes currently inherit the
+      ;; mount options of the first mounted subvolume.  To avoid
+      ;; mistakes due to failing to maintain mounting order, I avoid
+      ;; relying on the "nodatacow" mount option.
+      (options "subvol=@torrents-incomplete,compress=zstd")
+      (create-mount-point? #t)))
+
+  (define-public file-system-hdd-1-immich
+    (file-system
+      (device (uuid hdd-1-uuid))
+      (mount-point hdd-1-mount-point-immich)
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@immich,compress=zstd")
+      (create-mount-point? #t)))
+
+  ;; HDD 2
+  (define-public file-system-hdd-2-media
+    (file-system
+      (device (uuid hdd-2-uuid))
+      (mount-point hdd-2-mount-point-media)
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@media,compress=zstd")
+      (create-mount-point? #t)))
+
+  (define-public file-system-hdd-2-torrents-incomplete
+    (file-system
+      (device (uuid hdd-2-uuid))
+      (mount-point hdd-2-mount-point-torrents-incomplete)
+      (type "btrfs")
+      (flags '(no-atime))
+      ;; This subvolume is not mounted with "nodatacow."  For why, see
+      ;; the comment somewhere above.
+      (options "subvol=@torrents-incomplete,compress=zstd")
+      (create-mount-point? #t)))
+
+  (define-public file-system-hdd-2-immich
+    (file-system
+      (device (uuid hdd-2-uuid))
+      (mount-point hdd-2-mount-point-immich)
+      (type "btrfs")
+      (flags '(no-atime))
+      (options "subvol=@immich,compress=zstd")
+      (create-mount-point? #t)))
+#+end_src
+A torrenting-specific detail: torrenting large binary files creates high degrees of fragmentation, since each piece of the file is written randomly to a location on disk with COW (which matters for HDDs). As such, to greatly reduce disk fragmentation, incomplete torrent files should be NOCOW (the complete torrent files are fine to be COW, since they will be written in sequential chunks). However, the NOCOW file attribute is retained on moves[fn:13]---unless the move is to a separate subvolume, which makes the move essentially a copy[fn:14]. So in total, *one should have their incomplete downloads directory a separate NOCOW subvolume.*[fn:15]
+
+2026-01-15:
+Although [[https://www.reddit.com/r/qBittorrent/comments/1ecdmfg/comment/lezmjyj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this comment]] suggests that fragmentation doesn't matter when seeding many torrents since in such a case random IO occurs anyway...
+
+I think the idea is this: if the file is complete, readahead makes it such that there are always reads queued as the drive seeks. So the seeking time isn't the bottleneck, the predictability of the reads (i.e., the "access pattern") is. Consequently, fragmentation doesn't affect the speed of reads and writes /for sequential reads (e.g., single file), as opposed to random (e.g., jumping between many files) reads/: seek speed is increased but is masked by the kernel's readahead.
+
+Mount all subvolumes:
+#+begin_src scheme :noweb-ref sublation-system-filesystems
+  ;; HDD 1
+  file-system-hdd-1-media
+  file-system-hdd-1-torrents-incomplete
+  file-system-hdd-1-immich
+  ;; HDD 2
+  file-system-hdd-2-media
+  file-system-hdd-2-torrents-incomplete
+  file-system-hdd-2-immich
+#+end_src
+Later, I combine these mount points into MergerFS[fn:16] pools: see [[#h:20260701T121643.382408][here]] and [[#h:20260701T121922.577414][here]].
+
+[fn:13] I learned about this from [[https://www.reddit.com/r/btrfs/comments/s7qz6d/torrenting_on_btrfs_fragmentation_and_drive/][several comments from this Reddit thread]].
+
+[fn:14] In this context, the trade off of a single copy of a large file is much smaller than the HDD seeking speed degradation we're trying to avoid (for large torrented binary files) due to high fragmentation.
+
+[fn:15] Additionally, since the first mounted subvolume's options are applied to all mounted subvolumes (see [[https://man.archlinux.org/man/btrfs.5#MOUNT_OPTIONS][btrfs(5) — Arch manual pages]]), one must use ~chattr +C /path/to/incomplete/downloads~ to make the specific directory NOCOW rather than the entire subvolume. (And to repeat, a separate subvolume is needed to exploit the trick of turning a NOCOW file into a COW one when moved into a COW subvolume.)
+
+[fn:16] For why I opt for MergerFS instead of alternatives see [[#h:20260701T121721.253588][SnapRAID and MergerFS]].
 
 * XDG specification
 
@@ -3891,12 +4141,29 @@ Configuration helpers for my machines.
          %base-home-services)))))
 #+end_src
 
+**** Hardware
+
+#+begin_src scheme :tangle "src/krisb/config/machines/sublation/hardware.scm"
+  (define-module (krisb config machines sublation hardware)
+    #:use-module (krisb config common)
+    #:use-module (gnu system file-systems)
+    #:use-module <<sublation-hardware-modules>>
+    )
+
+  <<sublation-hardware-helpers>>
+
+  <<sublation-hardware-drives>>
+
+  <<sublation-hardware-mergerfs-pools>>
+#+end_src
+
 **** System
 
 #+begin_src scheme :tangle "src/krisb/config/machines/sublation/system.scm"
   (define-module (krisb config machines sublation system)
     #:use-module (krisb config common)
     #:use-module (krisb config machines sublation common)
+    #:use-module (krisb config machines sublation hardware)
     #:use-module (gnu)
     #:use-module (gnu system accounts)
     #:use-module (gnu services shepherd)
@@ -3904,6 +4171,7 @@ Configuration helpers for my machines.
     #:use-module (gnu services xorg)
     #:use-module (nongnu packages linux)
     #:use-module (nongnu system linux-initrd)
+    #:use-module (gnu system file-systems)
     #:use-module <<sublation-system-modules>>)
 
   <<sublation-system-helpers>>

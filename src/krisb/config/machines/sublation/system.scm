@@ -1,6 +1,7 @@
 (define-module (krisb config machines sublation system)
   #:use-module (krisb config common)
   #:use-module (krisb config machines sublation common)
+  #:use-module (krisb config machines sublation hardware)
   #:use-module (gnu)
   #:use-module (gnu system accounts)
   #:use-module (gnu services shepherd)
@@ -8,6 +9,7 @@
   #:use-module (gnu services xorg)
   #:use-module (nongnu packages linux)
   #:use-module (nongnu system linux-initrd)
+  #:use-module (gnu system file-systems)
   #:use-module (sops secrets)
   #:use-module (sops services sops)
   #:use-module (gnu services containers)
@@ -24,22 +26,13 @@
   #:use-module (gnu services monitoring)
   #:use-module (gnu services monitoring)
   #:use-module (gnu services linux)
-  #:use-module (gnu services sysctl)
-  #:use-module (gnu system file-systems))
+  #:use-module (gnu services sysctl))
 
 (define sops-secret-wireguard-private-key
   (sops-secret
     (key '("wireguard-private-key"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
-(define file-system-media
-  (file-system
-    (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-    (mount-point "/home/krisbalintona/services/media")
-    (type "btrfs")
-    (flags '(no-atime))
-    (options "subvol=@media,compress=zstd")
-    (create-mount-point? #t)))
 
 (define-public sublation-operating-system
   (operating-system
@@ -328,6 +321,10 @@
            ("vm.watermark_boost_factor". "0")
            ("vm.watermark_scale_factor" . "110")
            ("vm.page-cluster" . "0")))
+       (simple-service 'mergerfs-pools shepherd-root-service-type
+         (list shepherd-service-mergerfs-media
+               shepherd-service-mergerfs-torrents-incomplete
+               shepherd-service-mergerfs-immich))
        (service network-manager-service-type)
        (service wpa-supplicant-service-type)
        (service ntp-service-type)
@@ -364,24 +361,14 @@
                            (device (uuid "8D5D-5605"
                                          'fat32))
                            (type "vfat"))
-                         file-system-media
-                         (file-system
-                           (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-                           (mount-point "/home/krisbalintona/services/media/downloads/bittorrent/incomplete")
-                           (type "btrfs")
-                           (flags '(no-atime))
-                           ;; This subvolume is not mounted with "nodatacow," but it consists
-                           ;; of one directory that is NOCOW.  I avoid setting NOCOW via mount
-                           ;; option because btrfs subvolumes currently inherit the mount
-                           ;; options of the first mounted subvolume.
-                           (options "subvol=@torrents-incomplete,compress=zstd")
-                           (dependencies (list file-system-media)))
-                         (file-system
-                           (device (uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c"))
-                           (mount-point "/home/krisbalintona/services/immich/data")
-                           (type "btrfs")
-                           (flags '(no-atime))
-                           (options "subvol=@immich,compress=zstd"))
+                         ;; HDD 1
+                         file-system-hdd-1-media
+                         file-system-hdd-1-torrents-incomplete
+                         file-system-hdd-1-immich
+                         ;; HDD 2
+                         file-system-hdd-2-media
+                         file-system-hdd-2-torrents-incomplete
+                         file-system-hdd-2-immich
                          %base-file-systems))
 
     (swap-devices
