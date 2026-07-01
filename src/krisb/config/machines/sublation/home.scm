@@ -1006,7 +1006,7 @@
            (list
             (oci-container-configuration
               (provision "wrtag")
-              (image "ghcr.io/sentriz/wrtag:v0.30.0")
+              (image "ghcr.io/sentriz/wrtag:v0.32.0")
               (container-user "1000:1000")
               (host-environment
                (list
