@@ -8,6 +8,38 @@
   )
 
 (define media-mount-point "/home/krisbalintona/services/media")
+(define mergerfs-mount-options-base
+  (string-join
+   '(;; FIXME 2026-07-01: We set "allow_other" (here and in other
+     ;; pools) only because I'm currently on MergerFS version 2.33.5.
+     ;; According to the MergerFS documentation
+     ;; (https://trapexit.github.io/mergerfs/latest/config/deprecated_options/),
+     ;; MergerFS version 2.35.0 and above sets this automatically
+     ;; (when running as root).  Remove this mount option when
+     ;; MergerFS is upgraded to this version or above.
+     "allow_other"                ; A FUSE option, not MergerFS option
+     ;; Some media-related services (e.g., Jellyfin) depend on mtimes
+     ;; for e.g., determining when to do scans.
+     "func.getattr=newest"
+     ;; Ensure inode numbers are consistent.
+     ;;
+     ;; FIXME 2026-07-02: Currently use MergerFS version 2.33.5 (from
+     ;; 2022).  However, according to
+     ;; https://trapexit.github.io/mergerfs/latest/config/inodecalc/,
+     ;; v2.35.0+ no longer needs this option.  When I upgrade to such
+     ;; a version, remove this mount point here and elsewhere.
+     "use_ino"
+     ;; Recommended as per "man mergerfs".  (For instance, Bittorrent
+     ;; clients may use mmap.)
+     ;;
+     ;; FIXME 2026-07-02: When I upgrade MergerFS versions check if
+     ;; these are still the recommendations.
+     "cache.files=partial"
+     "dropcacheonclose=true"
+     ;;   Just use another drive when one gets full (actually or by
+     ;;   disk quota) mid-write.
+     "moveonenospc=mfs")
+   ","))
 ;; HDD 1
 (define hdd-1-uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c")
 
@@ -102,10 +134,12 @@
      (string-append hdd-1-mount-point-media ":" hdd-2-mount-point-media))
     (mount-point media-mount-point)
     (type "fuse.mergerfs")
-    ;; We set the "func.getattr=newest" option since some
-    ;; media-related services (e.g., Jellyfin) depend on mtimes for
-    ;; e.g., determining when to do scans.
-    (options "category.create=mfs,func.getattr=newest,minfreespace=10G")
+    (options
+     (string-append mergerfs-mount-options-base
+                    ;; TODO 2026-07-02: Consider switching to the
+                    ;; "pfrd" policy once I upgrade to a version that
+                    ;; offers it.
+                    ",category.create=mfs,minfreespace=10G"))
     (dependencies (list file-system-hdd-1-media file-system-hdd-2-media))))
 
 (define-public mergerfs-pool-torrents-incomplete
@@ -114,15 +148,19 @@
      (string-append hdd-1-mount-point-torrents-incomplete ":" hdd-2-mount-point-torrents-incomplete))
     (mount-point (string-append media-mount-point "/downloads/bittorrent/incomplete"))
     (type "fuse.mergerfs")
-    ;; The "epmfs" (existing path, most free space) policy is used for
-    ;; torrents because torrent clients expect a stable directory
-    ;; structure and should not have files scattered across different
-    ;; MergerFS branches for the same path.  This ensures downloads
-    ;; for a given torrent stay on a single disk while still allowing
-    ;; new torrents to be distributed across the pool based on
-    ;; available space, reducing fragmentation and avoiding cross-disk
-    ;; writes.
-    (options "category.create=epmfs,minfreespace=10G")
+    (options
+     (string-append mergerfs-mount-options-base
+                    ;; The "epmfs" (existing path, most free space)
+                    ;; policy is used for torrents because torrent
+                    ;; clients expect a stable directory structure and
+                    ;; should not have files scattered across
+                    ;; different MergerFS branches for the same path.
+                    ;; This ensures downloads for a given torrent stay
+                    ;; on a single disk while still allowing new
+                    ;; torrents to be distributed across the pool
+                    ;; based on available space, reducing
+                    ;; fragmentation and avoiding cross-disk writes.
+                    ",category.create=mfs,minfreespace=10G"))
     (dependencies
      (list file-system-hdd-1-torrents-incomplete
            file-system-hdd-2-torrents-incomplete
@@ -133,7 +171,9 @@
      (string-append hdd-1-mount-point-immich ":" hdd-2-mount-point-immich))
     (mount-point "/home/krisbalintona/services/immich/data")
     (type "fuse.mergerfs")
-    (options "category.create=mfs,minfreespace=10G")
+    (options
+     (string-append mergerfs-mount-options-base
+                    ",category.create=mfs,minfreespace=10G"))
     (dependencies (list file-system-hdd-1-immich file-system-hdd-2-immich))))
 ;;; Mergerfs pools
 ;;
@@ -185,18 +225,9 @@ live underneath."
    'media
    (list hdd-1-mount-point-media hdd-2-mount-point-media)
    media-mount-point
-   ;; FIXME 2026-07-01: We set "allow_other" (here and in other pools)
-   ;; only because I'm currently on MergerFS version 2.33.5.
-   ;; According to the MergerFS documentation
-   ;; (https://trapexit.github.io/mergerfs/latest/config/deprecated_options/),
-   ;; MergerFS version 2.35.0 and above sets this automatically (when
-   ;; running as root).  Remove this mount option when MergerFS is
-   ;; upgraded to this version or above.
-   ;; 
-   ;; We set the "func.getattr=newest" option since some media-related
-   ;; services (e.g., Jellyfin) depend on mtimes for e.g., determining
-   ;; when to do scans.
-   "allow_other,category.create=mfs,func.getattr=newest,minfreespace=10G"))
+   ;; 2026-07-02: Manually copied from 'mergerfs-pool-media'
+   (string-append mergerfs-mount-options-base
+                  ",category.create=mfs,minfreespace=10G")))
 
 (define-public shepherd-service-mergerfs-torrents-incomplete
   (mergerfs-shepherd-service
@@ -204,14 +235,9 @@ live underneath."
    (list hdd-1-mount-point-torrents-incomplete
          hdd-2-mount-point-torrents-incomplete)
    (string-append media-mount-point "/downloads/bittorrent/incomplete")
-   ;; The "epmfs" (existing path, most free space) policy is used for
-   ;; torrents because torrent clients expect a stable directory
-   ;; structure and should not have files scattered across different
-   ;; MergerFS branches for the same path.  This ensures downloads for
-   ;; a given torrent stay on a single disk while still allowing new
-   ;; torrents to be distributed across the pool based on available
-   ;; space, reducing fragmentation and avoiding cross-disk writes.
-   "allow_other,category.create=epmfs,minfreespace=10G"
+   ;; 2026-07-02: Manually copied from 'mergerfs-pool-media'
+   (string-append mergerfs-mount-options-base
+                  ",category.create=mfs,minfreespace=10G")
    ;; This mount point lives *inside* the media pool's mount point, so
    ;; it must come up only after the media pool is already mounted.
    '(mergerfs-media)))
@@ -221,4 +247,6 @@ live underneath."
    'immich
    (list hdd-1-mount-point-immich hdd-2-mount-point-immich)
    "/home/krisbalintona/services/immich/data"
-   "allow_other,category.create=mfs,minfreespace=10G"))
+   ;; 2026-07-02: Manually copied from 'mergerfs-pool-media'
+   (string-append mergerfs-mount-options-base
+                  ",category.create=mfs,minfreespace=10G")))
