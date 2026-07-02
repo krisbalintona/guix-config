@@ -60,7 +60,14 @@ $(CHANNELS_LOCK_FILE): $(CHANNELS_FILE) FORCE
 
 # ** System
 
-system system-build system-lock: _GUIX = sudo guix
+# We resolve 'guix' via '$(shell which guix)' and invoke it with 'sudo
+# -E' rather than just 'sudo guix' because the former will use the
+# current user's Guix profile (with root privileges) whereas the
+# latter will use the root user's Guix profile (also with root
+# privileges).  It is the former that we want.
+system system-build system-lock: _GUIX := sudo -E $(shell which guix)
+
+system system-build system-lock: _GUIX = sudo -E $(shell which guix)
 system: SYSTEM_ACTION = reconfigure
 system-build: SYSTEM_ACTION = build
 system-preview: _GUIX = guix time-machine -C $(CHANNELS_FILE) --
