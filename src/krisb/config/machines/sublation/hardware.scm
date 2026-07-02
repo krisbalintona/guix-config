@@ -189,11 +189,13 @@
 
 (define* (mergerfs-shepherd-service name branches mount-point mergerfs-options
                                     #:optional (extra-requirement '()))
-  "Return a <shepherd-service> that mounts BRANCHES (a list of
-directory name strings) at MOUNT-POINT via mergerfs, using
-MERGERFS-OPTIONS (a comma-separated mount-options string).
+  "Return a shepherd-service that mounts BRANCHES as a MergerFS pool.
+BRANCHES is a list of directory name strings at MOUNT-POINT via
+MergerFS.  It is mounted with MERGERFS-OPTIONS (a comma-separated
+string denoting mount options).
+
 EXTRA-REQUIREMENT is an extra list of Shepherd provision symbols to
-depend on -- e.g. another mergerfs pool that MOUNT-POINT happens to
+depend on, e.g., another MergerFS pool that MOUNT-POINT happens to
 live underneath."
   (with-imported-modules '((guix build utils))
     (shepherd-service
@@ -208,16 +210,21 @@ live underneath."
              branches)
         extra-requirement))
       (documentation
-       (string-append "Mount the mergerfs pool at " mount-point "."))
+       (string-append "Create a MergerFS pool and mount it at " mount-point "."))
       (start
        #~(lambda _
            (mkdir-p #$mount-point)
-           ((make-forkexec-constructor
-             (list #$(file-append mergerfs "/bin/mergerfs")
-                   "-f"              ; Stay in foreground for Shepherd
-                   "-o" #$mergerfs-options
-                   #$(string-join branches ":")
-                   #$mount-point)))))
+           (let ((command
+                  (list #$(file-append mergerfs "/bin/mergerfs")
+                        "-f"              ; Stay in foreground for Shepherd
+                        "-o" #$mergerfs-options
+                        #$(string-join branches ":")
+                        #$mount-point)))
+             (format #t "mergerfs command to run: ~a~%" command)
+             (let ((pid ((make-forkexec-constructor command))))
+               (format #t "Spawned mergerfs (pid ~a) for pool at ~a~%"
+                       pid mount-point)
+               pid))))
       (stop #~(make-kill-destructor)))))
 
 (define-public shepherd-service-mergerfs-media
@@ -238,8 +245,9 @@ live underneath."
    ;; 2026-07-02: Manually copied from 'mergerfs-pool-media'
    (string-append mergerfs-mount-options-base
                   ",category.create=mfs,minfreespace=10G")
-   ;; This mount point lives *inside* the media pool's mount point, so
-   ;; it must come up only after the media pool is already mounted.
+   ;; This mount point lives inside the shepherd service created in
+   ;; 'shepherd-service-mergerfs-media' so it must come up only after
+   ;; the media pool is already mounted.
    '(mergerfs-media)))
 
 (define-public shepherd-service-mergerfs-immich
