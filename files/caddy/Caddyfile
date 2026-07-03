@@ -632,3 +632,11 @@ vmagent.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:8429
 	import policy_private
 }
+
+# ** Zellij web server
+
+zellij.home.kristofferbalintona.me {
+	bind 10.0.0.1
+	reverse_proxy 127.0.0.1:4444
+	import policy_private
+}
