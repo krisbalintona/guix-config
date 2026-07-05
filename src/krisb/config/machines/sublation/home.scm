@@ -381,12 +381,12 @@
                     ;; local, we only need to specify a repository and
                     ;; optionally a tag.  The REPOSITORY field below
                     ;; corresponds to the [repository] of an OCI image
-                    ;; location; it can be whatever we want since this image is
-                    ;; created locally (in the Guix store)
-                    (repository "caddy-security-netlify-crowdsec-coraza-maxmind")
-                    (tag "2.10.2")
+                    ;; location; it can be whatever we want since this image
+                    ;; is created locally (in the Guix store)
+                    (repository "caddy-security-netlify-crowdsec-coraza-maxmind-l4")
+                    (tag "2.11.3")
                     (value (specifications->manifest '("coreutils"
-                                                       "caddy-security-netlify-crowdsec-coraza-maxmind")))
+                                                       "caddy-security-netlify-crowdsec-coraza-maxmind-l4")))
                     (pack-options '(#:symlinks (("/bin" -> "bin")
                                                 ;; MaxMind database files
                                                 ("/var/lib/geoip" -> "/var/lib/geoip"))))))
