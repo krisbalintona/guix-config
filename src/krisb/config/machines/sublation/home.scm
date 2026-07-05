@@ -1030,7 +1030,6 @@
                          "/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} "
                          "{{ if .IsCompilation}}{{ artistsString .Track.Artists | safepath }} - {{ end }}"
                          "{{ .Track.Title | safepath }}{{ .Ext }}"))
-                 "WRTAG_COVER_UPGRADE=true"
                  ;; NOTE 2026-03-12: There is currently an issue with the
                  ;; Genius lyrics provider, so I have excluded it.  See
                  ;; https://github.com/sentriz/wrtag/issues/168
