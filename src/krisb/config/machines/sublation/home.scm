@@ -64,6 +64,7 @@
         "bind:utils"
         "unbound"
         "caddy-security-netlify-crowdsec-coraza-maxmind"
+        "soju"
         "smartmontools"            ; For smartctl
         "mergerfs"
         "mergerfs-tools"

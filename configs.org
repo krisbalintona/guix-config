@@ -2967,6 +2967,41 @@ Create and mount MergerFS pool for Immich storage:
 #   mergerfs-pool-immich
 # #+end_src
 
+*** Soju: Simple IRC bouncer
+
+# TODO 2026-07-05: Does this need to be run as root? Can this be run as a user-level service instead?
+
+I self host Soju as an IRC bouncer. See the documentation entry point here: [[https://codeberg.org/emersion/soju/src/branch/master/doc/getting-started.md][soju/doc/getting-started.md at master - emersion/soju - Codeberg.org]]. See the manuals for the =sojudb= and =sojuctl= commands here:
++ [[https://soju.im/doc/soju.1.html#IRC_SERVICE][soju(1)]]
++ [[https://soju.im/doc/sojuctl.1.html][sojuctl(1)]]
+
+#+begin_src scheme :noweb-ref sublation-system-modules
+  (gnu services messaging)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-system-services
+  (service soju-service-type
+    (soju-configuration
+     (title "Personal bouncer")
+     (hostname "irc.home.kristofferbalintona.me")
+     (listen '("irc://localhost:6667"
+               "http://localhost:9500"
+               ;; Create a UNIX socket allows administering the bouncer
+               ;; from the command line with `sojuctl'.  (Recommended in
+               ;; (guix) Messaging Services.)
+               "unix+admin:///var/lib/soju/soju.sock"))
+     (extra-content
+      ;; I use Caddy with the caddy-l4 (layer 4) app as a reverse proxy
+      ;; in front of Soju which handles TLS termination.
+      ;; "accept-proxy-ip localhost" is needed to tell Soju to trust the
+      ;; PROXY protocol header that I've configured caddy-l4 to wrap the
+      ;; TCP packets in ("proxy_protocol v2").
+      (list (plain-file "soju-trusted-proxy.conf" "accept-proxy-ip localhost")))))
+#+end_src
+For the =sojudb= and =sojuctl= commands, which let one administrate and manage the Soju database and service:
+#+begin_src scheme :noweb-ref sublation-home-packages
+  "soju"
+#+end_src
+
 ** Monitoring
 
 *** Goaccess: Web log access analytics

@@ -175,6 +175,28 @@
 	# Alternatively, the crowdsec directive can be e.g. placed
 	# inside a route block to express the order explicitly
 	order crowdsec first
+
+	# Caddy-l4 app
+	layer4 {
+		# For the Soju bouncer.  Settings recommended from
+		# here:
+		# https://codeberg.org/emersion/soju/src/branch/master/contrib/caddy.md
+		irc.home.kristofferbalintona.me:6697 {
+			route {
+				tls {
+					connection_policy {
+						alpn irc
+					}
+				}
+				proxy {
+					proxy_protocol v2
+					# Must match the irc://... URL
+					# Soju listens to
+					upstream localhost:6667
+				}
+			}
+		}
+	}
 }
 
 # ** Snippets
@@ -638,5 +660,18 @@ vmagent.home.kristofferbalintona.me {
 zellij.home.kristofferbalintona.me {
 	bind 10.0.0.1
 	reverse_proxy 127.0.0.1:4444
+	import policy_private
+}
+
+# ** IRC (Soju bouncer)
+
+irc.home.kristofferbalintona.me {
+	# Soju bouncer
+	@soju {
+		path /socket
+		path /uploads
+		path /uploads/*
+	}
+	reverse_proxy @soju localhost:9500
 	import policy_private
 }

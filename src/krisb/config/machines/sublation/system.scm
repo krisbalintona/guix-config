@@ -23,6 +23,7 @@
   #:use-module (gnu services dns)
   #:use-module (gnu services vpn)
   #:use-module (gnu services sysctl)
+  #:use-module (gnu services messaging)
   #:use-module (gnu services monitoring)
   #:use-module (gnu services monitoring)
   #:use-module (gnu services linux)
@@ -303,6 +304,23 @@
        (simple-service 'sysctl-wireguard
            sysctl-service-type
          '(("net.ipv4.ip_forward" . "1")))
+       (service soju-service-type
+         (soju-configuration
+          (title "Personal bouncer")
+          (hostname "irc.home.kristofferbalintona.me")
+          (listen '("irc://localhost:6667"
+                    "http://localhost:9500"
+                    ;; Create a UNIX socket allows administering the bouncer
+                    ;; from the command line with `sojuctl'.  (Recommended in
+                    ;; (guix) Messaging Services.)
+                    "unix+admin:///var/lib/soju/soju.sock"))
+          (extra-content
+           ;; I use Caddy with the caddy-l4 (layer 4) app as a reverse proxy
+           ;; in front of Soju which handles TLS termination.
+           ;; "accept-proxy-ip localhost" is needed to tell Soju to trust the
+           ;; PROXY protocol header that I've configured caddy-l4 to wrap the
+           ;; TCP packets in ("proxy_protocol v2").
+           (list (plain-file "soju-trusted-proxy.conf" "accept-proxy-ip localhost")))))
        (service prometheus-node-exporter-service-type
          (prometheus-node-exporter-configuration
            (web-listen-address "127.0.0.1:21005")))
