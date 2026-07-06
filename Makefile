@@ -79,6 +79,10 @@ system system-lock: SYSTEM_EXTRA_FLAGS =
 # Guix WSL install!)
 ifeq ($(MACHINE),wsl)
 system system-lock: SYSTEM_EXTRA_FLAGS += --no-bootloader
+# Don't run multiple jobs in parallel with -M flag, since WSL2 has a
+# small /tmp/ tmpfs storage, so multiple jobs may lead to /tmp/
+# filling to capacity and therefore the build crashing
+system system-lock: FAST_BUILD_ARGS = -c 0
 endif
 
 SYSTEM-EXPRESSION := '(@ (krisb config machines $(MACHINE) system) $(MACHINE)-operating-system)'
@@ -106,6 +110,13 @@ home: HOME_ACTION = reconfigure
 home-build: HOME_ACTION = build
 home-preview: _GUIX = guix time-machine -C $(CHANNELS_FILE) --
 home-preview: HOME_ACTION = build
+
+ifeq ($(MACHINE),wsl)
+# Don't run multiple jobs in parallel with -M flag, since WSL2 has a
+# small /tmp/ tmpfs storage, so multiple jobs may lead to /tmp/
+# filling to capacity and therefore the build crashing
+home home-lock: FAST_BUILD_ARGS = -c 0
+endif
 
 HOME_EXPRESSION := '(@ (krisb config machines $(MACHINE) home) $(MACHINE)-home-environment)'
 
