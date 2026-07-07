@@ -305,7 +305,20 @@
                           "echo 'Starting notmuch new...'" "&&"
                           notmuch-new "&&"
                           "echo 'All done!'")))))))
-       ;; WSL2-specific
+       ;; Symlink notify-send.fish into fish's autoloaded functions
+       ;; directory.  This shadows the typical `notify-send` (which doesn't
+       ;; work under WSL2) with a wrapper that calls wsl-notify-send.exe on
+       ;; the Windows host instead.  This lets `notify-send` in WSL2 produce
+       ;; a native Windows notification.  See:
+       ;; https://github.com/stuartleeks/wsl-notify-send
+       (simple-service 'wsl2-fish-notify-send  ; For Fish
+           home-xdg-configuration-files-service-type
+         `(("fish/functions/notify-send.fish"
+            ,(local-file (config-files-path "fish/notify-send.fish")))))
+       (simple-service 'wsl2-bash-notify-send  ; For Bash
+           home-bash-service-type
+         (home-bash-extension
+           (bashrc (list (local-file (config-files-path "bash/notify-send.bash"))))))
        (simple-service 'wslg-display
            home-environment-variables-service-type
          '(("DISPLAY" . ":0")))

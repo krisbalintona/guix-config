@@ -4072,6 +4072,40 @@ Corresponding SOPS secrets:
       #:files (list (string-append (getenv "HOME") "/Documents/emails")))))
 #+end_src
 
+* WSL2-specific fixes
+
+WSL2 requires certain fixes to get typical behavior.
+
+** Notify-send
+
+Integration with [[https://github.com/stuartleeks/wsl-notify-send][wsl-notify-send]], which lets ~notify-send~ work in WSL2.
+#+begin_src scheme :noweb-ref mute-home-services
+  ;; Symlink notify-send.fish into fish's autoloaded functions
+  ;; directory.  This shadows the typical `notify-send` (which doesn't
+  ;; work under WSL2) with a wrapper that calls wsl-notify-send.exe on
+  ;; the Windows host instead.  This lets `notify-send` in WSL2 produce
+  ;; a native Windows notification.  See:
+  ;; https://github.com/stuartleeks/wsl-notify-send
+  (simple-service 'wsl2-fish-notify-send  ; For Fish
+      home-xdg-configuration-files-service-type
+    `(("fish/functions/notify-send.fish"
+       ,(local-file (config-files-path "fish/notify-send.fish")))))
+  (simple-service 'wsl2-bash-notify-send  ; For Bash
+      home-bash-service-type
+    (home-bash-extension
+      (bashrc (list (local-file (config-files-path "bash/notify-send.bash"))))))
+#+end_src
+
+Note that the ~wsl-notify-send~ EXE file also needs to be available on the Window host's PATH, as per [[https://github.com/stuartleeks/wsl-notify-send#download-wsl-notify-send][the documentation]].
+
+** Display
+
+#+begin_src scheme :noweb-ref mute-home-services
+  (simple-service 'wslg-display
+      home-environment-variables-service-type
+    '(("DISPLAY" . ":0")))
+#+end_src
+
 * Configurations
 
 ** Common
@@ -4153,10 +4187,6 @@ Configuration helpers for my machines.
         common-home-services
         (cons*
          <<mute-home-services>>
-         ;; WSL2-specific
-         (simple-service 'wslg-display
-             home-environment-variables-service-type
-           '(("DISPLAY" . ":0")))
          ;; Base services
          %base-home-services)))))
 #+end_src
