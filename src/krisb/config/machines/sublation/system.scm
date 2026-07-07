@@ -43,19 +43,25 @@
 
 (define-public sublation-operating-system
   (operating-system
-    ;; Use Linux kernel.  See also the (nonguix transformations) module
-    ;; from the nonguix channel for several convenient wrappers (e.g.,
+    ;; Nonguix kernel and CPU microcode. See
+    ;; https://gitlab.com/nonguix/nonguix#using-nonfree-firmware-and-drivers
+    ;; and https://gitlab.com/nonguix/nonguix#cpu-microcode for
+    ;; instructions.
+    ;;
+    ;; See also the (nonguix transformations) module from the nonguix
+    ;; channel for several convenience wrappers (e.g.,
     ;; nonguix-transformation-guix, nonguix-transformation-linux,
     ;; nonguix-transformation-nvidia)
     (kernel linux)
     (firmware (list linux-firmware))
+    (initrd microcode-initrd)
+
     (kernel-arguments
      (cons*
       ;; Enable the kernel module corresponding to step 2 in
       ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel/#configure-and-verify-lp-mode-on-linux
       "i915.enable_guc=3"
       %default-kernel-arguments))
-    (initrd microcode-initrd)
 
     (locale "en_US.utf8")
     (timezone "America/Chicago")
