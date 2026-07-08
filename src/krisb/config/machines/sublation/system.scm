@@ -34,6 +34,12 @@
     (key '("wireguard-private-key"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
+(define %signing-keys-dir
+  ;; The cwd should be the repository root
+  (string-append (getcwd) "/signing-keys"))
+
+(define (signing-keys-path path)
+  (string-append %signing-keys-dir "/" path))
 
 (define-public sublation-operating-system
   (operating-system
@@ -343,6 +349,13 @@
          (list shepherd-service-mergerfs-media
                shepherd-service-mergerfs-torrents-incomplete
                shepherd-service-mergerfs-immich))
+       (simple-service 'nonguix-substitutes
+           guix-service-type
+         (guix-extension
+           (authorized-keys
+            (list (local-file (signing-keys-path "nonguix.pub"))))
+           (substitute-urls
+            (list "https://substitutes.nonguix.org"))))
        (service network-manager-service-type)
        (service wpa-supplicant-service-type)
        (service ntp-service-type)

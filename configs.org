@@ -4071,6 +4071,27 @@ Corresponding SOPS secrets:
       #:files (list (string-append (getenv "HOME") "/Documents/emails")))))
 #+end_src
 
+* Substitute servers
+
+#+begin_src scheme :noweb-ref sublation-system-helpers
+  (define %signing-keys-dir
+    ;; The cwd should be the repository root
+    (string-append (getcwd) "/signing-keys"))
+
+  (define (signing-keys-path path)
+    (string-append %signing-keys-dir "/" path))
+#+end_src
+
+#+begin_src scheme :noweb-ref sublation-system-services
+  (simple-service 'nonguix-substitutes
+      guix-service-type
+    (guix-extension
+      (authorized-keys
+       (list (local-file (signing-keys-path "nonguix.pub"))))
+      (substitute-urls
+       (list "https://substitutes.nonguix.org"))))
+#+end_src
+
 * WSL2-specific fixes
 
 WSL2 requires certain fixes to get typical behavior.
