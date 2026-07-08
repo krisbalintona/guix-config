@@ -1007,7 +1007,7 @@
            (list
             (oci-container-configuration
               (provision "wrtag")
-              (image "ghcr.io/sentriz/wrtag:v0.32.0")
+              (image "ghcr.io/sentriz/wrtag:v0.33.0")
               (container-user "1000:1000")
               (host-environment
                (list
@@ -1030,10 +1030,7 @@
                          "/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} "
                          "{{ if .IsCompilation}}{{ artistsString .Track.Artists | safepath }} - {{ end }}"
                          "{{ .Track.Title | safepath }}{{ .Ext }}"))
-                 ;; NOTE 2026-03-12: There is currently an issue with the
-                 ;; Genius lyrics provider, so I have excluded it.  See
-                 ;; https://github.com/sentriz/wrtag/issues/168
-                 "WRTAG_ADDON=lyrics lrclib musixmatch,replaygain true-peak"))
+                 "WRTAG_ADDON=lyrics lrclib genius musixmatch,replaygain true-peak"))
               (network "gluetun-network")
               (ports '("127.0.0.1:7373:7373"))
               (volumes
