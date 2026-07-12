@@ -356,6 +356,12 @@
             (list (local-file (signing-keys-path "nonguix.pub"))))
            (substitute-urls
             (list "https://substitutes.nonguix.org"))))
+       (simple-service 'guix-moe-substitutes
+           guix-service-type
+         (guix-extension
+           (authorized-keys
+            (list (local-file (signing-keys-path "guix-moe.pub"))))
+           (substitute-urls (list "https://cache-cdn.guix.moe"))))
        (service network-manager-service-type)
        (service wpa-supplicant-service-type)
        (service ntp-service-type)

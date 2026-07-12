@@ -4079,6 +4079,8 @@ Corresponding SOPS secrets:
     (string-append %signing-keys-dir "/" path))
 #+end_src
 
+** Nonguix
+
 #+begin_src scheme :noweb-ref sublation-system-services
   (simple-service 'nonguix-substitutes
       guix-service-type
@@ -4087,6 +4089,17 @@ Corresponding SOPS secrets:
        (list (local-file (signing-keys-path "nonguix.pub"))))
       (substitute-urls
        (list "https://substitutes.nonguix.org"))))
+#+end_src
+
+** Guix Moe
+
+#+begin_src scheme :noweb-ref sublation-system-services
+  (simple-service 'guix-moe-substitutes
+      guix-service-type
+    (guix-extension
+      (authorized-keys
+       (list (local-file (signing-keys-path "guix-moe.pub"))))
+      (substitute-urls (list "https://cache-cdn.guix.moe"))))
 #+end_src
 
 * WSL2-specific fixes
