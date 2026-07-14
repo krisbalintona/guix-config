@@ -1,6 +1,8 @@
-((scheme-mode         ; Taken from https://codeberg.org/hako/Testament
+((scheme-mode
   .
-  ((eval . (put 'computed-file 'scheme-indent-function 1))
+  ((eval . (setopt-local geiser-guile-load-path (list (expand-file-name "src"))))
+   ;; Indentation rules taken from https://codeberg.org/hako/Testament
+   (eval . (put 'computed-file 'scheme-indent-function 1))
    (eval . (put 'mixed-text-file 'scheme-indent-function 1))
    (eval . (put 'plain-file 'scheme-indent-function 1))
    (eval . (put 'program-file 'scheme-indent-function 1))
