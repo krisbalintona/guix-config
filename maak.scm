@@ -136,7 +136,8 @@
 
 (define (system)
   "Reconfigure Guix system."
-  (generate-config-task 'system "reconfigure"))
+  (parameterize ((entry-point "sudo -E guix"))
+    (generate-config-task 'system "reconfigure")))
 
 (define (system-build)
   "Only build the Guix system profile."
