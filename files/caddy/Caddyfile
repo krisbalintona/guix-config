@@ -675,3 +675,10 @@ irc.home.kristofferbalintona.me {
 	reverse_proxy @soju localhost:9500
 	import policy_private
 }
+
+# ** Stash
+
+stash.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9999
+	import policy_private
+}

@@ -1308,6 +1308,43 @@
                  '(("/home/krisbalintona/services/immich/postgres-data" . "/var/lib/postgresql/data")))
                 (auto-start? #t)
                 (respawn? #f)))))))
+       (simple-service 'home-oci-stash
+           home-oci-service-type
+         (oci-extension
+          (networks
+           (list
+            (oci-network-configuration
+             (name "stash-network"))))
+          (containers
+           (list
+            (let ((host-stash-dir "/home/krisbalintona/services/stash"))
+              (oci-container-configuration
+                (provision "stash")
+                (image "stashapp/stash:latest")
+                (environment
+                 '(;; For reverse proxies, also need to set "external_host"
+                   ;; configuration option in Stash's config.yml file.  See
+                   ;; https://docs.stashapp.cc/guides/advanced-configuration-options/#external-host
+                   "STASH_PORT=9999"
+       
+                   ;; See mounted volumes
+                   "STASH_STASH=/data/"
+                   "STASH_METADATA=/metadata/"
+                   "STASH_CACHE=/cache/"
+                   "STASH_GENERATED=/generated/"))
+                (network "stash-network")
+                (ports '("127.0.0.1:9999:9999"))
+                (volumes
+                 (list '("/etc/localtime" . "/etc/localtime:ro")
+                       (cons (string-append host-stash-dir "/data") "/data")
+                       (cons (string-append host-stash-dir "/generated") "/generated")
+                       (cons (string-append host-stash-dir "/metadata") "/metadata")
+                       (cons (string-append host-stash-dir "/cache") "/cache")
+                       (cons (string-append host-stash-dir "/blobs") "/blobs")
+                       (cons (string-append host-stash-dir "/config") "/root/.stash")
+                       '("/home/krisbalintona/services/media/adult/downloads" . "/adult:ro")))
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-oci-goaccess
            home-oci-service-type
          (oci-extension
