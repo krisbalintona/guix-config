@@ -3040,6 +3040,65 @@ For the =sojudb= and =sojuctl= commands, which let one administrate and manage t
            (respawn? #f)))))))
 #+end_src
 
+*** Readeck: Read-later tool
+
+There are alternatives like Linking, Linkwarden, Shiori, and Wallabag (self-hosted and managed) that I considered. But I've settled with Readeck.
+
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-oci-readeck
+      home-oci-service-type
+    (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "readeck-network"))))
+     (containers
+      (list
+       (let ((port "17800")
+             (host-data-dir "/home/krisbalintona/services/readeck")
+             (secret-file
+              (sops-secret->secret-file
+               sops-secret-readeck-secret-key
+               #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+         (oci-container-configuration
+           (provision "readeck")
+           (image "codeberg.org/readeck/readeck:latest")
+           ;; FIXME 2026-08-04: Use `sops-secret->shepherd-service-name`
+           ;; when/if it becomes public/exported to get the Shepherd
+           ;; service name?
+           (requirement '(home-sops-secret-readeck/secret-key))
+           (host-environment
+            (list
+             (cons "READECK_SECRET_KEY"
+                   #~(call-with-input-file #$secret-file
+                       (@ (ice-9 textual-ports) get-string-all)))))
+           (environment
+            (list (cons "READECK_SERVER_PORT" port)
+                  "READECK_SERVER_BASE_URL=https://readeck.home.kristofferbalintona.me"
+                  "READECK_ALLOWED_HOSTS=readeck.home.kristofferbalintona.me"
+                  "READECK_SECRET_KEY"))
+           (network "readeck-network")
+           (ports (list (string-append "127.0.0.1:" port ":" port)))
+           (volumes (list (cons host-data-dir "/readeck")))
+           (auto-start? #t)
+           (respawn? #f)))))))
+#+end_src
+
+Secret key for Readeck:
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-readeck-secret-key
+    (sops-secret
+      (key '("readeck" "secret-key"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-readeck-secret-key
+#+end_src
+
 ** Monitoring
 
 *** Goaccess: Web log access analytics
