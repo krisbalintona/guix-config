@@ -1873,6 +1873,48 @@ Helpful links
          (respawn? #f))))))
 #+end_src
 
+**** Manga, webtoons, and doujinshi
+
+***** Suwayomi-server: Manga downloader and reader server
+
+Downloader and reader for manga, webtoons, doujinshi, and the like. I choose Suwayomi for the mature ecosystem and unparalleled number of supported sites. Alternatives include:
++ [[https://github.com/C9Glax/tranga][Tranga]]
++ [[https://github.com/KamiYomu/KamiYomu][KamiYomu]]
++ [[https://github.com/JeremiahM37/librarr][Librarr]]
+
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-oci-suwayomi-server
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let ((port "4567"))
+         (oci-container-configuration
+           (provision "suwayomi-server")
+           (requirement '(byparr))
+           (image "ghcr.io/suwayomi/suwayomi-server:latest")
+           (container-user "1000:1000")
+           (environment
+            (list "TZ=America/Chicago"
+                  (cons "BIND_PORT" port)
+                  
+                  "FLARESOLVERR_ENABLED=true"
+                  (cons "FLARESOLVERR_URL" "http://byparr:8191/")))
+           (network "gluetun-network")    ; For Byparr container
+           (ports (list (string-append "127.0.0.1:" port ":" port)))
+           (volumes
+            (list
+             ;; Make sure the downloads directory is mounted first,
+             ;; otherwise the other directory, which it should be nested
+             ;; inside, would shadow it
+             (cons "/home/krisbalintona/services/media/manga"
+                   "/home/suwayomi/.local/share/Tachidesk/downloads")
+             (cons "/home/krisbalintona/services/suwayomi-server"
+                   "/home/suwayomi/.local/share/Tachidesk")))
+           (auto-start? #t)
+           (respawn? #f)))))))
+#+end_src
+
 *** Servarr (Arr media stack)
 
 The Arr stack's ("Servarr") wiki: https://wiki.servarr.com/.
@@ -2095,6 +2137,8 @@ See https://wiki.servarr.com/sonarr/faq#vpns-jackett-and-the-arrs for a note on 
 #+end_src
 
 ***** Byparr: Bypass Cloudflare challenges
+
+# TODO 2026-08-18: Remove from gluetun-network and have its own subdomain.  Then change all services that use Byparr to that new URL, removing them from the gluetun-network if that's all they were in it for.
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-byparr

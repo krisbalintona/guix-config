@@ -635,6 +635,36 @@
                  ("/home/krisbalintona/services/media" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
+       (simple-service 'home-oci-suwayomi-server
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (let ((port "4567"))
+              (oci-container-configuration
+                (provision "suwayomi-server")
+                (requirement '(byparr))
+                (image "ghcr.io/suwayomi/suwayomi-server:latest")
+                (container-user "1000:1000")
+                (environment
+                 (list "TZ=America/Chicago"
+                       (cons "BIND_PORT" port)
+                       
+                       "FLARESOLVERR_ENABLED=true"
+                       (cons "FLARESOLVERR_URL" "http://byparr:8191/")))
+                (network "gluetun-network")    ; For Byparr container
+                (ports (list (string-append "127.0.0.1:" port ":" port)))
+                (volumes
+                 (list
+                  ;; Make sure the downloads directory is mounted first,
+                  ;; otherwise the other directory, which it should be nested
+                  ;; inside, would shadow it
+                  (cons "/home/krisbalintona/services/media/manga"
+                        "/home/suwayomi/.local/share/Tachidesk/downloads")
+                  (cons "/home/krisbalintona/services/suwayomi-server"
+                        "/home/suwayomi/.local/share/Tachidesk")))
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-oci-sonarr
            home-oci-service-type
          (oci-extension
