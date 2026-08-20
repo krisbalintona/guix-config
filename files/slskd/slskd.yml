@@ -5,3 +5,8 @@ integrations:
         - DownloadDirectoryComplete
       run:
         command: '/app/scripts/wrtag.sh' # Working directory is the scripts directory (/app/scripts)
+transfers:
+  download:
+    destination:
+      subdirectory: ${SEARCH_TEXT}/${SOURCE_USERNAME}/${SOURCE_DIRECTORY}
+      exists: overwrite
