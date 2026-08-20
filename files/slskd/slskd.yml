@@ -1,4 +1,4 @@
-integration:
+integrations:
   scripts:
     wrtag:                    # Tag and import (move) music with wrtag
       on:
