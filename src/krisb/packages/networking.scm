@@ -332,8 +332,8 @@ by WP-Statistics. Built from a pinned git commit.")
                 ("github.com/corazawaf/coraza-caddy/v2" . "v2.5.0") ; Coraza WAF
                 ("github.com/porech/caddy-maxmind-geolocation" . "v1.0.3") ; MaxMind
                 ("github.com/mholt/caddy-l4" . "v0.1.1")) ; Layer 4
-              "18w7b5nh3q38yigsy4kzb5qqzjp5sbg7l0sgdx6vr5sd0ifilcz0"
-              "1g5spf5czgcfmrmv5i1x5lf483dn77g3j6xg6swmy8150mamss1z")))
+              "1kg19z78a29n1x8r3x57zwz4n2fzlrsnw644yagpa8csx9xxc9ax"
+              "1fwdcb37bdqrgrrhs41v3lqnmzza9ydyi5h6n6fvsbnz0i33lc0a")))
     (package/inherit pkg
       (name "caddy-security-netlify-crowdsec-coraza-maxmind-l4")
       (arguments
