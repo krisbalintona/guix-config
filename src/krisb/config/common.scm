@@ -5,6 +5,7 @@
   #:use-module (gnu services)           ; Provides simple-service
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
+  #:use-module (krisb services utils)
   #:use-module (gnu services ssh)
   #:use-module (gnu packages shells)
   #:use-module (gnu home services shells)
@@ -256,10 +257,12 @@
        home-xdg-configuration-files-service-type
      `(("atuin/config.toml"
         ,(local-file (config-files-path "atuin/config.toml")))))
-   (simple-service 'zellij-config-files-service-type
-       home-xdg-configuration-files-service-type
-     `(("zellij/config.kdl"
-        ,(local-file (config-files-path "zellij/config.kdl")))))
+   (direct-symlink-service
+    'zellij-config-symlink-service
+    (string-append (or (getenv "XDG_CONFIG_HOME")
+                       (string-append (getenv "HOME") "/.config"))
+                   "/zellij/config.kdl")
+    (config-files-path "zellij/config.kdl"))
    (simple-service 'home-fish-direnv
        home-fish-service-type
      (home-fish-extension

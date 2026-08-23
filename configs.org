@@ -338,10 +338,12 @@ A batteries-included tmux alternative.
 #+end_src
 
 #+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'zellij-config-files-service-type
-      home-xdg-configuration-files-service-type
-    `(("zellij/config.kdl"
-       ,(local-file (config-files-path "zellij/config.kdl")))))
+  (direct-symlink-service
+   'zellij-config-symlink-service
+   (string-append (or (getenv "XDG_CONFIG_HOME")
+                      (string-append (getenv "HOME") "/.config"))
+                  "/zellij/config.kdl")
+   (config-files-path "zellij/config.kdl"))
 #+end_src
 
 ** Direnv: Directory-local environments
@@ -4290,6 +4292,7 @@ Configuration helpers for my machines.
     #:use-module (gnu services)           ; Provides simple-service
     #:use-module (gnu home services)
     #:use-module (gnu home services shepherd)
+    #:use-module (krisb services utils)
     #:use-module <<common-system-modules>>
     #:use-module <<common-home-modules>>
     )
