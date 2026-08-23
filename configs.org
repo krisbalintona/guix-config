@@ -1295,10 +1295,6 @@ Other notes:
     (permissions #o400))
 #+end_src
 
-#+begin_src scheme :noweb-ref sublation-home-packages
-  "caddy-security-netlify-crowdsec-coraza-maxmind"
-#+end_src
-
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-caddy
       home-oci-service-type
