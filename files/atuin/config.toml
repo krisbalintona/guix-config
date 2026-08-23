@@ -71,7 +71,7 @@ inline_height = 15
 
 ## enable or disable showing a preview of the selected command
 ## useful when the command is longer than the terminal width and is cut off
-show_preview = false
+show_preview = true
 
 ## what to do when the escape key is pressed when searching
 ## possible values: return-original, return-query
@@ -88,7 +88,7 @@ scroll_context_lines = 5
 
 ## use ctrl instead of alt as the shortcut modifier key for numerical UI shortcuts
 ## alt-0 .. alt-9
-ctrl_n_shortcuts = true
+ctrl_n_shortcuts = false
 
 ## default history list format - can also be specified with the --format arg
 history_format = "{time}\t{command} - {directory}$\t{host}"
