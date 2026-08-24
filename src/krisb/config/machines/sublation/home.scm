@@ -980,6 +980,7 @@
                                     #:file sops-sublation-secrets-path)))
               (oci-container-configuration
                 (provision "slskd")
+                (requirement '(gluetun))
                 (image "slskd/slskd:latest")
                 (container-user "1000:1000")
                 (host-environment
