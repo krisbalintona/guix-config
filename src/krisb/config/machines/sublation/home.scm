@@ -47,6 +47,17 @@
 
 (define copyparty-socket
   (string-append copyparty-socket-dir "/copyparty.sock"))
+(define sops-secret-gluetun-wireguard-private-key
+  (sops-secret
+    (key '("gluetun" "wireguard_private_key"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
+
+(define sops-secret-gluetun-wireguard-preshared-key
+  (sops-secret
+    (key '("gluetun" "wireguard_preshared_key"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
 (define sops-secret-readeck-secret-key
   (sops-secret
     (key '("readeck" "secret-key"))
@@ -141,14 +152,8 @@
                (key '("vaultwarden" "push-installation-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
-             (sops-secret
-               (key '("gluetun" "wireguard_private_key"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
-               (key '("gluetun" "wireguard_preshared_key"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
+             sops-secret-gluetun-wireguard-private-key
+             sops-secret-gluetun-wireguard-preshared-key
              (sops-secret
                (key '("profilarr" "pocket-id" "client-id"))
                (file (local-file sops-sublation-secrets-path))
@@ -522,12 +527,18 @@
              (subnet "10.89.6.0/24"))))
           (containers
            (list
-            (let ((wireguard_private_key
-                   (get-sops-secret '("gluetun" "wireguard_private_key")
-                                    #:file sops-sublation-secrets-path))
-                  (wireguard_preshared_key
-                   (get-sops-secret '("gluetun" "wireguard_preshared_key")
-                                    #:file sops-sublation-secrets-path))
+            (let ((wireguard-private-key
+                   #~(call-with-input-file
+                         #$(sops-secret->secret-file
+                            sops-secret-gluetun-wireguard-private-key
+                            #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
+                       (@ (ice-9 textual-ports) get-string-all)))
+                  (wireguard-preshared-key
+                   #~(call-with-input-file
+                         #$(sops-secret->secret-file
+                            sops-secret-gluetun-wireguard-preshared-key
+                            #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
+                       (@ (ice-9 textual-ports) get-string-all)))
                   (http-proxy-port "16016"))
               (oci-container-configuration
                 (provision "gluetun")
@@ -537,8 +548,8 @@
                 (image "qmcgaw/gluetun:latest")
                 (host-environment
                  (list
-                  (cons "WIREGUARD_PRIVATE_KEY" wireguard_private_key)
-                  (cons "WIREGUARD_PRESHARED_KEY" wireguard_preshared_key)))
+                  (cons "WIREGUARD_PRIVATE_KEY" wireguard-private-key)
+                  (cons "WIREGUARD_PRESHARED_KEY" wireguard-preshared-key)))
                 (environment
                  (list "TZ=America/Chicago"
                        ;; See
