@@ -146,7 +146,20 @@
                            (host-name "sublation.home.arpa")
                            (user "krisbalintona")
                            (identity-file "~/.ssh/id_ed25519-sublation_backups")
-                           (forward-agent? #t))))))
+                           (forward-agent? #t))
+             (openssh-host
+               (name "vps-1")
+               (host-name
+                ;; FIXME 2026-08-24: The `host-name` and `user` fields don't
+                ;; accept gexps, so I resort `get-sops-secret`, which stores
+                ;; the secrets as plain text in the store.  Ideally we don't
+                ;; store them in the store like that.
+                (get-sops-secret '("ssh" "vps-1" "ip")
+                                 #:file sops-mute-secrets-path))
+               (user
+                (get-sops-secret '("ssh" "vps-1" "user")
+                                 #:file sops-mute-secrets-path))
+               (identity-file "~/.ssh/vps-vms"))))))
        (simple-service 'home-restic-emacs-repos
            home-restic-backup-service-type
          (list

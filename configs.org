@@ -490,6 +490,9 @@ Files and paths:
   (define-public sops-sublation-secrets-path
     (config-files-path "sops/sublation.yaml"))
 
+  (define-public sops-mute-secrets-path
+    (config-files-path "sops/mute.yaml"))
+
   ;; TODO 2026-03-07: Make path identical to mount path of drive
   ;; (define-public sops-sublation-repository-path "/mnt/backup-hdd")
   (define-public sops-sublation-repository-path sops-mute-repository-path)
@@ -707,7 +710,8 @@ Create a podman socket. Necessary for services that make API calls to podman.
   (service openssh-service-type)
 #+end_src
 
-Sublation SSH config:
+** Sublation config
+
 #+begin_src scheme :noweb-ref sublation-home-modules
   (gnu home services ssh)
 #+end_src
@@ -722,7 +726,20 @@ Sublation SSH config:
           (identity-file "~/.ssh/2026-git-forges"))))))
 #+end_src
 
-Mute SSH config:
+#+begin_src scheme :noweb-ref sublation-system-fail2ban-jails
+  (simple-service 'fail2ban-openssh
+      fail2ban-service-type
+    (list
+     (fail2ban-jail-configuration
+       (name "sshd")
+       (enabled? #t)
+       (max-retry 5)
+       (find-time "10m")
+       (ban-time "1h"))))
+#+end_src
+
+** Mute config
+
 #+begin_src scheme :noweb-ref mute-home-modules
   (gnu home services ssh)
 #+end_src
@@ -749,19 +766,20 @@ Mute SSH config:
                       (host-name "sublation.home.arpa")
                       (user "krisbalintona")
                       (identity-file "~/.ssh/id_ed25519-sublation_backups")
-                      (forward-agent? #t))))))
-#+end_src
-
-#+begin_src scheme :noweb-ref sublation-system-fail2ban-jails
-  (simple-service 'fail2ban-openssh
-      fail2ban-service-type
-    (list
-     (fail2ban-jail-configuration
-       (name "sshd")
-       (enabled? #t)
-       (max-retry 5)
-       (find-time "10m")
-       (ban-time "1h"))))
+                      (forward-agent? #t))
+        (openssh-host
+          (name "vps-1")
+          (host-name
+           ;; FIXME 2026-08-24: The `host-name` and `user` fields don't
+           ;; accept gexps, so I resort `get-sops-secret`, which stores
+           ;; the secrets as plain text in the store.  Ideally we don't
+           ;; store them in the store like that.
+           (get-sops-secret '("ssh" "vps-1" "ip")
+                            #:file sops-mute-secrets-path))
+          (user
+           (get-sops-secret '("ssh" "vps-1" "user")
+                            #:file sops-mute-secrets-path))
+          (identity-file "~/.ssh/vps-vms"))))))
 #+end_src
 
 ** Keychain

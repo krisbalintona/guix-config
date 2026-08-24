@@ -50,6 +50,9 @@
 (define-public sops-sublation-secrets-path
   (config-files-path "sops/sublation.yaml"))
 
+(define-public sops-mute-secrets-path
+  (config-files-path "sops/mute.yaml"))
+
 ;; TODO 2026-03-07: Make path identical to mount path of drive
 ;; (define-public sops-sublation-repository-path "/mnt/backup-hdd")
 (define-public sops-sublation-repository-path sops-mute-repository-path)
