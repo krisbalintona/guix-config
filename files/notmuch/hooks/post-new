@@ -29,6 +29,7 @@ notmuch tag +list -- "path:l2md/**"
 notmuch tag +list +guix -- "path:/^l2md\/guix-[^/]+\/.*/"
 notmuch tag +list +guix +mumi -- "path:l2md/mumi-bugs/**"
 notmuch tag +list +guix +emacs -- '"List:<~abcdw/rde-discuss.lists.sr.ht>" or to:"~abcdw/rde-discuss.lists.sr.ht"'
+notmuch tag +list +notmuch +emacs -- '"List:<notmuch.notmuchmail.org>" or to:"notmuch@notmuchmail.org"'
 
 # * Newsletters/subscriptions
 notmuch tag +sub -- from:@substack # Any substack
