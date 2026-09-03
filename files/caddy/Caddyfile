@@ -696,3 +696,10 @@ suwayomi.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:4567
 	import policy_private
 }
+
+# ** Jobsrv web server
+
+jobsrv.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:9400
+	import policy_private
+}
