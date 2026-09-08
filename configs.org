@@ -596,7 +596,7 @@ For a list of resources for learning how to network with Podman containers (some
   (gnu services sysctl)
 #+end_src
 
-#+begin_src scheme :noweb-ref sublation-supplementary-groups
+#+begin_src scheme :noweb-ref sublation-user-supplementary-groups
   "cgroup"
 #+end_src
 
@@ -657,6 +657,18 @@ Create a podman socket. Necessary for services that make API calls to podman.
                  "system" "service" "--time" "0")))
        (stop
         #~(make-kill-destructor)))))
+#+end_src
+
+** Container group
+
+For security purposes, all containers run in a non-root, non-host user. But sometimes we want, from the host user, to be able to read and write in these directories. So we add the host user to the group that all containers run in, "containers." Then, we may change the group permissions of directories and files created by containers (e.g., podman's ~--umask~ option).
+#+begin_src scheme :noweb-ref sublation-groups
+  (user-group
+   (name "containers")
+   (id 166535))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-user-supplementary-groups
+  "containers"
 #+end_src
 
 ** Prometheus podman exporter
@@ -4599,15 +4611,19 @@ Configuration helpers for my machines.
       (users (cons* (user-account
                       (name "krisbalintona")
                       (comment "Kristoffer Balintona")
-                      (group "users")
                       (home-directory "/home/krisbalintona")
                       ;; REVIEW 2025-12-06: Fish shell through tramp has
                       ;; failed despite all my attempts
                       ;; (shell (file-append fish "/bin/fish"))
+                      (group "users")
                       (supplementary-groups '("wheel" "netdev"
                                               "audio" "video"
-                                              <<sublation-supplementary-groups>>)))
+                                              <<sublation-user-supplementary-groups>>)))
                     %base-user-accounts))
+
+      (groups (cons*
+  	     <<sublation-groups>>
+  	     %base-groups))
 
       (packages
        (cons*

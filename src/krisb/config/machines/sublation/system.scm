@@ -72,15 +72,22 @@
     (users (cons* (user-account
                     (name "krisbalintona")
                     (comment "Kristoffer Balintona")
-                    (group "users")
                     (home-directory "/home/krisbalintona")
                     ;; REVIEW 2025-12-06: Fish shell through tramp has
                     ;; failed despite all my attempts
                     ;; (shell (file-append fish "/bin/fish"))
+                    (group "users")
                     (supplementary-groups '("wheel" "netdev"
                                             "audio" "video"
-                                            "cgroup")))
+                                            "cgroup"
+                                            "containers")))
                   %base-user-accounts))
+
+    (groups (cons*
+	     (user-group
+	      (name "containers")
+	      (id 166535))
+	     %base-groups))
 
     (packages
      (cons*
