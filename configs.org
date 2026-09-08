@@ -2757,34 +2757,94 @@ Resources:
          (respawn? #f))))))
 #+end_src
 
-***** COMMENT Navidrome: Well-supported music server
+***** Navidrome: Well-supported music server
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-navidrome
       home-oci-service-type
     (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "navidrome-network"))))
      (containers
       (list
-       (oci-container-configuration
-         (provision "navidrome")
-         (image "deluan/navidrome:latest")
-         (container-user "1000:1000")
-         (environment '("ND_LOGLEVEL=info"))
-         (network "gluetun-network")
-         (ports '("127.0.0.1:4533:4533"))
-         (volumes
-          '(("/home/krisbalintona/services/media/music" . "/music")
-            ("/home/krisbalintona/services/navidrome/data" . "/data")))
-         (auto-start? #t)
-         (respawn? #f))))))
+       (let ((port "4533")
+             (env-file
+              (sops-secret->secret-file
+               sops-secret-navidrome-dotenv
+               #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+         (oci-container-configuration
+           (provision "navidrome")
+           (image "deluan/navidrome:latest")
+           (container-user "1000:1000")
+           (requirement '(home-sops-secret-navidrome))
+           ;; All environment variables can be found here:
+           ;; https://www.navidrome.org/docs/usage/configuration/options/#environment-variables
+           (environment
+            (list "TZ=America/Chicago"
+                  "ND_LOGLEVEL=info"
+                  "ND_CONFIGFILE=/config/navidrome.toml"
+                  "ND_DATAFOLDER=/data"
+                  ;; This will be the main music library.  But I have to
+                  ;; manually use the UI to create a second music
+                  ;; library at /music/partial-albums
+                  "ND_MUSICFOLDER=/music/full-albums"
+                  (cons "ND_BASEURL" "https://navidrome.home.kristofferbalintona.me")
+                  (cons "ND_PORT" port)
+                  "ND_ENFORCENONROOTUSER=true"
+
+                  "ND_SCANONSTARTUP=true"
+                  "ND_SCANNER_ENABLED=true"
+                  "ND_PLAYLISTSPATH=playlists/**"
+                  "ND_AUTOIMPORTPLAYLISTS=true"
+                  "ND_AUTOTRANSCODEDOWNLOAD=true"
+
+                  "ND_BACKUP_PATH=/backups"
+                  "ND_BACKUP_SCHEDULE=0 0 */2 * *"
+                  "ND_BACKUP_COUNT=7"
+
+                  ;; ND_LASTFM_APIKEY and ND_LASTFM_SECRET are set in
+                  ;; the env file
+                  "ND_LASTFM_ENABLED=true"
+                  "ND_LISTENBRAINZ_ENABLED=true"))
+           (extra-arguments (list "--env-file" env-file))
+           (network "navidrome-network")
+           (ports (list (string-append "127.0.0.1:" port ":" port)))
+           (volumes
+            '(("/home/krisbalintona/services/navidrome/config" . "/config")
+              ("/home/krisbalintona/services/navidrome/data" . "/data")
+              ("/home/krisbalintona/services/media/music" . "/music:ro")))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
-***** Gonic: Filesystem-as-data music server (and other differences)
+Environment file:
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-navidrome-dotenv
+    (sops-secret
+      (key '("navidrome"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)
+      (output-type "dotenv")))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-navidrome-dotenv
+#+end_src
+
+***** COMMENT Gonic: Filesystem-as-data music server (and other differences)
 
 #+begin_src scheme :noweb-ref sublation-home-services
   (simple-service 'home-oci-gonic
       home-oci-service-type
     (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "gonic-network"))))
      (containers
       (list
        (oci-container-configuration
@@ -2812,7 +2872,7 @@ Resources:
             "GONIC_SCAN_AT_START_ENABLED=true"
             "GONIC_SCAN_WATCHER_ENABLED=true"
             "GONIC_SCAN_EMBEDDED_COVER_ENABLED=true"))
-         (network "gluetun-network")
+         (network "gonic-network")
          (ports '("127.0.0.1:4747:4747"))
          (volumes
           '(("/home/krisbalintona/services/gonic/data" . "/data")

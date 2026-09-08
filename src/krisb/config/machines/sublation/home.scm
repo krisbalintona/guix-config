@@ -23,6 +23,7 @@
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services containers)
   #:use-module (sops services sops)
+  #:use-module (sops services sops)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
   #:use-module (krisb services containers)
@@ -58,6 +59,12 @@
     (key '("gluetun" "wireguard_preshared_key"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
+(define sops-secret-navidrome-dotenv
+  (sops-secret
+    (key '("navidrome"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)
+    (output-type "dotenv")))
 (define sops-secret-readeck-dotenv
   (sops-secret
     (key '("readeck"))
@@ -163,6 +170,7 @@
                (key '("profilarr" "pocket-id" "secret"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
+             sops-secret-navidrome-dotenv
              sops-secret-readeck-dotenv))))
        (service home-oci-service-type
          (for-home
@@ -1136,46 +1144,63 @@
                  ("/home/krisbalintona/services/media/music/full-albums" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
-       (simple-service 'home-oci-gonic
+       (simple-service 'home-oci-navidrome
            home-oci-service-type
          (oci-extension
+          (networks
+           (list
+            (oci-network-configuration
+             (name "navidrome-network"))))
           (containers
            (list
-            (oci-container-configuration
-              (provision "gonic")
-              (image "sentriz/gonic:latest")
-              (container-user "1000:1000")
-              ;; Documentation for all available environment variables found
-              ;; here: https://github.com/sentriz/gonic.
-              (environment
-               `("TZ=America/Chicago"
-                 "GONIC_LISTEN_ADDR=0.0.0.0:4747"
-                 
-                 ,(cons"GONIC_MUSIC_PATH"
-                       (string-join
-                        '("Full albums->/music/full-albums"
-                          "Partial albums->/music/partial-albums")
-                        ","))
-                 "GONIC_PLAYLISTS_PATH=/music/playlists"
-                 "GONIC_CACHE_PATH=/cache"
-                 
-                 "GONIC_MULTI_VALUE_GENRE=multi"
-                 "GONIC_MULTI_VALUE_ARTIST=multi"
-                 "GONIC_MULTI_VALUE_ALBUM_ARTIST=multi"
+            (let ((port "4533")
+                  (env-file
+                   (sops-secret->secret-file
+                    sops-secret-navidrome-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+              (oci-container-configuration
+                (provision "navidrome")
+                (image "deluan/navidrome:latest")
+                (container-user "1000:1000")
+                (requirement '(home-sops-secret-navidrome))
+                ;; All environment variables can be found here:
+                ;; https://www.navidrome.org/docs/usage/configuration/options/#environment-variables
+                (environment
+                 (list "TZ=America/Chicago"
+                       "ND_LOGLEVEL=info"
+                       "ND_CONFIGFILE=/config/navidrome.toml"
+                       "ND_DATAFOLDER=/data"
+                       ;; This will be the main music library.  But I have to
+                       ;; manually use the UI to create a second music
+                       ;; library at /music/partial-albums
+                       "ND_MUSICFOLDER=/music/full-albums"
+                       (cons "ND_BASEURL" "https://navidrome.home.kristofferbalintona.me")
+                       (cons "ND_PORT" port)
+                       "ND_ENFORCENONROOTUSER=true"
        
-                 "GONIC_SCAN_AT_START_ENABLED=true"
-                 "GONIC_SCAN_WATCHER_ENABLED=true"
-                 "GONIC_SCAN_EMBEDDED_COVER_ENABLED=true"))
-              (network "gluetun-network")
-              (ports '("127.0.0.1:4747:4747"))
-              (volumes
-               '(("/home/krisbalintona/services/gonic/data" . "/data")
-                 ("gonic_cache" . "/cache")
-                 ("/home/krisbalintona/services/media/music" . "/music")))
-              (extra-arguments
-               '("--device=/dev/snd:/dev/snd"))
-              (auto-start? #t)
-              (respawn? #f))))))
+                       "ND_SCANONSTARTUP=true"
+                       "ND_SCANNER_ENABLED=true"
+                       "ND_PLAYLISTSPATH=playlists/**"
+                       "ND_AUTOIMPORTPLAYLISTS=true"
+                       "ND_AUTOTRANSCODEDOWNLOAD=true"
+       
+                       "ND_BACKUP_PATH=/backups"
+                       "ND_BACKUP_SCHEDULE=0 0 */2 * *"
+                       "ND_BACKUP_COUNT=7"
+       
+                       ;; ND_LASTFM_APIKEY and ND_LASTFM_SECRET are set in
+                       ;; the env file
+                       "ND_LASTFM_ENABLED=true"
+                       "ND_LISTENBRAINZ_ENABLED=true"))
+                (extra-arguments (list "--env-file" env-file))
+                (network "navidrome-network")
+                (ports (list (string-append "127.0.0.1:" port ":" port)))
+                (volumes
+                 '(("/home/krisbalintona/services/navidrome/config" . "/config")
+                   ("/home/krisbalintona/services/navidrome/data" . "/data")
+                   ("/home/krisbalintona/services/media/music" . "/music:ro")))
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-oci-yamtrack
            home-oci-service-type
          (oci-extension
