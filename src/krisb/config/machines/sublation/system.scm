@@ -31,7 +31,7 @@
 
 (define sops-secret-wireguard-private-key
   (sops-secret
-    (key '("wireguard-private-key"))
+    (key '("wireguard" "private-key"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
 (define %signing-keys-dir
@@ -288,7 +288,7 @@
            (shepherd-requirement '(nftables))
            (addresses '("10.0.0.1/24"))
            (port "53020")
-           (private-key (sops-secret->secret-file sops-secret-wireguard-private-key))
+           (private-key (sops-secret->secret-file sops-secret-wireguard/private-key))
            (bootstrap-private-key? #f)
            ;; Network rules
            (pre-up

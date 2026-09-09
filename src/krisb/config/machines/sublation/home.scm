@@ -48,16 +48,11 @@
 
 (define copyparty-socket
   (string-append copyparty-socket-dir "/copyparty.sock"))
-(define sops-secret-gluetun-wireguard-private-key
+(define sops-secret-gluetun-dotenv
   (sops-secret
-    (key '("gluetun" "wireguard_private_key"))
+    (key '("gluetun"))
     (file (local-file sops-sublation-secrets-path))
-    (permissions #o400)))
-
-(define sops-secret-gluetun-wireguard-preshared-key
-  (sops-secret
-    (key '("gluetun" "wireguard_preshared_key"))
-    (file (local-file sops-sublation-secrets-path))
+    (output-type "dotenv")
     (permissions #o400)))
 (define sops-secret-navidrome-dotenv
   (sops-secret
@@ -160,8 +155,7 @@
                (key '("vaultwarden" "push-installation-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
-             sops-secret-gluetun-wireguard-private-key
-             sops-secret-gluetun-wireguard-preshared-key
+             sops-secret-gluetun-dotenv
              (sops-secret
                (key '("profilarr" "pocket-id" "client-id"))
                (file (local-file sops-sublation-secrets-path))
@@ -536,18 +530,10 @@
              (subnet "10.89.6.0/24"))))
           (containers
            (list
-            (let ((wireguard-private-key
-                   #~(call-with-input-file
-                         #$(sops-secret->secret-file
-                            sops-secret-gluetun-wireguard-private-key
-                            #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
-                       (@ (ice-9 textual-ports) get-string-all)))
-                  (wireguard-preshared-key
-                   #~(call-with-input-file
-                         #$(sops-secret->secret-file
-                            sops-secret-gluetun-wireguard-preshared-key
-                            #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
-                       (@ (ice-9 textual-ports) get-string-all)))
+            (let ((env-file
+                   (sops-secret->secret-file
+                    sops-secret-gluetun-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
                   (http-proxy-port "16016"))
               (oci-container-configuration
                 (provision "gluetun")
@@ -555,42 +541,46 @@
                 ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/readme.md#setup
                 ;; for instructions on setting up Gluetun
                 (image "qmcgaw/gluetun:latest")
-                (host-environment
-                 (list
-                  (cons "WIREGUARD_PRIVATE_KEY" wireguard-private-key)
-                  (cons "WIREGUARD_PRESHARED_KEY" wireguard-preshared-key)))
+                (requirement '(home-sops-secret-gluetun))
                 (environment
                  (list "TZ=America/Chicago"
-                       ;; See
-                       ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/windscribe.md
-                       ;; for Windscribe-specific Gluetun instructions
-                       "VPN_SERVICE_PROVIDER=windscribe"
+                       ;; VPN-specific options
+                       ;;
+                       ;; For ProtonVPN, see
+                       ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/protonvpn.md
+                       "VPN_SERVICE_PROVIDER=protonvpn"
        
                        ;; Wireguard configuration
                        ;;
-                       ;; Output from generated Wireguard config from
-                       ;; https://windscribe.com/myaccount#configgenerator-wireguard.
-                       ;; See all Wireguard options here:
+                       ;; Output from auto-generated Wireguard config.  See
+                       ;; all Wireguard options here:
                        ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/wireguard.md
                        ;;
-                       ;; Interface
+                       ;; These env vars are set in the --env-file:
+                       ;; - WIREGUARD_PRIVATE_KEY
+                       ;; - WIREGUARD_ADDRESSES
+                       ;; - WIREGUARD_PUBLIC_KEY
                        "VPN_TYPE=wireguard"
-                       "WIREGUARD_PRIVATE_KEY"
-                       "WIREGUARD_ADDRESSES='100.82.80.101/32'"
-                       ;; Peer (VPN server)
-                       "WIREGUARD_PUBLIC_KEY=6O1bKP+apj/JT/aV++aODc1+EHlPO+c0xGyfKXE+k14=" ; Optional
-                       "WIREGUARD_ENDPOINT_PORT=65142"
-                       "WIREGUARD_PRESHARED_KEY"
-       
+                       "VPN_PORT_FORWARDING=on"
+                       "PORT_FORWARD_ONLY=on"
                        ;; See
                        ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md
                        ;; for a list of VPN provider server regions and
                        ;; cities.  Choose values corresponding to the
-                       ;; location chosen in the config generated by
-                       ;; Windscribe (see above)
-                       "SERVER_REGIONS='US East'"
+                       ;; location chosen in the config auto-generated (see
+                       ;; above)
+                       "SERVER_COUNTRIES=United States"
                        "SERVER_CITIES=Chicago"
-                       "UPDATER_PERIOD=24h"    ; Automatically update server list
+       
+                       ;; Automatically update server list.  Please see
+                       ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-periodically
+                       ;; for the advised time periods
+                       ;;
+                       ;; These env vars are set in the --env-file:
+                       ;; - UPDATER_PROTONVPN_EMAIL
+                       ;; - UPDATER_PROTONVPN_PASSWORD
+                       "UPDATER_PERIOD=672h"
+                       "UPDATER_PREFER_DIRECT_DOWNLOAD=yes"
        
                        ;; Container firewall rules
                        ;;
@@ -627,11 +617,13 @@
                          "127.0.0.1:50300:50300"
                          ;; HTTP proxy (make accessible to host)
                          ,(string-append "127.0.0.1:" http-proxy-port ":" http-proxy-port)))
-                (extra-arguments '("--device=/dev/net/tun:/dev/net/tun"
-                                   "--cap-add=NET_ADMIN"
-                                   "--cap-add=NET_RAW")) ; For UDP health checks
+                (extra-arguments
+                 (list "--env-file" env-file
+                       "--device=/dev/net/tun:/dev/net/tun"
+                       "--cap-add=NET_ADMIN"
+                       "--cap-add=NET_RAW"))   ; For UDP health checks
                 (volumes
-                 `(("/home/krisbalintona/services/gluetun/data" . "/gluetun")))
+                 (list (cons "/home/krisbalintona/services/gluetun/data" "/gluetun")))
                 (auto-start? #t)
                 (respawn? #f)))))))
        (simple-service 'home-oci-qbittorrent
