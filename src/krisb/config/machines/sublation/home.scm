@@ -58,11 +58,12 @@
     (key '("gluetun" "wireguard_preshared_key"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
-(define sops-secret-readeck-secret-key
+(define sops-secret-readeck-dotenv
   (sops-secret
-    (key '("readeck" "secret-key"))
+    (key '("readeck"))
     (file (local-file sops-sublation-secrets-path))
-    (permissions #o400)))
+    (permissions #o400)
+    (output-type "dotenv")))
 
 (define-public sublation-home-environment
   (home-environment
@@ -162,7 +163,7 @@
                (key '("profilarr" "pocket-id" "secret"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
-             sops-secret-readeck-secret-key))))
+             sops-secret-readeck-dotenv))))
        (service home-oci-service-type
          (for-home
           (oci-configuration
@@ -1426,9 +1427,9 @@
            (list
             (let ((port "17800")
                   (host-data-dir "/home/krisbalintona/services/readeck")
-                  (secret-file
+                  (env-file
                    (sops-secret->secret-file
-                    sops-secret-readeck-secret-key
+                    sops-secret-readeck-dotenv
                     #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
               (oci-container-configuration
                 (provision "readeck")
@@ -1436,17 +1437,14 @@
                 ;; FIXME 2026-08-04: Use `sops-secret->shepherd-service-name`
                 ;; when/if it becomes public/exported to get the Shepherd
                 ;; service name?
-                (requirement '(home-sops-secret-readeck/secret-key))
-                (host-environment
-                 (list
-                  (cons "READECK_SECRET_KEY"
-                        #~(call-with-input-file #$secret-file
-                            (@ (ice-9 textual-ports) get-string-all)))))
+                (requirement '(home-sops-secret-readeck))
                 (environment
                  (list (cons "READECK_SERVER_PORT" port)
                        "READECK_SERVER_BASE_URL=https://readeck.home.kristofferbalintona.me"
-                       "READECK_ALLOWED_HOSTS=readeck.home.kristofferbalintona.me"
-                       "READECK_SECRET_KEY"))
+                       "READECK_ALLOWED_HOSTS=readeck.home.kristofferbalintona.me"))
+                (extra-arguments
+                 ;; Sets READECK_SECRET_KEY env var
+                 (list "--env-file" env-file))
                 (network "readeck-network")
                 (ports (list (string-append "127.0.0.1:" port ":" port)))
                 (volumes (list (cons host-data-dir "/readeck")))
