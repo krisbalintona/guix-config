@@ -1723,7 +1723,7 @@ Create and mount MergerFS pools specific to torrenting:
            ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/readme.md#setup
            ;; for instructions on setting up Gluetun
            (image "qmcgaw/gluetun:latest")
-           (requirement '(home-sops-secret-gluetun))
+           (requirement '(home-sops-secret-gluetun qsticky))
            (environment
             (list "TZ=America/Chicago"
                   ;; VPN-specific options
@@ -1876,7 +1876,6 @@ See also a few helpful resources:
           '("TZ=America/Chicago"
             "PUID=1000"
             "PGID=1000"
-            "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
             "WEBUI_PORT=6701"))
          (network "container:gluetun")
          (volumes
@@ -1894,6 +1893,59 @@ See also https://github.com/StuffAnThings/qbit_manage/wiki and [[#h:20260112T021
 [fn:3] I initially discovered the relevancy of this setting when I noticed qBittorrent was hogging a lot of my system's RAM. I'm not sure if this is intentional behavior or a bug (e.g., memory leak).
 
 [fn:4] I learned about the effect this option could have from [[https://www.reddit.com/r/qBittorrent/comments/1c3r366/comment/m5ft4wh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][this Reddit comment]].
+
+****** qSticky: Synchronize the qBittorrent with the port forwarded by Gluetun's VPN
+
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-qsticky-dotenv
+    (sops-secret
+      (key '("qsticky"))
+      (file (local-file sops-sublation-secrets-path))
+      (output-type "dotenv")
+      (permissions #o400)))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-qsticky-dotenv
+#+end_src
+
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-oci-qsticky
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let ((env-file
+              (sops-secret->secret-file
+               sops-secret-qsticky-dotenv
+               #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+         (oci-container-configuration
+           (provision "qsticky")
+           (image "ghcr.io/monstermuffin/qsticky:latest")
+           (requirement '(gluetun home-sops-secret-qsticky))
+           (container-user "1000:1000")
+           (environment
+            '("TZ=America/Chicago"
+              "LOG_LEVEL: INFO"
+
+              ;; qBittorrent settings
+              ;;
+              ;; These env vars are set in --env-file:
+              ;; - QBITTORRENT_API_KEY
+              "QBITTORRENT_HOST=gluetun"
+              "QBITTORRENT_PORT=6701"     ; Web UI port
+              "QBITTORRENT_HTTPS=false"
+
+              ;; Gluetun settings
+              ;;
+              ;; These env vars are set in --env-file:
+              ;; - GLUETUN_AUTH_TYPE
+              ;; - GLUETUN_APIKEY
+              "GLUETUN_HOST=gluetun"))
+           (extra-arguments (list "--env-file" env-file))
+           (network "container:gluetun")
+           (auto-start? #t)
+           (respawn? #f)))))))
+#+end_src
 
 **** Usenet
 

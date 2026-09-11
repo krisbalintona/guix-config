@@ -54,6 +54,12 @@
     (file (local-file sops-sublation-secrets-path))
     (output-type "dotenv")
     (permissions #o400)))
+(define sops-secret-qsticky-dotenv
+  (sops-secret
+    (key '("qsticky"))
+    (file (local-file sops-sublation-secrets-path))
+    (output-type "dotenv")
+    (permissions #o400)))
 (define sops-secret-navidrome-dotenv
   (sops-secret
     (key '("navidrome"))
@@ -156,6 +162,7 @@
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
              sops-secret-gluetun-dotenv
+             sops-secret-qsticky-dotenv
              (sops-secret
                (key '("profilarr" "pocket-id" "client-id"))
                (file (local-file sops-sublation-secrets-path))
@@ -541,7 +548,7 @@
                 ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/readme.md#setup
                 ;; for instructions on setting up Gluetun
                 (image "qmcgaw/gluetun:latest")
-                (requirement '(home-sops-secret-gluetun))
+                (requirement '(home-sops-secret-gluetun qsticky))
                 (environment
                  (list "TZ=America/Chicago"
                        ;; VPN-specific options
@@ -639,7 +646,6 @@
                '("TZ=America/Chicago"
                  "PUID=1000"
                  "PGID=1000"
-                 "TORRENTING_PORT=6299" ; 2026-01-09: Setting this doesn't have an effect in my setup
                  "WEBUI_PORT=6701"))
               (network "container:gluetun")
               (volumes
@@ -648,6 +654,42 @@
                  ("/home/krisbalintona/services/media" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
+       (simple-service 'home-oci-qsticky
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (let ((env-file
+                   (sops-secret->secret-file
+                    sops-secret-qsticky-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+              (oci-container-configuration
+                (provision "qsticky")
+                (image "ghcr.io/monstermuffin/qsticky:latest")
+                (requirement '(gluetun home-sops-secret-qsticky))
+                (container-user "1000:1000")
+                (environment
+                 '("TZ=America/Chicago"
+                   "LOG_LEVEL: INFO"
+       
+                   ;; qBittorrent settings
+                   ;;
+                   ;; These env vars are set in --env-file:
+                   ;; - QBITTORRENT_API_KEY
+                   "QBITTORRENT_HOST=gluetun"
+                   "QBITTORRENT_PORT=6701"     ; Web UI port
+                   "QBITTORRENT_HTTPS=false"
+       
+                   ;; Gluetun settings
+                   ;;
+                   ;; These env vars are set in --env-file:
+                   ;; - GLUETUN_AUTH_TYPE
+                   ;; - GLUETUN_APIKEY
+                   "GLUETUN_HOST=gluetun"))
+                (extra-arguments (list "--env-file" env-file))
+                (network "container:gluetun")
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-oci-sabnzbd
            home-oci-service-type
          (oci-extension
