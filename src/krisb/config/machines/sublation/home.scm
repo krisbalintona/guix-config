@@ -522,7 +522,8 @@
                `(("/home/krisbalintona/services/copyparty/config" . "/config")
                  ,(cons copyparty-socket-dir copyparty-socket-dir)
                  ("/home/krisbalintona/services/copyparty/log" . "/var/log/copyparty")
-                 ("/home/krisbalintona/services/copyparty/data" . "/data")))
+                 ("/home/krisbalintona/services/copyparty/data" . "/data")
+                 ("/home/krisbalintona/services/media" . "/media:ro")))
               (command '("-c" "/config/copyparty.conf"
                          "--chdir" "/config"
                          ;; Logging

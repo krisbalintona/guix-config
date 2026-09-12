@@ -104,3 +104,11 @@
     e2d     # the e2d volflag enables the uploads database
     nodupe  # the nodupe volflag rejects duplicate uploads
     nohtml  # Prevent cross-site scripting (XSS)
+
+[/bittorent-downloads-manual]
+  /media/downloads/bittorrent/complete/manual/
+  accs:
+    r: @admin
+  flags:
+    fka
+    dk
