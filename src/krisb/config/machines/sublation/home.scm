@@ -23,6 +23,9 @@
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services containers)
   #:use-module (sops services sops)
+  #:use-module (gnu packages bash)                     ; For bash
+  #:use-module (gnu packages gettext)                  ; For gettext-minimal
+  #:use-module (sops services sops)
   #:use-module (sops services sops)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
@@ -48,6 +51,12 @@
 
 (define copyparty-socket
   (string-append copyparty-socket-dir "/copyparty.sock"))
+(define sops-secret-copyparty-dotenv
+  (sops-secret
+    (key '("copyparty"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)
+    (output-type "dotenv")))
 (define sops-secret-gluetun-dotenv
   (sops-secret
     (key '("gluetun"))
@@ -153,6 +162,7 @@
                (key '("caddy" "crowdsec-bouncer" "api-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
+             sops-secret-copyparty-dotenv
              (sops-secret
                (key '("vaultwarden" "push-installation-id"))
                (file (local-file sops-sublation-secrets-path))
@@ -395,7 +405,7 @@
                    (get-sops-secret-path "caddy/crowdsec-bouncer/api-key")))
               (oci-container-configuration
                 (provision "caddy")
-                (requirement '(home-oci-copyparty-socket home-oci-pocket-id-socket))
+                (requirement '(copyparty-socket home-oci-pocket-id-socket))
                 (image
                   (oci-image
                     ;; OCI images locations follow a
@@ -451,7 +461,7 @@
            home-shepherd-service-type
          (list
           (shepherd-service
-            (provision '(home-oci-copyparty-socket))
+            (provision '(copyparty-socket))
             (one-shot? #t)
             (start
              #~(lambda ()
@@ -459,6 +469,43 @@
                  (format #t "Socket directory exists at: ~a~%" #$copyparty-socket-dir)
                  #t))
             (documentation "Create parent directory for Copyparty socket."))))
+       (simple-service 'home-oci-copyparty-envsubst
+           home-shepherd-service-type
+         (list
+          ;; FIXME 2026-09-12: Right now since this is a oneshot service, I
+          ;; don't think anything is logged in the output of 'herd status'.
+          ;; However, it would be useful to log what this does, such as which
+          ;; files are deleted and created, and on failures, what exactly
+          ;; failed.
+          (shepherd-service
+            (provision '(copyparty-envsubst))
+            (requirement '(home-sops-secret-copyparty))
+            (one-shot? #t)
+            (start
+             #~(lambda ()
+                 (let ((template #$(config-files-path "copyparty/copyparty.conf.template"))
+                       (dotenv
+                        #$(sops-secret->secret-file
+                           sops-secret-copyparty-dotenv
+                           #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
+                       (output "/home/krisbalintona/services/copyparty/config/copyparty.conf"))
+                   (mkdir-p (dirname output))
+                   (format #t "envsubst: dotenv=~a exists?=~a~%" dotenv (file-exists? dotenv))
+                   (format #t "envsubst: template=~a exists?=~a~%" template (file-exists? template))
+                   (when (file-exists? output) ; envsubst doesn't overwrite, so we delete first
+                     (delete-file output))
+                   (let* ((status
+                           (system* #$(file-append bash "/bin/bash") "-c"
+                                    (string-append "set -a; "
+                                                   "source " dotenv "; "
+                                                   "set +a; "
+                                                   #$(file-append gettext-minimal "/bin/envsubst") " < " template
+                                                   " > " output)))
+                          (exit-val (status:exit-val status)))
+                     (format #t "envsubst: exit-val=~a~%" exit-val)
+                     (when (zero? exit-val) (chmod output #o600)) ; Read and write for owner only
+                     (zero? exit-val)))))
+            (documentation "Create Copyparty config file with env vars substituted."))))
        (simple-service 'home-oci-copyparty
            home-oci-service-type
          (oci-extension
@@ -466,18 +513,18 @@
            (list
             (oci-container-configuration
               (provision "copyparty")
-              (requirement '(home-oci-copyparty-socket))
+              (requirement '(copyparty-socket copyparty-envsubst))
               (image "docker.io/copyparty/ac:latest")
-              ;; Have files mounted at /data and copyparty config + cache
-              ;; files in /srv
+              ;; Have served files mounted at /data and the copyparty config
+              ;; + cache files in /config (~/services/copyparty/config on the
+              ;; host)
               (volumes
-               `(("/home/krisbalintona/services/copyparty/data" . "/data")
+               `(("/home/krisbalintona/services/copyparty/config" . "/config")
+                 ,(cons copyparty-socket-dir copyparty-socket-dir)
                  ("/home/krisbalintona/services/copyparty/log" . "/var/log/copyparty")
-                 (,(config-files-path "copyparty/copyparty.conf")
-                  . "/srv/copyparty.conf")
-                 ,(cons copyparty-socket-dir copyparty-socket-dir)))
-              (command '("-c" "/srv/copyparty.conf"
-                         "--chdir" "/srv"
+                 ("/home/krisbalintona/services/copyparty/data" . "/data")))
+              (command '("-c" "/config/copyparty.conf"
+                         "--chdir" "/config"
                          ;; Logging
                          "-lo" "/var/log/copyparty/copyparty-%Y-%m%d-%H%M%S.txt"))
               (auto-start? #t)

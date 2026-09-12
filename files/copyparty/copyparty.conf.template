@@ -13,12 +13,19 @@
   e2dsa                        # File indexing and filesystem scanning
   re-maxage: 60  # Re-index every 60 seconds; see also --db-act and the :c volflag
   e2ts           # Multimedia indexing
-  # Account info
+  # Accounts
   ban-pw: 5,30,1440             # Ban from bruteforce attempts
   usernames
+
+  # Salts
   ah-alg: argon2
-  show-ah-salt
-  ah-salt: 880jUWho350b058O6y1WfmdD
+  show-ah-salt                  # For password hashes
+  ah-salt: ${AH_SALT}
+  show-fk-salt                  # For per-file access keys
+  fk-salt: ${FK_SALT}
+  show-dk-salt                  # For per-directory access keys
+  dk-salt: ${DK_SALT}
+    
   # Reverse proxy settings
   rproxy: 1
   # We isolate Copyparty in its own network container and use a
@@ -32,6 +39,9 @@
   # https://github.com/9001/copyparty?tab=readme-ov-file#reverse-proxy
   # for more information
   xff-src: lan
+  # Return 404 response instead of 401/403 where appropriate, to make
+  # denied paths look the same as non-existent ones
+  vague-403
   # Use Unix Domain Sockets (UDS) instead of TCP. Create a socket
   # (then share this with other containers in a shared volume) and
   # give it 770 permissions.
@@ -54,16 +64,18 @@
 # result of USERNAME:PASSWORD instead of just PASSWORD (as the
 # password inputted to e.g. --ah-gen or --ah-cli).
 [accounts]
-  krisbalintona: +2lHolr8f9BkozY6Pz9MXDbhHeNfisejk
+  krisbalintona: ${KRISBALINTONA_PASSWORD_HASH}
+  guest: ${GUEST_PASSWORD_HASH}
 
 [groups]
   admin: krisbalintona
+  friends: guest
 
 # create volumes:
 [/]
   /data/root/
   accs:
-    r: *
+    r: @friends
     A: @admin
 
 [/secrets]
@@ -77,7 +89,7 @@
 [/biblio]
   /data/biblio/
   accs:
-    g: *
+    g: @friends
     A: @admin
   flags:
     dk
@@ -86,7 +98,9 @@
 [/dump]
   /data/root/dump/
   accs:
+    rw: @friends
     A: @admin
   flags:
     e2d     # the e2d volflag enables the uploads database
     nodupe  # the nodupe volflag rejects duplicate uploads
+    nohtml  # Prevent cross-site scripting (XSS)
