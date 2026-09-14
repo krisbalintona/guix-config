@@ -288,7 +288,7 @@
            (shepherd-requirement '(nftables))
            (addresses '("10.0.0.1/24"))
            (port "53020")
-           (private-key (sops-secret->secret-file sops-secret-wireguard/private-key))
+           (private-key (sops-secret->secret-file sops-secret-wireguard-private-key))
            (bootstrap-private-key? #f)
            ;; Network rules
            (pre-up
