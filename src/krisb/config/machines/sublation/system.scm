@@ -244,14 +244,28 @@
                  (so-rcvbuf . "1m")
                  (use-caps-for-id . "no")
                  (num-threads . "1")))))
+       
+           (forward-zone
+            (list
+             ;; Use Quad9 as upstream DNS
+             (unbound-zone
+               (name ".")
+               (forward-addr
+                '("9.9.9.9#dns.quad9.net"
+                  "149.112.112.112#dns.quad9.net"
+                  "2620:fe::fe#dns.quad9.net"
+                  "2620:fe::9#dns.quad9.net"))
+               (forward-tls-upstream #t))))
+           
+           ;; With the control server enabled, modify and query Unbound using
+           ;; e.g.:
+           ;;
+           ;;     sudo unbound-control -s CONTROL-INTERFACE-SOCKET status
            (remote-control
             (unbound-remote
               (control-enable #t)
-              ;; Use with:
-              ;;
-              ;;     sudo unbound-control -s CONTROL-INTERFACE status
-              ;;
               (control-interface "/run/unbound.sock"))) ; Default value
+           
            ;; We place the below in EXTRA-CONTENT because we either need to
            ;; unquote a value entirely in the config or quote portions of
            ;; them (which can be done if the cdr is a single Guile symbol).
@@ -260,29 +274,29 @@
            ;; be multiple "server:" blocks in the config, it seems.)
            (extra-content
             "server:
-               access-control: 127.0.0.0/8 allow
-               # Pihole sets \"host.containers.internal\" as the upstream #
-               # DNS, so allow queries from this device's IP.  (See also the
-               # \"interface\" setting.)
-               access-control: 192.168.4.0/22 allow
+       access-control: 127.0.0.0/8 allow
+       # Pihole sets \"host.containers.internal\" as the upstream #
+       # DNS, so allow queries from this device's IP.  (See also the
+       # \"interface\" setting.)
+       access-control: 192.168.4.0/22 allow
        
-               # Ensure privacy of local IP ranges.  Taken from
-               # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
-               private-address: 192.168.0.0/16
-               private-address: 169.254.0.0/16
-               private-address: 172.16.0.0/12
-               private-address: 10.0.0.0/8
-               private-address: fd00::/8
-               private-address: fe80::/10
+       # Ensure privacy of local IP ranges.  Taken from
+       # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+       private-address: 192.168.0.0/16
+       private-address: 169.254.0.0/16
+       private-address: 172.16.0.0/12
+       private-address: 10.0.0.0/8
+       private-address: fd00::/8
+       private-address: fe80::/10
        
-               # Ensure no reverse queries to non-public IP ranges (RFC6303
-               # 4.2).  Taken from
-               # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
-               private-address: 192.0.2.0/24
-               private-address: 198.51.100.0/24
-               private-address: 203.0.113.0/24
-               private-address: 255.255.255.255/32
-               private-address: 2001:db8::/32")))
+       # Ensure no reverse queries to non-public IP ranges (RFC6303
+       # 4.2).  Taken from
+       # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
+       private-address: 192.0.2.0/24
+       private-address: 198.51.100.0/24
+       private-address: 203.0.113.0/24
+       private-address: 255.255.255.255/32
+       private-address: 2001:db8::/32")))
        (service wireguard-service-type
          (wireguard-configuration
            (shepherd-requirement '(nftables))
