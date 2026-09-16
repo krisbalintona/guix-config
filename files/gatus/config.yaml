@@ -31,16 +31,12 @@ endpoints:
     group: services
     <<: [*http, *internal]
 
-  - name: Pihole (webserver)
-    url: "https://pihole.home.kristofferbalintona.me/admin"
-    group: network
-    <<: [*http, *internal]
-  - name: Pihole (DNS server)
+  - name: Technitium (DNS server)
     url: "192.168.4.242"
     group: network
     interval: 30s
     dns:
-      query-name: pihole.home.kristofferbalintona.me
+      query-name: technitium.home.kristofferbalintona.me
       query-type: A
     conditions:
       - "[BODY] == [IP]"

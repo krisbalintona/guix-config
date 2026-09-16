@@ -611,8 +611,11 @@ For a list of resources for learning how to network with Podman containers (some
     (rootless-podman-configuration
       (subgids (list (subid-range (name "krisbalintona"))))
       (subuids (list (subid-range (name "krisbalintona"))))))
-  ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid this.
-  ;; For rootless podman services (Caddy and Pihole)
+  ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid lowering
+  ;; the unprivileged port start?
+  ;;
+  ;; For rootless services that require lower port numbers, such as a
+  ;; reverse proxy (Caddy) and DNS server (Technitium)
   (simple-service 'sysctl-podman
       sysctl-service-type
     '(("net.ipv4.ip_unprivileged_port_start" . "53")))
@@ -1069,10 +1072,12 @@ Some useful tooling:
 
 *** DNS
 
-**** Unbound: Privacy-centered DNS resolver
+**** COMMENT Unbound: Privacy-centered DNS resolver
 :PROPERTIES:
 :CUSTOM_ID: h:20260105T091837.031550
 :END:
+
+*2026-09-15: Superseded by Technitium.*
 
 I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS filter]]) with Unbound being my DNS resolver.
 
@@ -1233,10 +1238,12 @@ I use Pihole as a DNS forwarder (see [[#h:20260105T091835.257202][Pi-hole: DNS f
   "unbound"
 #+end_src
 
-**** Pi-hole: DNS filter
+**** COMMENT Pi-hole: DNS filter
 :PROPERTIES:
 :CUSTOM_ID: h:20260105T091835.257202
 :END:
+
+*2026-09-15: Superseded by Technitium.*
 
 I use Pihole as a DNS forwarder, setting the only upstream DNS server to be my self-hosted Unbound instance (see [[#h:20260105T091837.031550][Unbound: Privacy-centered DNS resolver]]). Effectively, Pihole filters DNS requests, and forwards the ones that need to be resolved to Unbound (when the request isn't already cached by Pihole itself).
 
@@ -1312,6 +1319,90 @@ Other notes:
   #+end_src
   As such, the issue is not with Pi-hole nor Unbound, but with badly configured domains. Therefore, there is nothing to be "fixed" on the user's end.
   
+**** Technitium: The most featureful DNS resolver
+
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-technitium-password
+    (sops-secret
+      (key '("technitium" "password"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-technitium-password
+#+end_src
+
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-oci-technitium
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let ((container-log-dir "/var/log/technitium/dns")
+             (web-ui-port "5380")
+             (password-file
+              (sops-secret->secret-file
+               sops-secret-technitium-password
+               #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+         (oci-container-configuration
+           (provision "technitium")
+           (image "technitium/dns-server:latest")
+           ;; See
+           ;; https://github.com/TechnitiumSoftware/DnsServer/blob/master/DockerEnvironmentVariables.md
+           ;; for the documentation of all environment variables, and
+           ;; https://github.com/TechnitiumSoftware/DnsServer/blob/master/docker-compose.yml
+           ;; for an example Docker compose file
+           (environment
+            (list (cons "DNS_SERVER_LOG_FOLDER_PATH" container-log-dir)
+                  (cons "DNS_SERVER_DOMAIN" "technitium.home.kristofferbalintona.me")
+
+                  ;; Web UI/service.  We use Caddy as a reverse proxy
+                  (cons "DNS_SERVER_WEB_SERVICE_HTTP_PORT" web-ui-port)
+                  (cons "DNS_SERVER_WEB_SERVICE_LOCAL_ADDRESSES" "127.0.0.1")
+                  (cons "DNS_SERVER_WEB_SERVICE_REVERSE_PROXY_ADDRESSES" "127.0.0.1")
+                  (cons "DNS_SERVER_WEB_SERVICE_ENABLE_HTTPS" "false") ; Default value
+                  (cons "DNS_SERVER_ADMIN_PASSWORD_FILE" password-file)
+
+                  ;; Who do we allow to query the DNS server?
+                  (cons "DNS_SERVER_RECURSION" "UseSpecifiedNetworkACL")
+                  (cons "DNS_SERVER_RECURSION_NETWORK_ACL"
+                        (string-join '("127.0.0.1"      ; This machine
+                                       "192.168.1.0/24" ; LAN subnet
+                                       "10.0.0.0/24")   ; Wireguard VPN
+                                     ","))
+
+                  ;; Regarding actual DNS resolution: although
+                  ;; Technitium can handle DoH and DoT, we do so with
+                  ;; Caddy for both.  This means we don't have to renew
+                  ;; any SSL certificates ourselves; we let Caddy do
+                  ;; it for us.
+                  ;;
+                  ;; I enable DNS-over-HTTP in Technitium and have Caddy
+                  ;; forward requests from a chosen endpoint to the port
+                  ;; Technitium is listening on.  This gives us
+                  ;; DNS-over-HTTPS (DoH).
+                  ;;
+                  ;; For DoT, we use the caddy-l4 app to handle TLS
+                  ;; termination. We enable "DNS-over-TCP-PROXY" in
+                  ;; Technitium and point Caddy's caddy-l4 block at that
+                  ;; port, with the PROXY protocol carrying the real
+                  ;; client IP.
+
+                  "DNS_SERVER_LOG_USING_LOCAL_TIME=true" ; Default value
+                  "DNS_SERVER_ENABLE_BLOCKING=true")) ; Network filtering
+           (network "host")
+           (volumes
+            (list (cons "/etc/localtime" "/etc/localtime:ro")
+                  (cons password-file password-file)
+                  (cons "/home/krisbalintona/services/technitium/config" "/etc/dns")
+                  (cons "/home/krisbalintona/services/technitium/logs" container-log-dir)))
+           (auto-start? #t)
+           (respawn? #f)))))))
+#+end_src
+
 *** Web traffic
 
 **** Caddy: Reverse proxy
@@ -3440,9 +3531,8 @@ A lightweight, simpler alternative to Uptime Kuma.
          (image "twinproduction/gatus:stable")
          (network "host")
          (volumes
-          `(,(cons (config-files-path "gatus/config.yaml")
-                   "/config/config.yaml")
-            "/home/krisbalintona/services/gatus/data:/data"))
+          (list (cons (config-files-path "gatus/config.yaml") "/config/config.yaml")
+                "/home/krisbalintona/services/gatus/data:/data"))
          (auto-start? #t)
          (respawn? #f))))))
 #+end_src

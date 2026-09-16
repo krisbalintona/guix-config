@@ -85,9 +85,14 @@ table inet filter {
         # Allow SSH
         tcp dport ssh accept
 
-        # Allow all DNS queries (e.g., Pihole)
+        # Allow all standard (Tcp, Udp) DNS queries
         udp dport 53 counter accept
         tcp dport 53 counter accept
+
+        # Allow DNS-over-TLS (853/tcp) and DNS-over-QUIC (853/udp)
+        # queries
+        udp dport 853 counter accept
+        tcp dport 853 counter accept
 
         # Reject everything else
         reject with icmpx type port-unreachable

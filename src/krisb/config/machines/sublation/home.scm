@@ -16,6 +16,7 @@
   #:use-module (gnu home services containers)
   #:use-module (gnu packages containers)
   #:use-module (gnu home services ssh)
+  #:use-module (sops services sops)
   #:use-module (krisb packages networking)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
@@ -45,6 +46,11 @@
 
 (define pocket-id-socket
   (string-append pocket-id-socket-dir "/pocket-id.sock"))
+(define sops-secret-technitium-password
+  (sops-secret
+    (key '("technitium" "password"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
 (define copyparty-socket-dir
   (string-append (getenv "XDG_RUNTIME_DIR")
                  "/copyparty"))
@@ -97,7 +103,6 @@
         "brightnessctl"
         "pinentry"
         "bind:utils"
-        "unbound"
         "soju"
         "smartmontools"            ; For smartctl
         "mergerfs"
@@ -142,10 +147,7 @@
                (key '("pocket-id-encryption-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
-             (sops-secret
-               (key '("pihole-webserver-password"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
+             sops-secret-technitium-password
              (sops-secret
                (key '("caddy" "netlify-access-token"))
                (file (local-file sops-sublation-secrets-path))
@@ -353,41 +355,69 @@
                 (extra-arguments '("--userns=keep-id"))
                 (auto-start? #t)
                 (respawn? #f)))))))
-       (simple-service 'home-oci-pihole
+       (simple-service 'home-oci-technitium
            home-oci-service-type
          (oci-extension
           (containers
            (list
-            (let* ((password-file
-                    (get-sops-secret-path "pihole-webserver-password")))
+            (let ((container-log-dir "/var/log/technitium/dns")
+                  (web-ui-port "5380")
+                  (password-file
+                   (sops-secret->secret-file
+                    sops-secret-technitium-password
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
               (oci-container-configuration
-                (provision "pihole")
-                (image "docker.io/pihole/pihole:latest")
+                (provision "technitium")
+                (image "technitium/dns-server:latest")
+                ;; See
+                ;; https://github.com/TechnitiumSoftware/DnsServer/blob/master/DockerEnvironmentVariables.md
+                ;; for the documentation of all environment variables, and
+                ;; https://github.com/TechnitiumSoftware/DnsServer/blob/master/docker-compose.yml
+                ;; for an example Docker compose file
                 (environment
-                 `("TZ=America/Chicago"
-                   "FTLCONF_dns_port=53" ; Default port
-                   ;; Webserver
-                   "FTLCONF_webserver_port=127.0.0.1:7080"
-                   ,(cons "WEBPASSWORD_FILE" password-file)
-                   ;; Listen for queries on all interfaces and from all
-                   ;; origins
-                   "FTLCONF_dns_listeningMode=ALL"
-                   ;; Forward queries to Unbound DNS (whose port is 5335 on
-                   ;; the host)
-                   "FTLCONF_dns_upstreams=127.0.0.1#5335"
-                   ;; Pihole as NTP server for other devices?
-                   "FTLCONF_ntp_ipv4_active=false"
-                   "FTLCONF_ntp_ipv6_active=false"
-                   ;; Pihole as NTP server for host?
-                   "FTLCONF_ntp_sync_active=false"))
-                ;; We use the host network since clients need to directly
-                ;; talk to pihole otherwise pihole can't distinguish clients
-                ;; (an internal container network would make all clients come
-                ;; from the same client)
+                 (list (cons "DNS_SERVER_LOG_FOLDER_PATH" container-log-dir)
+                       (cons "DNS_SERVER_DOMAIN" "technitium.home.kristofferbalintona.me")
+       
+                       ;; Web UI/service.  We use Caddy as a reverse proxy
+                       (cons "DNS_SERVER_WEB_SERVICE_HTTP_PORT" web-ui-port)
+                       (cons "DNS_SERVER_WEB_SERVICE_LOCAL_ADDRESSES" "127.0.0.1")
+                       (cons "DNS_SERVER_WEB_SERVICE_REVERSE_PROXY_ADDRESSES" "127.0.0.1")
+                       (cons "DNS_SERVER_WEB_SERVICE_ENABLE_HTTPS" "false") ; Default value
+                       (cons "DNS_SERVER_ADMIN_PASSWORD_FILE" password-file)
+       
+                       ;; Who do we allow to query the DNS server?
+                       (cons "DNS_SERVER_RECURSION" "UseSpecifiedNetworkACL")
+                       (cons "DNS_SERVER_RECURSION_NETWORK_ACL"
+                             (string-join '("127.0.0.1"      ; This machine
+                                            "192.168.1.0/24" ; LAN subnet
+                                            "10.0.0.0/24")   ; Wireguard VPN
+                                          ","))
+       
+                       ;; Regarding actual DNS resolution: although
+                       ;; Technitium can handle DoH and DoT, we do so with
+                       ;; Caddy for both.  This means we don't have to renew
+                       ;; any SSL certificates ourselves; we let Caddy do
+                       ;; it for us.
+                       ;;
+                       ;; I enable DNS-over-HTTP in Technitium and have Caddy
+                       ;; forward requests from a chosen endpoint to the port
+                       ;; Technitium is listening on.  This gives us
+                       ;; DNS-over-HTTPS (DoH).
+                       ;;
+                       ;; For DoT, we use the caddy-l4 app to handle TLS
+                       ;; termination. We enable "DNS-over-TCP-PROXY" in
+                       ;; Technitium and point Caddy's caddy-l4 block at that
+                       ;; port, with the PROXY protocol carrying the real
+                       ;; client IP.
+       
+                       "DNS_SERVER_LOG_USING_LOCAL_TIME=true" ; Default value
+                       "DNS_SERVER_ENABLE_BLOCKING=true")) ; Network filtering
                 (network "host")
                 (volumes
-                 (list (cons "/home/krisbalintona/services/pihole/data" "/etc/pihole")
-                       (cons password-file password-file)))
+                 (list (cons "/etc/localtime" "/etc/localtime:ro")
+                       (cons password-file password-file)
+                       (cons "/home/krisbalintona/services/technitium/config" "/etc/dns")
+                       (cons "/home/krisbalintona/services/technitium/logs" container-log-dir)))
                 (auto-start? #t)
                 (respawn? #f)))))))
        (simple-service 'home-oci-caddy
@@ -1611,9 +1641,8 @@
               (image "twinproduction/gatus:stable")
               (network "host")
               (volumes
-               `(,(cons (config-files-path "gatus/config.yaml")
-                        "/config/config.yaml")
-                 "/home/krisbalintona/services/gatus/data:/data"))
+               (list (cons (config-files-path "gatus/config.yaml") "/config/config.yaml")
+                     "/home/krisbalintona/services/gatus/data:/data"))
               (auto-start? #t)
               (respawn? #f))))))
        (simple-service 'home-oci-grafana

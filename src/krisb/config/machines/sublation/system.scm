@@ -20,7 +20,6 @@
   #:use-module (ice-9 textual-ports)                   ; For 'get-string-all'
   #:use-module (krisb packages networking)
   #:use-module (gnu services security)
-  #:use-module (gnu services dns)
   #:use-module (gnu services vpn)
   #:use-module (gnu services sysctl)
   #:use-module (gnu services messaging)
@@ -118,8 +117,11 @@
          (rootless-podman-configuration
            (subgids (list (subid-range (name "krisbalintona"))))
            (subuids (list (subid-range (name "krisbalintona"))))))
-       ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid this.
-       ;; For rootless podman services (Caddy and Pihole)
+       ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid lowering
+       ;; the unprivileged port start?
+       ;;
+       ;; For rootless services that require lower port numbers, such as a
+       ;; reverse proxy (Caddy) and DNS server (Technitium)
        (simple-service 'sysctl-podman
            sysctl-service-type
          '(("net.ipv4.ip_unprivileged_port_start" . "53")))
@@ -151,152 +153,6 @@
             (filter
              (fail2ban-jail-filter-configuration
                (name "nginx-botsearch"))))))
-       ;; I use Unbound with Pihole.  For an explanation of why (and a guide
-       ;; on how to do so) I pair Unbound with the latter, see
-       ;; https://docs.pi-hole.net/guides/dns/unbound/
-       (service unbound-service-type
-         (unbound-configuration
-           (server
-            (unbound-server
-              ;; Let only these interfaces query Unbound (Pihole forwards DNS
-              ;; queries to Unbound)
-              (interface '("127.0.0.1"         ; IPv4 local host
-                           "::1"               ; IPv6 local
-                           ;; Pihole sets "host.containers.internal" as the
-                           ;; upstream DNS, so allow queries from this
-                           ;; device's interface.  (See also the
-                           ;; "access-control" setting.)
-                           "192.168.4.242"))
-              (tls-cert-bundle "/etc/ssl/certs/ca-certificates.crt")
-              (hide-version #t)
-              (hide-identity #t)
-              ;; See
-              ;; https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html
-              ;; for a description of all options
-              (extra-options
-               '((port . 5335) ; Pihole forwards DNS queries to this port
-                 ;; These are already default, but I declare them explicitly
-                 ;; anyway
-                 (do-ip4 . "yes")
-                 (do-udp . "yes")
-                 (do-tcp . "yes")
-                 ;; The following can be set to "yes" if my WAN supports
-                 ;; IPv6.  I can check by going to test-ipv6.com
-                 (do-ip6 . "no")
-                 ;; All paths below are relative to CHROOT, if set.  Make
-                 ;; sure CHROOT has the permissions of the unbound process.
-                 ;; The default user of the process is "unbound" (see also
-                 ;; the USERNAME option).  To change permissions, do
-                 ;; something like:
-                 ;;
-                 ;;     sudo chown unbound:unbound CHROOT_PATH
-                 ;;
-                 ;; I do not CHROOT since unbound already runs as a user
-                 ;; without elevated privileges, and that's good enough for
-                 ;; me.
-                 (chroot . "")
-                 ;; Logging.  If LOGFILE is a path, then ensure its parent
-                 ;; directory is created and that LOGFILE or its directory is
-                 ;; owned by "unbound" (the default value of the USERNAME
-                 ;; option).  If LOGFILE is not set or is set to an empty
-                 ;; string, then log output to "sudo herd status unbound"
-                 ;; instead
-                 (verbosity . "1")  ; Default
-                 (logfile . "")
-                 (log-time-ascii . "yes")
-                 (log-destaddr . "yes")
-                 (log-queries . "yes")
-                 (log-servfail . "yes")
-                 ;; TODO 2025-12-16: Write a service to do this
-                 ;; automatically.  But first check if there truly is no
-                 ;; currently existing way to do it automatically.
-                 ;;
-                 ;; Use DNSSEC.
-                 ;;
-                 ;; NOTE 2025-12-12: On Guix Systems, the root key has to be
-                 ;; created manually, it seems.  Ensure the parent directory
-                 ;; of the file exists then run:
-                 ;;
-                 ;;     sudo unbound-anchor -a /PATH/TO/KEY/root.key
-                 ;;
-                 ;; Unbound also runs as the "unbound" user, so for extra
-                 ;; security you can change the permissions of the file, too:
-                 ;;
-                 ;;     sudo chown unbound:unbound /PATH/TO/KEY
-                 ;;
-                 ;; Or, the first command can be ran with "-u unbound", like
-                 ;; so:
-                 ;;
-                 ;;     sudo -u unbound unbound-anchor -a /PATH/TO/KEY/root.key
-                 ;;
-                 (auto-trust-anchor-file . "/var/lib/unbound/root.key")
-                 (harden-glue . "yes")
-                 (harden-dnssec-stripped . "yes")
-                 ;; Give minimal domain name information in queries to DNS
-                 ;; servers.  See also the 'qname-minimisation-strict'
-                 ;; setting.
-                 (qname-minimisation . "yes")
-                 ;; See
-                 ;; https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
-                 ;; for an explanation of these values
-                 (prefetch . "yes")
-                 (edns-buffer-size . "1232")
-                 (so-rcvbuf . "1m")
-                 (use-caps-for-id . "no")
-                 (num-threads . "1")))))
-       
-           (forward-zone
-            (list
-             ;; Use Quad9 as upstream DNS
-             (unbound-zone
-               (name ".")
-               (forward-addr
-                '("9.9.9.9#dns.quad9.net"
-                  "149.112.112.112#dns.quad9.net"
-                  "2620:fe::fe#dns.quad9.net"
-                  "2620:fe::9#dns.quad9.net"))
-               (forward-tls-upstream #t))))
-           
-           ;; With the control server enabled, modify and query Unbound using
-           ;; e.g.:
-           ;;
-           ;;     sudo unbound-control -s CONTROL-INTERFACE-SOCKET status
-           (remote-control
-            (unbound-remote
-              (control-enable #t)
-              (control-interface "/run/unbound.sock"))) ; Default value
-           
-           ;; We place the below in EXTRA-CONTENT because we either need to
-           ;; unquote a value entirely in the config or quote portions of
-           ;; them (which can be done if the cdr is a single Guile symbol).
-           ;; But UNBOUND-SERVER always quotes values, so to deal with edge
-           ;; cases we place certain settings in EXTRA-CONTENT.  (There can
-           ;; be multiple "server:" blocks in the config, it seems.)
-           (extra-content
-            "server:
-       access-control: 127.0.0.0/8 allow
-       # Pihole sets \"host.containers.internal\" as the upstream #
-       # DNS, so allow queries from this device's IP.  (See also the
-       # \"interface\" setting.)
-       access-control: 192.168.4.0/22 allow
-       
-       # Ensure privacy of local IP ranges.  Taken from
-       # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
-       private-address: 192.168.0.0/16
-       private-address: 169.254.0.0/16
-       private-address: 172.16.0.0/12
-       private-address: 10.0.0.0/8
-       private-address: fd00::/8
-       private-address: fe80::/10
-       
-       # Ensure no reverse queries to non-public IP ranges (RFC6303
-       # 4.2).  Taken from
-       # https://docs.pi-hole.net/guides/dns/unbound/#configure-unbound
-       private-address: 192.0.2.0/24
-       private-address: 198.51.100.0/24
-       private-address: 203.0.113.0/24
-       private-address: 255.255.255.255/32
-       private-address: 2001:db8::/32")))
        (service wireguard-service-type
          (wireguard-configuration
            (shepherd-requirement '(nftables))

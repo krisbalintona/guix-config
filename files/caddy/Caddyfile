@@ -196,6 +196,31 @@
 				}
 			}
 		}
+
+		# DNS-over-TLS (DoT) via Technitium.
+		#
+		# Instead of letting Technitium handle TLS
+		# termination, we give it to Caddy (which it can do
+		# via caddy-l4).  Caddy, then, acts as a proxy for DoT
+		# ("DNS-over-TCP-PROXY": enable this in the Technitium
+		# web UI settings page).  Any DNS requests that come
+		# in through port 853 (standard DoT port) and caught
+		# by Caddy and unencrypted, then sent to port 538,
+		# which Technitium listens on (the DNS-over-TCP-PROXY
+		# port configured in Technitium).
+		dns.technitium.home.kristofferbalintona.me:853 {
+			route {
+				tls {
+					connection_policy {
+						alpn dot
+					}
+				}
+				proxy {
+					proxy_protocol v2
+					upstream 127.0.0.1:538
+				}
+			}
+		}
 	}
 }
 
@@ -378,6 +403,7 @@
 # * Domains
 
 # ** Pihole web UI
+# 2026-09-15: Service shut down but I leave its configuration here.
 
 pihole.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:7080
@@ -701,5 +727,24 @@ suwayomi.home.kristofferbalintona.me {
 
 jobsrv.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:9400
+	import policy_private
+}
+
+# ** Technitiuim DNS server
+
+technitium.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:5380
+	import policy_private
+}
+
+# DNS-over-HTTPS (DoH) in Technitium
+#
+# Technitium listens on port 8053 (see comment below), sending
+# unencrypted HTTP requests to Caddy, for it to then encrypt (into
+# HTTPS)
+dns.technitium.home.kristofferbalintona.me {
+	# Make sure this port matches the one in Technitium's web UI
+	# settings page)
+	reverse_proxy 127.0.0.1:8053
 	import policy_private
 }
