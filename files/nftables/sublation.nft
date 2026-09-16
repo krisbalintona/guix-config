@@ -52,17 +52,18 @@
 # - https://wiki.nftables.org/wiki-nftables/index.php/Building_rules_through_expressions
 # - https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/7/html/security_guide/sec-using_nftables_to_limit_the_amount_of_connections
 
+define LAN_IF = "wlp108s0"
 define LAN_SUBNET = 192.168.4.0/22
 define WG_IF = "wg0"
 define WG_SUBNET = 10.0.0.0/24
 define TRUSTED_SRC = { 127.0.0.1, $LAN_SUBNET, $WG_SUBNET }
 
-# IPv4 and IPv6 table for disallowing and allowing packets
+# Table for disallowing and allowing IPv4 and IPv6 packets
 table inet firewall {
     # Incoming packets addressed to and have now been routed to the
     # local system and processes running there
     chain incoming {
-        type filter hook input priority 0; policy drop;
+        type filter hook input priority filter; policy drop;
 
         jump sanity
         jump trust
@@ -147,7 +148,7 @@ table inet firewall {
 
     # Incoming packets not addressed to the local machine
     chain forward {
-        type filter hook forward priority 0; policy drop;
+        type filter hook forward priority filter; policy drop;
         ct state invalid drop
 
         # New connections initiated BY a WireGuard peer (e.g. peer ->
@@ -162,6 +163,27 @@ table inet firewall {
 
     # Packets originating from processes in the local machine
     chain outgoing {
-        type filter hook output priority 0; policy accept;
+        type filter hook output priority filter; policy accept;
+    }
+}
+
+# Address translation for outbound Inet (IPv4, IPv6) connections
+table inet nat {
+    # Right after routing is complete, for packets leaving the system
+    # (more specifically: only the first packet of a connection go
+    # through the nat chain type; it's just that the nftables NAT
+    # engine has the rest of the packets in the connection inherit
+    # these mappings)
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+
+        # Masquerade (rewrite source address) traffic for outbound
+        # traffic that comes from the Wireguard interface and subnet
+        # (forwarded from the "forward" chain above).  This means LAN
+        # devices see those requests as originating from the server.
+        # (Then later, incoming responses are un-rewritten
+        # automatically by conntrack, restoring the original Wireguard
+        # peer as the destination address)
+        oifname $LAN_IF iifname $WG_IF ip saddr $WG_SUBNET masquerade
     }
 }
