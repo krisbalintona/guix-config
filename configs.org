@@ -4047,6 +4047,30 @@ Currently, multi-device devices are not supported by Guix's =file-system= (see a
          (string-append "Create a MergerFS pool and mount it at " mount-point "."))
         (start
          #~(lambda _
+             ;; A directory is a mount point iff its device id differs
+             ;; from its parent's.  Used to block until MergerFS has
+             ;; actually attached its FUSE mount, since
+             ;; 'make-forkexec-constructor' only waits for fork+exec,
+             ;; not for the mount itself.  Without this, a nested
+             ;; MergerFS pool's Shepherd service can start (and
+             ;; mkdir-p/mount) before its parent pool is really mounted,
+             ;; silently shadowing the nested mount once the parent
+             ;; attaches.
+             (define (mounted? point)
+               (and (file-exists? point)
+                    (not (= (stat:dev (stat point))
+                            (stat:dev (stat (dirname point)))))))
+
+             (define (wait-until-mounted point timeout)
+               (let loop ((elapsed 0))
+                 (cond
+                  ((mounted? point) #t)
+                  ((>= elapsed timeout)
+                   (error "Timed out waiting for MergerFS mount to attach:" point))
+                  (else
+                   (usleep 200000)        ; 0.2s
+                   (loop (+ elapsed 0.2))))))
+
              (mkdir-p #$mount-point)
              (let ((command
                     (list #$(file-append mergerfs "/bin/mergerfs")
@@ -4056,8 +4080,11 @@ Currently, multi-device devices are not supported by Guix's =file-system= (see a
                           #$mount-point)))
                (format #t "mergerfs command to run: ~a~%" command)
                (let ((pid ((make-forkexec-constructor command))))
-                 (format #t "Spawned mergerfs (pid ~a) for pool at ~a~%"
-                         pid mount-point)
+                 (format #t "Spawned mergerfs (pid ~a) for pool at ~a, waiting for mount...~%"
+                         pid #$mount-point)
+                 ;; 30s is generous for spinning-up HDDs; tune as needed.
+                 (wait-until-mounted #$mount-point 30)
+                 (format #t "Mount at ~a is ready.~%" #$mount-point)
                  pid))))
         (stop #~(make-kill-destructor)))))
 
