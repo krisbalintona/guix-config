@@ -643,7 +643,7 @@
                 ;; https://github.com/qdm12/gluetun-wiki/blob/main/setup/readme.md#setup
                 ;; for instructions on setting up Gluetun
                 (image "qmcgaw/gluetun:latest")
-                (requirement '(home-sops-secret-gluetun qsticky))
+                (requirement '(home-sops-secret-gluetun))
                 (environment
                  (list "TZ=America/Chicago"
                        ;; VPN-specific options
