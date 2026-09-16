@@ -268,17 +268,16 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# Remove server name
 		-Server
+		# Strict Transport Security (HSTS); makes HTTPS
+		# mandatory over HTTP.  (Note: Assumes that HTTPS and
+		# TLS is working properly.  Will get in the way if TLS
+		# isn't working, e.g., during testing without
+		# certificates)
+		Strict-Transport-Security "max-age=31536000; preload"
 	}
 }
 
 (headers_security_public) {
-	header {
-		# Strict Transport Security (HSTS); makes HTTPS
-		# mandatory over HTTP.  (Note: Assumes that HTTPS and
-		# TLS is working properly.  Will get in the way if TLS
-		# isn't working, e.g., during testing)
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-	}
 }
 
 (headers_security_private) {
