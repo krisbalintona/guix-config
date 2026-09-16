@@ -28,6 +28,7 @@
   #:use-module (gnu packages gettext)                  ; For gettext-minimal
   #:use-module (sops services sops)
   #:use-module (sops services sops)
+  #:use-module (sops services sops)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
   #:use-module (krisb services containers)
@@ -81,6 +82,12 @@
     (file (local-file sops-sublation-secrets-path))
     (output-type "dotenv")
     (permissions #o400)))
+(define sops-secret-profilarr-dotenv
+  (sops-secret
+    (key '("profilarr"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)
+    (output-type "dotenv")))
 (define sops-secret-navidrome-dotenv
   (sops-secret
     (key '("navidrome"))
@@ -182,14 +189,7 @@
                (permissions #o400))
              sops-secret-gluetun-dotenv
              sops-secret-qsticky-dotenv
-             (sops-secret
-               (key '("profilarr" "pocket-id" "client-id"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
-               (key '("profilarr" "pocket-id" "secret"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
+             sops-secret-profilarr-dotenv
              sops-secret-navidrome-dotenv
              sops-secret-readeck-dotenv))))
        (service home-oci-service-type
@@ -902,35 +902,32 @@
               (respawn? #f))))))
        (simple-service 'home-oci-profilarr
            home-oci-service-type
-         (let ((oidc-client-id-secret-path
-                (get-sops-secret-path "profilarr/pocket-id/client-id"))
-               (oidc-client-secret-secret-path
-                (get-sops-secret-path "profilarr/pocket-id/secret")))
+         (let ((env-file
+                (sops-secret->secret-file
+                 sops-secret-profilarr-dotenv
+                 #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
            (oci-extension
             (containers
              (list
               (oci-container-configuration
                 (provision "profilarr")
                 (image "ghcr.io/dictionarry-hub/profilarr:latest")
+                (requirement '(home-sops-secret-navidrome))
                 (environment
                  `("TZ=America/Chicago"
                    "PUID=1000"
                    "PGID=1000"
                    "UMASK=022"
                    "ORIGIN=https://profilarr.home.kristofferbalintona.me" ; Because behind reverse proxy
-                   ;; Authentication method
-                   "AUTH=oidc"
-                   "OIDC_DISCOVERY_URL=https://pocket-id.kristofferbalintona.me/.well-known/openid-configuration"
-                   ,(cons "OIDC_CLIENT_ID_FILE" oidc-client-id-secret-path)
-                   ,(cons "OIDC_CLIENT_SECRET_FILE" oidc-client-secret-secret-path)))
+       
+                   "AUTH=oidc"))  ; OIDC-related env vars are set in env file
+                (extra-arguments
+                 (list "--env-file" env-file))
                 (network "gluetun-network")
                 (ports '("127.0.0.1:11200:6868"))
                 (volumes
-                 `(("/home/krisbalintona/services/profilarr/data" . "/config")
-                   ("/home/krisbalintona/services/profilarr/log" . "/config/log")
-                   ;; Secrets
-                   ,(cons oidc-client-id-secret-path oidc-client-id-secret-path)
-                   ,(cons oidc-client-secret-secret-path oidc-client-secret-secret-path)))
+                 '(("/home/krisbalintona/services/profilarr/data" . "/config")
+                   ("/home/krisbalintona/services/profilarr/log" . "/config/log")))
                 (auto-start? #t)
                 (respawn? #f)))))))
        (simple-service 'home-oci-prowlarr
