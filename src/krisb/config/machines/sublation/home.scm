@@ -51,6 +51,12 @@
     (key '("technitium" "password"))
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
+(define sops-secret-technitium-pocket-id-sso-dotenv
+  (sops-secret
+    (key '("technitium" "pocket-id-SSO"))
+    (file (local-file sops-sublation-secrets-path))
+    (output-type "dotenv")
+    (permissions #o400)))
 (define copyparty-socket-dir
   (string-append (getenv "XDG_RUNTIME_DIR")
                  "/copyparty"))
@@ -148,6 +154,7 @@
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
              sops-secret-technitium-password
+             sops-secret-technitium-pocket-id-sso-dotenv
              (sops-secret
                (key '("caddy" "netlify-access-token"))
                (file (local-file sops-sublation-secrets-path))
@@ -362,6 +369,10 @@
            (list
             (let ((container-log-dir "/var/log/technitium/dns")
                   (web-ui-port "5380")
+                  (env-file
+                   (sops-secret->secret-file
+                    sops-secret-technitium-pocket-id-sso-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
                   (password-file
                    (sops-secret->secret-file
                     sops-secret-technitium-password
@@ -369,6 +380,8 @@
               (oci-container-configuration
                 (provision "technitium")
                 (image "technitium/dns-server:latest")
+                (requirement
+                 '(home-sops-secret-technitium/password home-sops-secret-technitium/pocket-id-SSO))
                 ;; See
                 ;; https://github.com/TechnitiumSoftware/DnsServer/blob/master/DockerEnvironmentVariables.md
                 ;; for the documentation of all environment variables, and
@@ -412,6 +425,9 @@
        
                        "DNS_SERVER_LOG_USING_LOCAL_TIME=true" ; Default value
                        "DNS_SERVER_ENABLE_BLOCKING=true")) ; Network filtering
+                (extra-arguments
+                 ;; All SSO-related env vars are set in the env file
+                 (list "--env-file" env-file))
                 (network "host")
                 (volumes
                  (list (cons "/etc/localtime" "/etc/localtime:ro")
