@@ -922,7 +922,10 @@
        
                    "AUTH=oidc"))  ; OIDC-related env vars are set in env file
                 (extra-arguments
-                 (list "--env-file" env-file))
+                 (list "--env-file" env-file
+                       ;; For reaching the Pocket ID container's endpoint
+                       ;; published on the host
+                       "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
                 (network "gluetun-network")
                 (ports '("127.0.0.1:11200:6868"))
                 (volumes
@@ -1052,12 +1055,17 @@
                '(("/home/krisbalintona/services/jellyfin/data" . "/config")
                  ("/home/krisbalintona/services/jellyfin/cache" . "/cache")
                  ("/home/krisbalintona/services/media" . "/media")))
-              ;; Pass the appropriate GPU device to Jellyfin, as instructed
-              ;; here:
-              ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel#configure-on-linux-host,
-              ;; for the sake of hardware acceleration. The device is
-              ;; specific to Intel GPUs.
-              (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
+              (extra-arguments
+               (list
+                ;; Pass the appropriate GPU device to Jellyfin, as instructed
+                ;; here:
+                ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel#configure-on-linux-host,
+                ;; for the sake of hardware acceleration. The device is
+                ;; specific to Intel GPUs.
+                "--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"
+                ;; For reaching the Pocket ID container's endpoint published
+                ;; on the host
+                "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
               (auto-start? #t)
               (respawn? #f))))))
        (simple-service 'home-oci-shoko
@@ -1391,6 +1399,10 @@
                  "ANILIST_ID"
                  "ANILIST_SECRET"))
               (network "yamtrack-network")
+              (extra-arguments
+               ;; For reaching the Pocket ID container's endpoint published
+               ;; on the host
+               (list "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
               (ports '("127.0.0.1:7878:8000"))
               (volumes '(("/home/krisbalintona/services/yamtrack/data" . "/yamtrack/db")))
               (auto-start? #t)
@@ -1425,7 +1437,7 @@
                 ;; learning containers).  See
                 ;; https://docs.immich.app/install/environment-variables/#redis
                 (redis-hostname "REDIS_HOSTNAME=immich-redis")
-                (redis-port "REDIS_PORT=6379")  ; Default
+                (redis-port "REDIS_PORT=6379") ; Default
                 (redis-env-vars
                  (list redis-hostname redis-port)))
            (oci-extension
@@ -1452,12 +1464,17 @@
                         immich-network-subnet) ; Trust the Caddy reverse proxy
                   (append db-env-vars
                           redis-env-vars)))
-                ;; Enable hardware transcoding (Intel QuickSync).  This is
-                ;; specific to my hardware; if my hardware changes, I may
-                ;; need to change the relevant settings too.  See
-                ;; https://docs.immich.app/features/hardware-transcoding and
-                ;; the linked hwaccel.transcoding.yml file
-                (extra-arguments '("--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"))
+                (extra-arguments
+                 (list
+                  ;; Enable hardware transcoding (Intel QuickSync).  This is
+                  ;; specific to my hardware; if my hardware changes, I may
+                  ;; need to change the relevant settings too.  See
+                  ;; https://docs.immich.app/features/hardware-transcoding
+                  ;; and the linked hwaccel.transcoding.yml file
+                  "--device=/dev/dri/renderD128:/dev/dri/renderD128:rwm"
+                  ;; For reaching the Pocket ID container's endpoint
+                  ;; published on the host
+                  "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
                 (network "immich-network")
                 (ports '("127.0.0.1:2283:2283"))
                 (volumes
