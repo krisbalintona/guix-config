@@ -983,19 +983,16 @@
             (oci-container-configuration
               (provision "cleanuparr")
               (image "cleanuparr/cleanuparr:latest")
+              (container-user "1000:1000")
               (environment
                '("TZ=America/Chicago"
-                 "PUID=1000"
-                 "PGID=1000"
                  "UMASK=022"
-                 "PORT=10001"
-                 "BASE_PATH="))
+                 "PORT=10001"))
               (network "gluetun-network")
               (ports '("127.0.0.1:10001:10001"))
               (volumes
                '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
-                 ("/home/krisbalintona/services/cleanuparr/log" . "/config/logs")
-                 ("/home/krisbalintona/services/media" . "/data")))
+                 ("/home/krisbalintona/services/media" . "/data:ro")))
               (auto-start? #t)
               (respawn? #f))))))
        (simple-service 'home-oci-seerr
