@@ -19,7 +19,8 @@
             caddy-netlify-coraza-maxmind
             caddy-security-netlify-coraza-maxmind
             caddy-security-netlify-crowdsec-coraza-maxmind
-            caddy-security-netlify-crowdsec-coraza-maxmind-l4))
+            caddy-security-netlify-crowdsec-coraza-maxmind-l4
+            caddy-netlify-crowdsec-coraza-maxmind-l4))
 
 (define geoip-address-csv
   (package
@@ -40,7 +41,7 @@
       #:builder #~(begin
                     (use-modules (guix build utils))
                     (mkdir-p %output)
-                    
+
                     (let ((file "/dbip.csv.gz"))
                       (copy-file #$source
                                  (string-append %output file))
@@ -291,7 +292,7 @@ by WP-Statistics. Built from a pinned git commit.")
       (arguments
        (substitute-keyword-arguments (package-arguments pkg)
          ((#:phases phases)
-          #~(modify-phases #$phases 
+          #~(modify-phases #$phases
               (add-after 'install 'link-geolite-dbs
                 ;; The city database is a superset of the country
                 ;; database, but we bundle both: users may choose
@@ -339,7 +340,54 @@ by WP-Statistics. Built from a pinned git commit.")
       (arguments
        (substitute-keyword-arguments (package-arguments pkg)
          ((#:phases phases)
-          #~(modify-phases #$phases 
+          #~(modify-phases #$phases
+              (add-after 'install 'link-geolite-dbs
+                ;; The city database is a superset of the country
+                ;; database, but we bundle both: users may choose
+                ;; which database to use
+                (lambda* (#:key inputs outputs #:allow-other-keys)
+                  (let* ((out (assoc-ref outputs "out"))
+                         (geoip-country (assoc-ref inputs "geolite2-country-mmdb"))
+                         (geoip-city (assoc-ref inputs "geolite2-city-mmdb"))
+                         (target (string-append out "/var/lib/geoip")))
+                    (mkdir-p target)
+                    (symlink
+                     (string-append geoip-country "/var/lib/geoip/GeoLite2-Country.mmdb")
+                     (string-append target "/GeoLite2-Country.mmdb"))
+                    (symlink
+                     (string-append geoip-city "/var/lib/geoip/GeoLite2-City.mmdb")
+                     (string-append target "/GeoLite2-City.mmdb")))))))))
+      (inputs
+       (modify-inputs (package-inputs pkg)
+         (append geolite2-country-mmdb geolite2-city-mmdb)))
+      (synopsis "Caddy with Netlify DNS, CrowdSec, Coraza WAF, MaxMind geoblocking, Pocket ID authentication, and layer 4 support."))))
+
+(define caddy-netlify-crowdsec-coraza-maxmind-l4
+  (let ((pkg (caddy-custom
+              "2.11.4"
+              ;; TODO 2026-04-15: I should pin the versions of the
+              ;; modules of the other Caddy packages defined in this
+              ;; file
+              '(("github.com/caddy-dns/netlify" . "v1.1.0")
+                ;; The next three are directories from the
+                ;; caddy-crowdsec-bouncer module
+                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.13.1")
+                "github.com/hslatman/caddy-crowdsec-bouncer/http"
+                "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
+                "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
+                ;; The next two packages are for optional features in
+                ;; caddy
+                ("github.com/corazawaf/coraza-caddy/v2" . "v2.5.0") ; Coraza WAF
+                ("github.com/porech/caddy-maxmind-geolocation" . "v1.0.3") ; MaxMind
+                ("github.com/mholt/caddy-l4" . "v0.1.1")) ; Layer 4
+              "1rnnc9176zclal8nd3dcq39afrxamng54vbp4dy7ydl1svbxcklz"
+              "1xwhq3kf7sr08yj5pvyg9860jasf8vmvf6jq9fpmhp0mmjsi9jfy")))
+    (package/inherit pkg
+      (name "caddy-netlify-crowdsec-coraza-maxmind-l4")
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          #~(modify-phases #$phases
               (add-after 'install 'link-geolite-dbs
                 ;; The city database is a superset of the country
                 ;; database, but we bundle both: users may choose

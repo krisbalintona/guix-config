@@ -22,14 +22,10 @@ profiles:
       insecure: true
 
 endpoints:
-  - name: Copyparty (public)
+  - name: Copyparty
     url: "https://party.kristofferbalintona.me"
     group: services
     <<: *http
-  - name: Copyparty (local)
-    url: "https://party.home.kristofferbalintona.me"
-    group: services
-    <<: [*http, *internal]
 
   - name: Technitium (DNS server)
     url: "192.168.4.242"

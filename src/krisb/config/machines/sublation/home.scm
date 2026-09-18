@@ -20,6 +20,7 @@
   #:use-module (krisb packages networking)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
+  #:use-module (sops services sops)
   #:use-module (gnu services containers)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services containers)
@@ -55,6 +56,12 @@
 (define sops-secret-technitium-pocket-id-sso-dotenv
   (sops-secret
     (key '("technitium" "pocket-id-SSO"))
+    (file (local-file sops-sublation-secrets-path))
+    (output-type "dotenv")
+    (permissions #o400)))
+(define sops-secret-tinyauth-dotenv
+  (sops-secret
+    (key '("tinyauth"))
     (file (local-file sops-sublation-secrets-path))
     (output-type "dotenv")
     (permissions #o400)))
@@ -167,17 +174,10 @@
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
              (sops-secret
-               (key '("caddy" "pocket-id" "client-id"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
-               (key '("caddy" "pocket-id" "client-secret"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
                (key '("caddy" "crowdsec-bouncer" "api-key"))
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
+             sops-secret-tinyauth-dotenv
              sops-secret-copyparty-dotenv
              (sops-secret
                (key '("vaultwarden" "push-installation-id"))
@@ -443,10 +443,6 @@
            (list
             (let ((netlify-access-token
                    (get-sops-secret-path "caddy/netlify-access-token"))
-                  (pocket-id-client-id
-                   (get-sops-secret-path "caddy/pocket-id/client-id"))
-                  (pocket-id-client-secret
-                   (get-sops-secret-path "caddy/pocket-id/client-secret"))
                   (crowdsec-bouncer-api-key
                    (get-sops-secret-path "caddy/crowdsec-bouncer/api-key")))
               (oci-container-configuration
@@ -462,7 +458,7 @@
                     ;; location; it can be whatever we want since this image
                     ;; is created locally (in the Guix store)
                     (repository "caddy-security-netlify-crowdsec-coraza-maxmind-l4")
-                    (tag "2.11.3")
+                    (tag "2.11.4")
                     (value (specifications->manifest '("coreutils"
                                                        "caddy-security-netlify-crowdsec-coraza-maxmind-l4")))
                     (pack-options '(#:symlinks (("/bin" -> "bin")
@@ -497,10 +493,60 @@
                        ;; file placeholders; see
                        ;; https://caddyserver.com/docs/conventions#placeholders
                        (cons netlify-access-token netlify-access-token)
-                       (cons pocket-id-client-id pocket-id-client-id)
-                       (cons pocket-id-client-secret pocket-id-client-secret)
                        (cons crowdsec-bouncer-api-key crowdsec-bouncer-api-key)))
                 (command '("caddy" "run" "--config" "/config/Caddyfile"))
+                (auto-start? #t)
+                (respawn? #f)))))))
+       (simple-service 'home-oci-tinyauth
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (let ((port "3070")
+                  (env-file
+                   (sops-secret->secret-file
+                    sops-secret-tinyauth-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
+              (oci-container-configuration
+                (provision "tinyauth")
+                (requirement '(home-sops-secret-tinyauth))
+                (image "ghcr.io/tinyauthapp/tinyauth:latest")
+                ;; TinyAuth has documentation for its integration with Pocket
+                ;; ID: https://tinyauth.app/docs/guides/pocket-id/.
+                ;;
+                ;; See also an example for integrating TinyAuth into Caddy:
+                ;; https://tinyauth.app/docs/community/caddy/
+                ;;
+                ;; See https://tinyauth.app/docs/reference/configuration/ for
+                ;; all configuration options
+                (environment
+                 (list (cons "TINYAUTH_SERVER_PORT" port)
+                       (cons "TINYAUTH_APPURL" "https://tinyauth.kristofferbalintona.me")
+                       (cons "TINYAUTH_LOG_LEVEL" "debug")
+                       ;; Since this container has a non-bridged pasta tap,
+                       ;; the host's addresses are copied into it so
+                       ;; 127.0.0.1 refers to the host loopback-exposed Caddy
+                       (cons "TINYAUTH_AUTH_TRUSTEDPROXIES" "127.0.0.1")
+                       (cons "TINYAUTH_OAUTH_PROVIDERS_POCKETID_NAME" "Pocket ID")
+                       (cons "TINYAUTH_OAUTH_AUTOREDIRECT" "pocketid") ; Auto-redirect to Pocket ID
+       
+                       ;; Domain configs
+                       ;;
+                       ;; For TinyAuth to work behind a domain, each domain
+                       ;; must be registered as an "app."  These must be
+                       ;; configured for every domain behind TinyAuth (in
+                       ;; addition to Caddy forwarding authentication to
+                       ;; TinyAuth for those domains)
+                       (cons "TINYAUTH_APPS_COPYPARTY_CONFIG_DOMAIN" "party.kristofferbalintona.me")))
+                (extra-arguments
+                 (list
+                  ;; All OIDC (Pocket ID) env vars are set in the env file
+                  "--env-file" env-file
+                  ;; For reaching the Pocket ID container's endpoint
+                  ;; published on the host
+                  "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
+                (ports (list (cons "127.0.0.1" (string-append port ":" port))))
+                (volumes '(("/home/krisbalintona/services/tinyauth/data" . "/data")))
                 (auto-start? #t)
                 (respawn? #f)))))))
        (simple-service 'home-oci-copyparty-socket
@@ -992,7 +1038,7 @@
               (ports '("127.0.0.1:10001:10001"))
               (volumes
                '(("/home/krisbalintona/services/cleanuparr/data" . "/config")
-                 ("/home/krisbalintona/services/media" . "/data:ro")))
+                 ("/home/krisbalintona/services/media" . "/data")))
               (auto-start? #t)
               (respawn? #f))))))
        (simple-service 'home-oci-seerr
