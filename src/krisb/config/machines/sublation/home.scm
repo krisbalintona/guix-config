@@ -239,6 +239,15 @@
                (name "codeberg.org")
                (user "git")
                (identity-file "~/.ssh/2026-git-forges"))))))
+       (simple-service 'home-bash-keychain
+           home-bash-service-type
+         (home-bash-extension
+           (bash-profile (list (local-file (config-files-path "keychain/sublation.bash"))))))
+       (simple-service 'home-fish-keychain
+           home-fish-service-type
+         (home-fish-extension
+           (config
+            (list (local-file (config-files-path "keychain/sublation.fish"))))))
        (simple-service 'home-oci-crowdsec
            home-oci-service-type
          (oci-extension

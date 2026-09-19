@@ -160,6 +160,15 @@
                 (get-sops-secret '("ssh" "vps-1" "user")
                                  #:file sops-mute-secrets-path))
                (identity-file "~/.ssh/vps-vms"))))))
+       (simple-service 'home-bash-keychain
+           home-bash-service-type
+         (home-bash-extension
+           (bash-profile (list (local-file (config-files-path "keychain/mute.bash") "keychain.bash")))))
+       (simple-service 'home-fish-keychain
+           home-fish-service-type
+         (home-fish-extension
+           (config
+            (list (local-file (config-files-path "keychain/mute.fish"))))))
        (simple-service 'home-restic-emacs-repos
            home-restic-backup-service-type
          (list
