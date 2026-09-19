@@ -46,26 +46,6 @@ Mute bash shell:
                  ("ls" . "ls -p --color=auto")))))
 #+end_src
 
-Sublation bash shell:
-#+begin_src scheme :noweb-ref sublation-home-modules
-  (gnu home services shells)
-#+end_src
-#+begin_src scheme :noweb-ref sublation-home-services
-  (service home-bash-service-type
-    (home-bash-configuration
-      (bashrc
-       (list
-        ;; 2025-12-06: My default shell is bash because I haven't gotten
-        ;; Tramp to work with Fish shell yet.  (I've deduced that the
-        ;; prompt is not the problem.)  So, instead, I keep bash as my
-        ;; shell and dispatch to fish if the current process wasn't
-        ;; started by tramp
-        (plain-file "to-fish.bash"
-          "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $INSIDE_EMACS == *,eat* ]]; }; then
-      SHELL=$(command -v fish) exec fish
-  fi")))))
-#+end_src
-
 ** Fish
 
 #+begin_src scheme :noweb-ref common-home-packages
@@ -74,16 +54,16 @@ Sublation bash shell:
 
 Fish in Sublation:
 #+begin_src scheme :noweb-ref sublation-home-modules
+  (gnu home services shells)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-modules
   (gnu packages shells)
 #+end_src
 #+begin_src scheme :noweb-ref sublation-home-services
   (service home-fish-service-type
     (home-fish-configuration
       (config
-       (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
-      (environment-variables
-       ;; REVIEW 2026-03-07: Do I need this line?
-       `(("SHELL" . ,(file-append fish "/bin/fish"))))))
+       (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
 #+end_src
 
 Fish in Mute:
@@ -4826,6 +4806,7 @@ Configuration helpers for my machines.
         common-home-packages
         (specifications->packages
          (list
+          "glibc" ; 2026-09-19: For Emacs Ghostel's shell auto-detection, via 'getent'
           ;; Editors
           "vim"
           "neovim"
@@ -4876,6 +4857,7 @@ Configuration helpers for my machines.
     #:use-module (gnu services shepherd)
     #:use-module (gnu services desktop)
     #:use-module (gnu services xorg)
+    #:use-module (gnu packages shells)
     #:use-module (nongnu packages linux)
     #:use-module (nongnu system linux-initrd)
     #:use-module (gnu system file-systems)
@@ -4913,9 +4895,7 @@ Configuration helpers for my machines.
                       (name "krisbalintona")
                       (comment "Kristoffer Balintona")
                       (home-directory "/home/krisbalintona")
-                      ;; REVIEW 2025-12-06: Fish shell through tramp has
-                      ;; failed despite all my attempts
-                      ;; (shell (file-append fish "/bin/fish"))
+                      (shell (file-append fish "/bin/fish"))
                       (group "users")
                       (supplementary-groups '("wheel" "netdev"
                                               "audio" "video"

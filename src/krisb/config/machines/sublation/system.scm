@@ -7,6 +7,7 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
+  #:use-module (gnu packages shells)
   #:use-module (nongnu packages linux)
   #:use-module (nongnu system linux-initrd)
   #:use-module (gnu system file-systems)
@@ -72,9 +73,7 @@
                     (name "krisbalintona")
                     (comment "Kristoffer Balintona")
                     (home-directory "/home/krisbalintona")
-                    ;; REVIEW 2025-12-06: Fish shell through tramp has
-                    ;; failed despite all my attempts
-                    ;; (shell (file-append fish "/bin/fish"))
+                    (shell (file-append fish "/bin/fish"))
                     (group "users")
                     (supplementary-groups '("wheel" "netdev"
                                             "audio" "video"

@@ -115,6 +115,7 @@
       common-home-packages
       (specifications->packages
        (list
+        "glibc" ; 2026-09-19: For Emacs Ghostel's shell auto-detection, via 'getent'
         ;; Editors
         "vim"
         "neovim"
@@ -136,26 +137,10 @@
      (append
       common-home-services
       (cons*
-       (service home-bash-service-type
-         (home-bash-configuration
-           (bashrc
-            (list
-             ;; 2025-12-06: My default shell is bash because I haven't gotten
-             ;; Tramp to work with Fish shell yet.  (I've deduced that the
-             ;; prompt is not the problem.)  So, instead, I keep bash as my
-             ;; shell and dispatch to fish if the current process wasn't
-             ;; started by tramp
-             (plain-file "to-fish.bash"
-               "if [[ $- == *i* ]] && { [[ ! $TERM =~ dumb ]] || [[ $INSIDE_EMACS == *,eat* ]]; }; then
-           SHELL=$(command -v fish) exec fish
-       fi")))))
        (service home-fish-service-type
          (home-fish-configuration
            (config
-            (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))
-           (environment-variables
-            ;; REVIEW 2026-03-07: Do I need this line?
-            `(("SHELL" . ,(file-append fish "/bin/fish"))))))
+            (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
        (service home-gpg-agent-service-type)
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
