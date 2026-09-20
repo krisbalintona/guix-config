@@ -139,7 +139,6 @@
   (specifications->packages
    (list
     "bash-completion"
-    "grc"                          ; For oh-my-fish/plugin-grc fish plugin
     "coreutils"
     "findutils"
     "diffutils"
