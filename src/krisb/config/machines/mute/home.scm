@@ -81,7 +81,8 @@
        (service home-fish-service-type
          (home-fish-configuration
            (config
-            (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+            (list (plain-file "non_interactive_early_return.fish" "status is-interactive; or return")
+                  (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
        (simple-service 'fish-fisher
            ;; Install fisher if it isn't already installed, then symlink
            ;; fish_plugins, then update plugins.  We do this altogether to

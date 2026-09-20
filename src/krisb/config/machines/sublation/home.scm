@@ -140,7 +140,8 @@
        (service home-fish-service-type
          (home-fish-configuration
            (config
-            (list (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
+            (list (plain-file "non_interactive_early_return.fish" "status is-interactive; or return")
+                  (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
        (service home-gpg-agent-service-type)
        (service home-sops-secrets-service-type
          (home-sops-service-configuration
