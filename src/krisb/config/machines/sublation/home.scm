@@ -458,10 +458,10 @@
                     ;; corresponds to the [repository] of an OCI image
                     ;; location; it can be whatever we want since this image
                     ;; is created locally (in the Guix store)
-                    (repository "caddy-security-netlify-crowdsec-coraza-maxmind-l4")
+                    (repository "caddy-netlify-crowdsec-coraza-maxmind-l4")
                     (tag "2.11.4")
                     (value (specifications->manifest '("coreutils"
-                                                       "caddy-security-netlify-crowdsec-coraza-maxmind-l4")))
+                                                       "caddy-netlify-crowdsec-coraza-maxmind-l4")))
                     (pack-options '(#:symlinks (("/bin" -> "bin")
                                                 ;; MaxMind database files
                                                 ("/var/lib/geoip" -> "/var/lib/geoip"))))))
