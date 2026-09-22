@@ -371,7 +371,7 @@ by WP-Statistics. Built from a pinned git commit.")
               '(("github.com/caddy-dns/netlify" . "v1.1.0")
                 ;; The next three are directories from the
                 ;; caddy-crowdsec-bouncer module
-                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.13.1")
+                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.14.1")
                 "github.com/hslatman/caddy-crowdsec-bouncer/http"
                 "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
                 "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
@@ -384,6 +384,7 @@ by WP-Statistics. Built from a pinned git commit.")
               "1xwhq3kf7sr08yj5pvyg9860jasf8vmvf6jq9fpmhp0mmjsi9jfy")))
     (package/inherit pkg
       (name "caddy-netlify-crowdsec-coraza-maxmind-l4")
+      (version"2.11.4") 
       (arguments
        (substitute-keyword-arguments (package-arguments pkg)
          ((#:phases phases)
