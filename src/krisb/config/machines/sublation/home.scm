@@ -25,8 +25,8 @@
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services containers)
   #:use-module (sops services sops)
-  #:use-module (gnu packages bash)                     ; For bash
-  #:use-module (gnu packages gettext)                  ; For gettext-minimal
+  #:use-module (krisb services envsubst)
+  #:use-module (krisb services home envsubst)
   #:use-module (sops services sops)
   #:use-module (sops services sops)
   #:use-module (sops services sops)
@@ -562,43 +562,18 @@
                  (format #t "Socket directory exists at: ~a~%" #$copyparty-socket-dir)
                  #t))
             (documentation "Create parent directory for Copyparty socket."))))
-       (simple-service 'home-oci-copyparty-envsubst
-           home-shepherd-service-type
+       (simple-service 'home-copyparty-envsubst
+           home-envsubst-service-type
          (list
-          ;; FIXME 2026-09-12: Right now since this is a oneshot service, I
-          ;; don't think anything is logged in the output of 'herd status'.
-          ;; However, it would be useful to log what this does, such as which
-          ;; files are deleted and created, and on failures, what exactly
-          ;; failed.
-          (shepherd-service
-            (provision '(copyparty-envsubst))
-            (requirement '(home-sops-secret-copyparty))
-            (one-shot? #t)
-            (start
-             #~(lambda ()
-                 (let ((template #$(config-files-path "copyparty/copyparty.conf.template"))
-                       (dotenv
-                        #$(sops-secret->secret-file
-                           sops-secret-copyparty-dotenv
-                           #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
-                       (output "/home/krisbalintona/services/copyparty/config/copyparty.conf"))
-                   (mkdir-p (dirname output))
-                   (format #t "envsubst: dotenv=~a exists?=~a~%" dotenv (file-exists? dotenv))
-                   (format #t "envsubst: template=~a exists?=~a~%" template (file-exists? template))
-                   (when (file-exists? output) ; envsubst doesn't overwrite, so we delete first
-                     (delete-file output))
-                   (let* ((status
-                           (system* #$(file-append bash "/bin/bash") "-c"
-                                    (string-append "set -a; "
-                                                   "source " dotenv "; "
-                                                   "set +a; "
-                                                   #$(file-append gettext-minimal "/bin/envsubst") " < " template
-                                                   " > " output)))
-                          (exit-val (status:exit-val status)))
-                     (format #t "envsubst: exit-val=~a~%" exit-val)
-                     (when (zero? exit-val) (chmod output #o600)) ; Read and write for owner only
-                     (zero? exit-val)))))
-            (documentation "Create Copyparty config file with env vars substituted."))))
+          (envsubst-substitution
+           (name 'copyparty)
+           (template (local-file "files/copyparty/copyparty.conf.template"))
+           (output "/home/krisbalintona/services/copyparty/config/copyparty.conf")
+           (environment-file
+            (sops-secret->secret-file
+             sops-secret-copyparty-dotenv
+             #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
+           (requirement '(home-sops-secret-copyparty)))))
        (simple-service 'home-oci-copyparty
            home-oci-service-type
          (oci-extension
@@ -606,7 +581,7 @@
            (list
             (oci-container-configuration
               (provision "copyparty")
-              (requirement '(copyparty-socket copyparty-envsubst))
+              (requirement '(copyparty-socket home-envsubst-copyparty))
               (image "docker.io/copyparty/ac:latest")
               ;; Have served files mounted at /data and the copyparty config
               ;; + cache files in /config (~/services/copyparty/config on the

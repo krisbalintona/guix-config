@@ -81,11 +81,10 @@
             (respawn? (netbird-configuration-respawn? config))
             (stop #~(make-kill-destructor))))))
 
-(define-public netbird-service-type
+(define netbird-service-type
   (service-type
     (name 'netbird)
-    (extensions (list (service-extension
-                       shepherd-root-service-type
-                       netbird-shepherd-service)))
+    (extensions (list (service-extension shepherd-root-service-type
+                                         netbird-shepherd-service)))
     (default-value (netbird-configuration))
     (description "Run and connect to netbird")))
