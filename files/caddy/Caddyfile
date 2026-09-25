@@ -31,8 +31,8 @@
 		# https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples.
 		#
 		# Accept forwarded IPs that originate from my
-		# Wireguard subnet
-		trusted_proxies static 10.0.0.0/24
+		# Wireguard and Netbird subnet
+		trusted_proxies static 10.0.0.0/24 100.83.0.0/16
 		# See
 		# https://caddyserver.com/docs/caddyfile/options#trusted-proxies-strict
 		# for why we enable this setting
@@ -238,28 +238,6 @@
 	}
 }
 
-# *** MaxMind geo-blocking
-# I use the caddy-maxmind-geolocation module for geoblocking.  To test
-# whether geoblocking is working, use something like
-# https://check-host.net/check-http
-
-(maxmind-us-il) {
-	# Since we'll be passing this to error/respond for blocking,
-	# it should match all IPs that should be blocked
-	@geo_blocked {
-		not remote_ip private_ranges
-		not maxmind_geolocation {
-			# See where the geolite2-country-mmdb and
-			# geolite2-city-mmdb packages install the
-			# databases.  The city database is a superset
-			# of the country database
-			db_path /var/lib/geoip/GeoLite2-City.mmdb
-			allow_countries US
-			allow_subdivisions IL
-		}
-	}
-}
-
 # *** Subdomain policies
 
 (policy_global) {
@@ -267,12 +245,24 @@
 	import headers_security_global
 }
 
-# Policy for domains exposed only locally (via my local DNS)
+# Policy for all domains exposed to the internet
 (policy_public) {
 	import policy_global
 	import headers_security_public
 
-	import maxmind-us-il
+	# Block if outside US/IL (and not in a trusted subnet)
+	#
+	# Use the caddy-maxmind-geolocation module for geoblocking.
+	# To test whether geoblocking is working, use something like
+	# https://check-host.net/check-http
+	@geo_blocked {
+		not remote_ip private_ranges 100.83.0.0/16
+		not maxmind_geolocation {
+			db_path /var/lib/geoip/GeoLite2-City.mmdb
+			allow_countries US
+			allow_subdivisions IL
+		}
+	}
 	error @geo_blocked 403
 
 	# CrowdSec bouncer (caddy-crowdsec): block if CrowdSec deems
@@ -280,14 +270,13 @@
 	crowdsec
 }
 
-# Policy for all domains exposed to the internet
+# Policy for domains exposed only locally (via my local DNS)
 (policy_private) {
 	import policy_global
 	import headers_security_private
 
-	# Only access in local networks
-	@external not remote_ip private_ranges
-	error @external 403
+	@untrusted not remote_ip private_ranges 100.83.0.0/16
+	error @untrusted 403
 }
 
 # *** TinyAuth authentication forwarder
@@ -312,7 +301,7 @@ pihole.home.kristofferbalintona.me {
 # ** Copyparty
 
 party.kristofferbalintona.me {
-	@external not remote_ip private_ranges
+	@external not remote_ip private_ranges 100.83.0.0/16
 	route @external {
 		import tinyauth_forwarder
 	}
@@ -337,17 +326,18 @@ goaccess.home.kristofferbalintona.me {
 # using Vaultwarden specifically with Caddy
 
 vault.home.kristofferbalintona.me {
-	reverse_proxy 127.0.0.1:7000
-	import policy_private
-	import service-logs vaultwarden
-	# Only access admin page in local networks.  policy_private
+	# Only access admin page in trusted networks.  policy_private
 	# should only make this domain reachable only locally, but to
 	# avoid future misconfigurations I include it anyway
 	@admin {
 		path /admin*
-		not remote_ip private_ranges
+		not remote_ip private_ranges 100.83.0.0/16
 	}
 	error @admin 403
+
+	import policy_private
+	import service-logs vaultwarden
+	reverse_proxy 127.0.0.1:7000
 }
 
 # ** Syncthing GUI
@@ -578,7 +568,12 @@ vmagent.home.kristofferbalintona.me {
 # ** Zellij web server
 
 zellij.home.kristofferbalintona.me {
-	bind 10.0.0.1
+	# Gate behind Netbird subnet
+	@admin {
+		not remote_ip 100.83.0.0/16
+	}
+	error @admin 403
+
 	reverse_proxy 127.0.0.1:4444
 	import policy_private
 }
@@ -649,4 +644,25 @@ tinyauth.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:3070
 	import policy_public
 	import service-logs tinyauth
+}
+
+# ** Netbird
+# See
+# https://docs.netbird.io/selfhosted/external-reverse-proxy#caddy-combined
+# for the appropriate Netbird configuration with Caddy
+
+netbird.kristofferbalintona.me {
+	# Native gRPC (needs HTTP/2 cleartext to backend)
+	@grpc header Content-Type application/grpc*
+	reverse_proxy @grpc h2c://127.0.0.1:15301
+
+	# Combined server paths (relay, signal, management, OAuth2)
+	@backend path /relay* /ws-proxy/* /api/* /oauth2/*
+	reverse_proxy @backend 127.0.0.1:15301
+
+	# Dashboard (everything else)
+	reverse_proxy /* 127.0.0.1:15300
+
+	import policy_public
+	import service-logs netbird
 }

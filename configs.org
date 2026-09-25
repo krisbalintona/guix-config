@@ -875,7 +875,7 @@ Informative articles on security principles:
 
 [fn:2] See also [[https://www.reddit.com/r/selfhosted/comments/1cv2l3q/security_psa_for_anyone_using_docker_on_a/][this relevant Reddit post]].
    
-*** Nftables: Firewall
+*** Nftables: Firewall and networking rules
 
 I minimize the number of ports I have open and I route all internet traffic through my reverse proxy. (See also [[#h:20251227T085128.494786][Principles and guidelines]].)
 
@@ -891,6 +891,17 @@ I minimize the number of ports I have open and I route all internet traffic thro
     (nftables-configuration
       (ruleset
        (local-file (config-files-path "nftables/sublation.nft")))))
+  ;; Enable IPv4 packet forwarding
+  ;;
+  ;; NOTE: Plain Wireguard doesn't do this for me, but Netbird does
+  ;; (according to
+  ;; https://docs.netbird.io/manage/networks/how-routing-peers-work#ip-forwarding).
+  ;; Nevertheless, we set this in case IPv4 forwarding is possible.
+  ;; Also be aware of its IPv6 counterpart:
+  ;; net.ipv6.conf.all.forwarding.
+  (simple-service 'sysctl-nftables-forwarding
+      sysctl-service-type
+    '(("net.ipv4.ip_forward" . "1")))
 #+end_src
 
 *** Fail2ban: Scan logs and ban malicious actors 
@@ -1395,7 +1406,10 @@ Other notes:
                   (cons "DNS_SERVER_RECURSION_NETWORK_ACL"
                         (string-join '("127.0.0.1"      ; This machine
                                        "192.168.1.0/24" ; LAN subnet
-                                       "10.0.0.0/24")   ; Wireguard VPN
+                                       ;; NOTE 2026-09-23: Switched to
+                                       ;; Netbird
+                                       ;; "10.0.0.0/24"    ; Wireguard VPN
+                                       "100.83.0.0/16") ; Netbird
                                      ","))
 
                   ;; Regarding actual DNS resolution: although
@@ -1615,7 +1629,9 @@ Other notes:
            (respawn? #f)))))))
 #+end_src
 
-**** Wireguard: VPN
+**** COMMENT Wireguard: VPN
+
+*2026-09-22:* Superseded by Netbird.
 
 #+begin_src scheme :noweb-ref sublation-system-modules
   (gnu services vpn)
@@ -1660,10 +1676,6 @@ Wireguard config:
           (name "OnePlus")
           (public-key "Mgj/EOTOJv96q6NSN8CC7DEXB7ic6WV78H1ukHm7fyY=")
           (allowed-ips '("10.0.0.2/32")))))))
-  ;; For Wireguard IP forwarding
-  (simple-service 'sysctl-wireguard
-      sysctl-service-type
-    '(("net.ipv4.ip_forward" . "1")))
 #+end_src
 
 The private key for the Wireguard VPN:
@@ -1676,6 +1688,124 @@ The private key for the Wireguard VPN:
 #+end_src
 #+begin_src scheme :noweb-ref sublation-system-sops-secrets
   sops-secret-wireguard-private-key
+#+end_src
+
+**** Netbird: VPN mesh network
+
+Completely self-hosted and open source alternative to Tailscale
+
+***** Control plane
+
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-netbird-dotenv
+    (sops-secret
+      (key '("netbird"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)
+      (output-type "dotenv")))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-netbird-dotenv
+#+end_src
+
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (krisb services envsubst)
+  (krisb services home envsubst)
+  (gnu services containers)
+  (gnu home services shepherd)
+  (gnu home services containers)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-netbird-envsusbt
+      home-envsubst-service-type
+    (list
+     (envsubst-substitution
+      (name 'netbird)
+      (template (local-file "files/netbird-server/config.yaml.template"))
+      (output "/home/krisbalintona/services/netbird-server/config/config.yaml")
+      (environment-file
+       (sops-secret->secret-file
+        sops-secret-netbird-dotenv
+        #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))))
+  (simple-service 'home-oci-netbird
+      home-oci-service-type
+    (oci-extension
+     (containers
+      ;; See
+      ;; https://docs.netbird.io/selfhosted/maintenance/configuration-files
+      ;; for how to start setting up these containers
+      (list
+       (oci-container-configuration
+         (provision "netbird-server")
+         (image "netbirdio/netbird-server:latest")
+         (command '("--config" "/etc/netbird/config.yaml"))
+         (requirement '(home-envsubst-netbird))
+         (ports
+          '("127.0.0.1:15301:80"
+            ;; As per
+            ;; https://docs.netbird.io/selfhosted/external-reverse-proxy#combined-container-setup-v0-65-0,
+            ;; the STUN port must be publicly available, not proxied
+            ;; through HTTP reverse proxy.  Ensure the firewall allows
+            ;; inbound connections through this UDP port
+            "3478:3478/udp"))
+         (extra-arguments
+          ;; For reaching the Pocket ID container's endpoint published
+          ;; on the host
+          (list "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
+         (volumes
+          (list (cons "/home/krisbalintona/services/netbird-server/data" "/var/lib/netbird")
+                (cons "/home/krisbalintona/services/netbird-server/config" "/etc/netbird:ro")))
+         (auto-start? #t)
+         (respawn? #f))
+       (oci-container-configuration
+         (provision "netbird-dashboard")
+         (image "netbirdio/dashboard:latest")
+         ;; See
+         ;; https://docs.netbird.io/selfhosted/maintenance/configuration-files#dashboard-env
+         ;; for the available web UI env vars
+         (environment
+          (list "NETBIRD_MGMT_API_ENDPOINT=https://netbird.kristofferbalintona.me"
+                "NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.kristofferbalintona.me"
+
+                ;; Web UI login details (different from the identity
+                ;; providers the server uses)
+                "USE_AUTH0=false"
+                "AUTH_AUDIENCE=netbird-dashboard"
+                "AUTH_CLIENT_ID=netbird-dashboard"
+                "AUTH_CLIENT_SECRET="
+                "AUTH_AUTHORITY=https://netbird.kristofferbalintona.me/oauth2"
+                "AUTH_SUPPORTED_SCOPES=openid profile email groups"
+                "AUTH_REDIRECT_URI=/nb-auth"
+                "AUTH_SILENT_REDIRECT_URI=/nb-silent-auth"
+                
+                ;; Rely on Caddy as external reverse proxy, not the
+                ;; embedded Traefik reverse proxy
+                "LETSENCRYPT_DOMAIN=none"))
+         (extra-arguments
+          ;; For reaching the Pocket ID container's endpoint published
+          ;; on the host
+          (list "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
+         (ports '("127.0.0.1:15300:80"))
+         (auto-start? #t)
+         (respawn? #f))))))
+#+end_src
+
+***** Peers
+
+#+begin_src scheme :noweb-ref sublation-system-modules
+  (krisb packages netbird)
+  (krisb services netbird)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-system-packages
+  netbird
+#+end_src
+#+begin_src scheme :noweb-ref sublation-system-services
+  (service netbird-service-type
+    (netbird-configuration
+     (respawn? #f)))
 #+end_src
 
 ** Services

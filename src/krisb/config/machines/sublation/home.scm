@@ -21,6 +21,12 @@
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
   #:use-module (sops services sops)
+  #:use-module (sops services sops)
+  #:use-module (krisb services envsubst)
+  #:use-module (krisb services home envsubst)
+  #:use-module (gnu services containers)
+  #:use-module (gnu home services shepherd)
+  #:use-module (gnu home services containers)
   #:use-module (gnu services containers)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services containers)
@@ -65,6 +71,12 @@
     (file (local-file sops-sublation-secrets-path))
     (output-type "dotenv")
     (permissions #o400)))
+(define sops-secret-netbird-dotenv
+  (sops-secret
+    (key '("netbird"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)
+    (output-type "dotenv")))
 (define copyparty-socket-dir
   (string-append (getenv "XDG_RUNTIME_DIR")
                  "/copyparty"))
@@ -170,6 +182,7 @@
                (file (local-file sops-sublation-secrets-path))
                (permissions #o400))
              sops-secret-tinyauth-dotenv
+             sops-secret-netbird-dotenv
              sops-secret-copyparty-dotenv
              (sops-secret
                (key '("vaultwarden" "push-installation-id"))
@@ -404,7 +417,10 @@
                        (cons "DNS_SERVER_RECURSION_NETWORK_ACL"
                              (string-join '("127.0.0.1"      ; This machine
                                             "192.168.1.0/24" ; LAN subnet
-                                            "10.0.0.0/24")   ; Wireguard VPN
+                                            ;; NOTE 2026-09-23: Switched to
+                                            ;; Netbird
+                                            ;; "10.0.0.0/24"    ; Wireguard VPN
+                                            "100.83.0.0/16") ; Netbird
                                           ","))
        
                        ;; Regarding actual DNS resolution: although
@@ -550,6 +566,78 @@
                 (volumes '(("/home/krisbalintona/services/tinyauth/data" . "/data")))
                 (auto-start? #t)
                 (respawn? #f)))))))
+       (simple-service 'home-netbird-envsusbt
+           home-envsubst-service-type
+         (list
+          (envsubst-substitution
+           (name 'netbird)
+           (template (local-file "files/netbird-server/config.yaml.template"))
+           (output "/home/krisbalintona/services/netbird-server/config/config.yaml")
+           (environment-file
+            (sops-secret->secret-file
+             sops-secret-netbird-dotenv
+             #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))))
+       (simple-service 'home-oci-netbird
+           home-oci-service-type
+         (oci-extension
+          (containers
+           ;; See
+           ;; https://docs.netbird.io/selfhosted/maintenance/configuration-files
+           ;; for how to start setting up these containers
+           (list
+            (oci-container-configuration
+              (provision "netbird-server")
+              (image "netbirdio/netbird-server:latest")
+              (command '("--config" "/etc/netbird/config.yaml"))
+              (requirement '(home-envsubst-netbird))
+              (ports
+               '("127.0.0.1:15301:80"
+                 ;; As per
+                 ;; https://docs.netbird.io/selfhosted/external-reverse-proxy#combined-container-setup-v0-65-0,
+                 ;; the STUN port must be publicly available, not proxied
+                 ;; through HTTP reverse proxy.  Ensure the firewall allows
+                 ;; inbound connections through this UDP port
+                 "3478:3478/udp"))
+              (extra-arguments
+               ;; For reaching the Pocket ID container's endpoint published
+               ;; on the host
+               (list "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
+              (volumes
+               (list (cons "/home/krisbalintona/services/netbird-server/data" "/var/lib/netbird")
+                     (cons "/home/krisbalintona/services/netbird-server/config" "/etc/netbird:ro")))
+              (auto-start? #t)
+              (respawn? #f))
+            (oci-container-configuration
+              (provision "netbird-dashboard")
+              (image "netbirdio/dashboard:latest")
+              ;; See
+              ;; https://docs.netbird.io/selfhosted/maintenance/configuration-files#dashboard-env
+              ;; for the available web UI env vars
+              (environment
+               (list "NETBIRD_MGMT_API_ENDPOINT=https://netbird.kristofferbalintona.me"
+                     "NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.kristofferbalintona.me"
+       
+                     ;; Web UI login details (different from the identity
+                     ;; providers the server uses)
+                     "USE_AUTH0=false"
+                     "AUTH_AUDIENCE=netbird-dashboard"
+                     "AUTH_CLIENT_ID=netbird-dashboard"
+                     "AUTH_CLIENT_SECRET="
+                     "AUTH_AUTHORITY=https://netbird.kristofferbalintona.me/oauth2"
+                     "AUTH_SUPPORTED_SCOPES=openid profile email groups"
+                     "AUTH_REDIRECT_URI=/nb-auth"
+                     "AUTH_SILENT_REDIRECT_URI=/nb-silent-auth"
+                     
+                     ;; Rely on Caddy as external reverse proxy, not the
+                     ;; embedded Traefik reverse proxy
+                     "LETSENCRYPT_DOMAIN=none"))
+              (extra-arguments
+               ;; For reaching the Pocket ID container's endpoint published
+               ;; on the host
+               (list "--add-host" "pocket-id.kristofferbalintona.me:host-gateway"))
+              (ports '("127.0.0.1:15300:80"))
+              (auto-start? #t)
+              (respawn? #f))))))
        (simple-service 'home-oci-copyparty-socket
            home-shepherd-service-type
          (list

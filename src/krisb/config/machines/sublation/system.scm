@@ -21,19 +21,14 @@
   #:use-module (ice-9 textual-ports)                   ; For 'get-string-all'
   #:use-module (krisb packages networking)
   #:use-module (gnu services security)
-  #:use-module (gnu services vpn)
-  #:use-module (gnu services sysctl)
+  #:use-module (krisb packages netbird)
+  #:use-module (krisb services netbird)
   #:use-module (gnu services messaging)
   #:use-module (gnu services monitoring)
   #:use-module (gnu services monitoring)
   #:use-module (gnu services linux)
   #:use-module (gnu services sysctl))
 
-(define sops-secret-wireguard-private-key
-  (sops-secret
-    (key '("wireguard" "private-key"))
-    (file (local-file sops-sublation-secrets-path))
-    (permissions #o400)))
 (define %signing-keys-dir
   ;; The cwd should be the repository root
   (string-append (getcwd) "/signing-keys"))
@@ -89,7 +84,7 @@
 
     (packages
      (cons*
-      
+      netbird
       glibc-locales
       %base-packages))
 
@@ -105,7 +100,7 @@
            (verbose? #t)
            (secrets
             (list
-             sops-secret-wireguard-private-key))))
+             ))))
        ;; Rootless podman also needs 'iptables-service-type' specifically for
        ;; its (non-internal) networks; 'nftables-service-type' will not
        ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
@@ -128,6 +123,17 @@
          (nftables-configuration
            (ruleset
             (local-file (config-files-path "nftables/sublation.nft")))))
+       ;; Enable IPv4 packet forwarding
+       ;;
+       ;; NOTE: Plain Wireguard doesn't do this for me, but Netbird does
+       ;; (according to
+       ;; https://docs.netbird.io/manage/networks/how-routing-peers-work#ip-forwarding).
+       ;; Nevertheless, we set this in case IPv4 forwarding is possible.
+       ;; Also be aware of its IPv6 counterpart:
+       ;; net.ipv6.conf.all.forwarding.
+       (simple-service 'sysctl-nftables-forwarding
+           sysctl-service-type
+         '(("net.ipv4.ip_forward" . "1")))
        (service fail2ban-service-type)
        (simple-service 'fail2ban-openssh
            fail2ban-service-type
@@ -152,46 +158,9 @@
             (filter
              (fail2ban-jail-filter-configuration
                (name "nginx-botsearch"))))))
-       (service wireguard-service-type
-         (wireguard-configuration
-           (shepherd-requirement '(nftables))
-           (addresses '("10.0.0.1/24"))
-           (port "53020")
-           (private-key (sops-secret->secret-file sops-secret-wireguard-private-key))
-           (bootstrap-private-key? #f)
-           ;; Network rules
-           (pre-up
-            (list
-             ;; Create IPv4 and IPv6 table for address translation (rewriting
-             ;; packet addresses)
-             #~(string-append #$(file-append nftables "/sbin/nft")
-                              " add table inet wg-nat")
-             #~(string-append #$(file-append nftables "/sbin/nft")
-                              " add chain inet wg-nat postrouting '{ type nat hook postrouting priority -100; }'")
-             ;; Allow Wireguard traffic to occur as if from the host (this
-             ;; peer).  Do this by rewriting source IP of Wireguard outgoing
-             ;; packets (packets from peers having a source IP from
-             ;; 10.0.0.0/24, that is, from within my Wireguard subnet (which
-             ;; are IPs from 10.0.0.0 to 10.0.0.255)) leaving via wifi
-             ;; (interface wlp108s0) to have a source IP of the host's IP on
-             ;; the wifi network (wlp108s0).
-             #~(string-append #$(file-append nftables "/sbin/nft")
-                              " add rule inet wg-nat postrouting oifname 'wlp108s0'"
-                              " ip saddr 10.0.0.0/24 masquerade")))
-           (post-down
-            (list
-             #~(string-append #$(file-append nftables "/sbin/nft")
-                              " delete table inet wg-nat")))
-           (peers
-            (list
-             (wireguard-peer
-               (name "OnePlus")
-               (public-key "Mgj/EOTOJv96q6NSN8CC7DEXB7ic6WV78H1ukHm7fyY=")
-               (allowed-ips '("10.0.0.2/32")))))))
-       ;; For Wireguard IP forwarding
-       (simple-service 'sysctl-wireguard
-           sysctl-service-type
-         '(("net.ipv4.ip_forward" . "1")))
+       (service netbird-service-type
+         (netbird-configuration
+          (respawn? #f)))
        (service soju-service-type
          (soju-configuration
           (title "Personal bouncer")
