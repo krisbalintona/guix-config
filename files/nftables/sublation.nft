@@ -60,6 +60,12 @@ define NETBIRD_IF = "wt0"
 define NETBIRD_SUBNET = 100.83.0.0/16
 define TRUSTED_SRC = { 127.0.0.1, $LAN_SUBNET, $WG_SUBNET, $NETBIRD_SUBNET }
 
+# Flush only my tables
+table inet firewall {}          # No-op in case it doesn't exist yet
+flush table inet firewall
+table inet nat {}               # No-op in case it doesn't exist yet
+flush table inet nat
+
 # Table for disallowing and allowing IPv4 and IPv6 packets
 table inet firewall {
     # Incoming packets addressed to and have now been routed to the
