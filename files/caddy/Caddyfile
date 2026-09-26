@@ -666,3 +666,10 @@ netbird.kristofferbalintona.me {
 	import policy_public
 	import service-logs netbird
 }
+
+# ** Ntfy
+
+ntfy.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:16200
+	import policy_private
+}

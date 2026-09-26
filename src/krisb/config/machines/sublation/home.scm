@@ -39,6 +39,7 @@
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
   #:use-module (krisb services containers)
+  #:use-module (sops services sops)
   #:use-module (gnu home services backup)
   #:use-module (gnu home services syncthing)
   )
@@ -119,6 +120,12 @@
     (file (local-file sops-sublation-secrets-path))
     (permissions #o400)
     (output-type "dotenv")))
+(define sops-secret-ntfy-dotenv
+  (sops-secret
+    (key '("ntfy"))
+    (file (local-file sops-sublation-secrets-path))
+    (output-type "dotenv")
+    (permissions #o400)))
 
 (define-public sublation-home-environment
   (home-environment
@@ -196,7 +203,8 @@
              sops-secret-qsticky-dotenv
              sops-secret-profilarr-dotenv
              sops-secret-navidrome-dotenv
-             sops-secret-readeck-dotenv))))
+             sops-secret-readeck-dotenv
+             sops-secret-ntfy-dotenv))))
        (service home-oci-service-type
          (for-home
           (oci-configuration
@@ -1876,6 +1884,53 @@
               ;; (ports '("127.0.0.1:3000:3000"))
               (auto-start? #t)
               (respawn? #f))))))
+       (simple-service 'home-oci-ntfy
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (let ((env-file
+                   (sops-secret->secret-file
+                    sops-secret-ntfy-dotenv
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
+                  ;; Since I set the container user to a non-root user,
+                  ;; change the HTTP listening port to something that
+                  ;; non-root user can bind to
+                  (container-listen-port "8080"))
+              (oci-container-configuration
+                (provision "ntfy")
+                (image "binwiederhier/ntfy:latest")
+                (requirement '(home-sops-secret-ntfy))
+                (container-user "1000:1000")
+                (command
+                 (list "serve"
+                       "--listen-http" (string-append ":" container-listen-port)
+                       "--cache-file" "/var/cache/ntfy/cache.db"))
+                ;; Users can either configure settings in
+                ;; /etc/ntfy/server.yml or environment files (we do the
+                ;; latter).  See https://docs.ntfy.sh/config for the
+                ;; documentation of all configuration options
+                (environment
+                 (list "TZ=America/Chicago"
+                       
+                       (cons "NTFY_BASE_URL" "https://ntfy.kristofferbalintona.me")
+                       (cons "NTFY_BEHIND_PROXY" "true")
+                       
+                       (cons "NTFY_CACHE_FILE" "/var/cache/ntfy/cache.db")
+                       (cons "NTFY_CACHE_DURATION" "48h")
+                       
+                       (cons "NTFY_AUTH_FILE" "/var/lib/ntfy/auth.db")
+                       (cons "NTFY_AUTH_DEFAULT_ACCESS" "deny-all")
+                       (cons "NTFY_ENABLE_LOGIN" "true")
+                       (cons "NTFY_REQUIRE_LOGIN" "true")))
+                (extra-arguments
+                 (list "--env-file" env-file))
+                (ports (list (string-append "127.0.0.1:16200:" container-listen-port)))
+                (volumes
+                 (list (cons "/home/krisbalintona/services/ntfy/data" "/var/lib/ntfy")
+                       (cons "/home/krisbalintona/services/ntfy/cache" "/var/cache/ntfy")))
+                (auto-start? #t)
+                (respawn? #f)))))))
        (simple-service 'home-restic-vault
            home-restic-backup-service-type
          (list
