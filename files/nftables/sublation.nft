@@ -96,10 +96,14 @@ table inet firewall {
 
         # Allow everything from loopback interface
         iif lo accept
-        # Anti-spoof rules: drop connections destined to loopbook
-        # address but not coming from loopback interface
+        # Anti-spoof rules: drop packets destined to loopback address
+        # but not coming from loopback interface
         iif != lo ip daddr 127.0.0.1/8 counter drop
         iif != lo ip6 daddr ::1/128 counter drop
+        # Likewise, drop connections with a source address of loopback
+        # but not originating there
+        iif != lo ip saddr 127.0.0.0/8 counter drop
+        iif != lo ip6 saddr ::1/128 counter drop
     }
 
     # Already-accepted traffic + LAN
@@ -114,13 +118,14 @@ table inet firewall {
         ip saddr $LAN_SUBNET accept
     }
 
-    # Netbird VPN
+    # Netbird server
     chain netbird {
-        # STUN port must be publicly available.  (STUN lets two peers
-        # connect directly, rather than indirectly, using of routing
-        # through the relay server.)  NOTE: Only effective when the
-        # port itself is publicly accessible, so this port should be
-        # forwarded from my router
+        # STUN port must be publicly available.  (The Signal
+        # functionality of Netbird lets two peers connect directly,
+        # rather than indirectly, using of routing through the relay
+        # server.)  NOTE: Only effective when the port itself is
+        # publicly accessible, so this port should be forwarded from
+        # my router
         udp dport 3478 accept
     }
 
@@ -180,9 +185,8 @@ table inet firewall {
         # above rule)
         oifname $WG_IF ct state { established, related } accept
 
-        # Do the same above for the Netbird interface
-        iifname $NETBIRD_IF accept
-        oifname $NETBIRD_IF ct state { established, related } accept
+        # NOTE: Netbird handles its NAT routing with the rules it
+        # inserts itself
     }
 
     # Packets originating from processes in the local machine
@@ -210,7 +214,7 @@ table inet nat {
         # peer as the destination address)
         oifname $LAN_IF iifname $WG_IF ip saddr $WG_SUBNET masquerade
 
-        # Do the same above for the Netbird interface and subnet
-        oifname $LAN_IF iifname $NETBIRD_IF ip saddr $NETBIRD_SUBNET masquerade
+        # NOTE: Netbird handles its NAT routing with the rules it
+        # inserts itself
     }
 }
