@@ -250,24 +250,31 @@
 	import policy_global
 	import headers_security_public
 
-	# Block if outside US/IL (and not in a trusted subnet)
+	# Matcher for everything that is not from LAN or Netbird
+	# network
+	@untrusted not remote_ip private_ranges 100.83.0.0/16
+
+	# Block if outside US/IL (and not in a trusted subnet) with
+	# caddy-maxmind-geolocation
 	#
-	# Use the caddy-maxmind-geolocation module for geoblocking.
 	# To test whether geoblocking is working, use something like
 	# https://check-host.net/check-http
 	@geo_blocked {
-		not remote_ip private_ranges 100.83.0.0/16
 		not maxmind_geolocation {
 			db_path /var/lib/geoip/GeoLite2-City.mmdb
 			allow_countries US
 			allow_subdivisions IL
 		}
 	}
-	error @geo_blocked 403
 
-	# CrowdSec bouncer (caddy-crowdsec): block if CrowdSec deems
-	# the client malicious
-	crowdsec
+	# Only geoblock and run through crowdsec for untrusted IPs
+	route @untrusted {
+		error @geo_blocked 403
+
+		# CrowdSec bouncer (caddy-crowdsec): block if CrowdSec
+		# deems the client malicious
+		crowdsec
+	}
 }
 
 # Policy for domains exposed only locally (via my local DNS)
