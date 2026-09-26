@@ -54,11 +54,9 @@
 
 define LAN_IF = "wlp108s0"
 define LAN_SUBNET = 192.168.4.0/22
-define WG_IF = "wg0"
-define WG_SUBNET = 10.0.0.0/24
 define NETBIRD_IF = "wt0"
 define NETBIRD_SUBNET = 100.83.0.0/16
-define TRUSTED_SRC = { 127.0.0.1, $LAN_SUBNET, $WG_SUBNET, $NETBIRD_SUBNET }
+define TRUSTED_SRC = { 127.0.0.1, $LAN_SUBNET, $NETBIRD_SUBNET }
 
 # Flush only my tables
 table inet firewall {}          # No-op in case it doesn't exist yet
@@ -68,6 +66,19 @@ flush table inet nat
 
 # Table for disallowing and allowing IPv4 and IPv6 packets
 table inet firewall {
+    # Runtime extensions.  Any service can register itself here and
+    # deregister at shutdown.
+
+    # Interfaces granted the same blanket trust that $LAN_SUBNET gets
+    # (i.e., any port/protocol)
+    set dyn_trusted_ifaces {
+        type ifname
+    }
+    # UDP ports opened on the WAN-facing interface
+    set dyn_open_udp_ports {
+        type inet_service
+    }
+
     # Incoming packets addressed to and have now been routed to the
     # local system and processes running there
     chain incoming {
@@ -76,9 +87,7 @@ table inet firewall {
         jump sanity
         jump trust
         jump netbird
-        # NOTE 2026-09-22: Superseded by Netbird, but still here,
-        # merely commented out
-        # jump wireguard
+        udp dport @dyn_open_udp_ports accept
         jump public_services
         jump ssh
         jump icmp_control
@@ -114,8 +123,8 @@ table inet firewall {
         # connections we already know about)
         ct state vmap { established : accept, related : accept }
 
-        # Accept anything originating from my LAN
-        ip saddr $LAN_SUBNET accept
+        # Anything from a dynamically-registered trusted interfaces
+        iifname @dyn_trusted_ifaces accept
     }
 
     # Netbird server
@@ -127,12 +136,6 @@ table inet firewall {
         # publicly accessible, so this port should be forwarded from
         # my router
         udp dport 3478 accept
-    }
-
-    # Wireguard VPN
-    chain wireguard {
-        udp dport 53020 accept  # Initial connection
-        iifname $WG_IF accept    # Accept all traffic in tunnel
     }
 
     # Caddy
@@ -176,17 +179,8 @@ table inet firewall {
         type filter hook forward priority filter; policy drop;
         ct state invalid drop
 
-        # New connections initiated BY a WireGuard peer (e.g. peer ->
-        # server, or peer -> LAN device): accept (and let conntrack
-        # start tracking them)
-        iifname $WG_IF accept
-        # Replies traveling back TOWARD a WireGuard peer (for the
-        # established/related connections known and accepted from the
-        # above rule)
-        oifname $WG_IF ct state { established, related } accept
-
-        # NOTE: Netbird handles its NAT routing with the rules it
-        # inserts itself
+        iifname @dyn_trusted_ifaces accept
+        oifname @dyn_trusted_ifaces ct state { established, related } accept
     }
 
     # Packets originating from processes in the local machine
@@ -204,17 +198,5 @@ table inet nat {
     # these mappings)
     chain postrouting {
         type nat hook postrouting priority srcnat;
-
-        # Masquerade (rewrite source address) traffic for outbound
-        # traffic that comes from the Wireguard interface and subnet
-        # (forwarded from the "forward" chain above).  This means LAN
-        # devices see those requests as originating from the server.
-        # (Then later, incoming responses are un-rewritten
-        # automatically by conntrack, restoring the original Wireguard
-        # peer as the destination address)
-        oifname $LAN_IF iifname $WG_IF ip saddr $WG_SUBNET masquerade
-
-        # NOTE: Netbird handles its NAT routing with the rules it
-        # inserts itself
     }
 }
