@@ -1434,6 +1434,7 @@
                 (volumes
                  '(("/home/krisbalintona/services/navidrome/config" . "/config")
                    ("/home/krisbalintona/services/navidrome/data" . "/data")
+                   ("/home/krisbalintona/services/navidrome/backups" . "/backups")
                    ("/home/krisbalintona/services/media/music" . "/music:ro")))
                 (auto-start? #t)
                 (respawn? #f)))))))
