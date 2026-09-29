@@ -476,10 +476,9 @@ yamtrack.kristofferbalintona.me {
 	import policy_public
 	import service-logs yamtrack
 
-	# Only access admin page in local networks and my public IP
 	@admin {
 		path /admin*
-		not remote_ip private_ranges 99.113.24.207
+		not remote_ip private_ranges 100.83.0.0/16
 	}
 	error @admin 403
 }

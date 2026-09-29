@@ -1,0 +1,22 @@
+# Taken from
+# https://nkaushik.in/writing/securing-your-homelab-with-crowdsec-traefik-and-docker/
+type: http          
+name: ntfy          
+log_level: trace
+
+format: |
+    {{range . -}}{{$alert := . -}}{{range .Decisions -}}{{.Value}} will get {{.Type}} for next {{.Duration}} for triggering {{.Scenario}}
+
+    Run below command to remove the ban:
+    sudo cscli decisions delete -i {{.Value}}
+
+    Shodan Link: https://www.shodan.io/host/{{.Value}}
+    CTI Link: https://app.crowdsec.net/cti/{{.Value}}{{end -}}{{end -}}
+    
+url: https://ntfy.home.kristofferbalintona.me/crowdsec
+method: POST
+headers:
+  Content-Type: "text/plain"
+  Title: "Crowdsec Trigger"
+  Tags: "warning"
+  Authorization: "Bearer tk_szcp3w1yre3gq2bhicm5woj6sy6j9"

@@ -924,49 +924,44 @@ Several of my services integrate with ~fail2ban-service-type~.
   (simple-service 'home-oci-crowdsec
       home-oci-service-type
     (oci-extension
-     (networks
-      (list
-       (oci-network-configuration
-        ;; Should be an external network because CrowdSec requires
-        ;; host-outbound internet requests
-        (name "crowdsec-network"))))
      (containers
       (list
-       (oci-container-configuration
-         (provision "crowdsec")
-         (image "crowdsecurity/crowdsec:latest")
-         (environment
-          (list '("TZ" . "America/Chicago")
-                '("LOCAL_API_URL" . "http://127.0.0.1:7200")
-                (string-append "COLLECTIONS="
-                               (string-join '("crowdsecurity/linux"
-                                              "crowdsecurity/sshd"
-                                              "crowdsecurity/whitelist-good-actors"
-                                              "crowdsecurity/base-http-scenarios"
-                                              "crowdsecurity/caddy")
-                                            " "))
-                ;; Enable Write-Ahead Logging with SQLite.  Disable if
-                ;; using a filesystem over the network, e.g., NAS
-                '("USE_WAL" . "true")
-                ;; Bouncers
-                (cons "BOUNCER_KEY_caddy"
-                      (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
-                                       #:file sops-sublation-secrets-path))))
-         (network "crowdsec-network")
-         (ports
-          '("127.0.0.1:7200:7200"         ; LAPI
-            "127.0.0.1:6060:6060"))       ; Prometheus metrics
-         (volumes
-          (list (cons "/home/krisbalintona/services/crowdsec/data/" "/var/lib/crowdsec/data/")
-                (cons "/home/krisbalintona/services/crowdsec/config/" "/etc/crowdsec")
-                (cons (config-files-path "/crowdsec/config.yaml")
-                      "/etc/crowdsec/config.yaml")
-                (cons (config-files-path "crowdsec/acquis.yaml")
-                      "/etc/crowdsec/acquis.yaml")
-                ;; All Caddy logs
-                (cons "/home/krisbalintona/services/caddy/log" "/var/log/caddy")))
-         (auto-start? #t)
-         (respawn? #f))))))
+       (let ((lapi-port "7200"))
+         (oci-container-configuration
+           (provision "crowdsec")
+           (image "crowdsecurity/crowdsec:latest")
+           (environment
+            (list (cons "TZ" "America/Chicago")
+                  (cons "LOCAL_API_URL" (string-append "http://127.0.0.1:" lapi-port))
+                  (string-append "COLLECTIONS="
+                                 (string-join '("crowdsecurity/linux"
+                                                "crowdsecurity/sshd"
+                                                "crowdsecurity/whitelist-good-actors"
+                                                "crowdsecurity/base-http-scenarios"
+                                                "crowdsecurity/caddy")
+                                              " "))
+                  ;; Bouncers
+                  (cons "BOUNCER_KEY_caddy"
+                        (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
+                                         #:file sops-sublation-secrets-path))))
+           (ports
+            (list (string-append "127.0.0.1:" lapi-port ":" lapi-port) ; LAPI
+                  "127.0.0.1:6060:6060")) ; Prometheus metrics
+           (extra-arguments
+            (list
+             ;; For Ntfy notifications
+             "--add-host" "ntfy.home.kristofferbalintona.me:host-gateway"))
+           (volumes
+            (list (cons "/home/krisbalintona/services/crowdsec/data/" "/var/lib/crowdsec/data/")
+                  (cons "/home/krisbalintona/services/crowdsec/config/" "/etc/crowdsec")
+                  (cons (config-files-path "/crowdsec/config.yaml") "/etc/crowdsec/config.yaml")
+                  (cons (config-files-path "crowdsec/profiles.yaml") "/etc/crowdsec/profiles.yaml")
+                  (cons (config-files-path "crowdsec/acquis.yaml") "/etc/crowdsec/acquis.yaml")
+                  (cons (config-files-path "crowdsec/ntfy.yaml") "/etc/crowdsec/notifications/ntfy.yaml")
+                  ;; All Caddy logs
+                  (cons "/home/krisbalintona/services/caddy/log" "/var/log/caddy")))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 #+begin_src scheme :noweb-ref sublation-home-restic-backup-jobs
