@@ -22,6 +22,7 @@
   #:use-module (gnu home services containers)
   #:use-module (sops services sops)
   #:use-module (sops services sops)
+  #:use-module (sops services sops)
   #:use-module (krisb services envsubst)
   #:use-module (krisb services home envsubst)
   #:use-module (gnu services containers)
@@ -65,6 +66,16 @@
     (key '("technitium" "pocket-id-SSO"))
     (file (local-file sops-sublation-secrets-path))
     (output-type "dotenv")
+    (permissions #o400)))
+(define sops-secret-caddy-netlify-access-token
+  (sops-secret
+    (key '("caddy" "netlify-access-token"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
+(define sops-secret-caddy-crowdsec-bouncer-api-key
+  (sops-secret
+    (key '("caddy" "crowdsec-bouncer" "api-key"))
+    (file (local-file sops-sublation-secrets-path))
     (permissions #o400)))
 (define sops-secret-tinyauth-dotenv
   (sops-secret
@@ -180,14 +191,8 @@
                (permissions #o400))
              sops-secret-technitium-password
              sops-secret-technitium-pocket-id-sso-dotenv
-             (sops-secret
-               (key '("caddy" "netlify-access-token"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
-             (sops-secret
-               (key '("caddy" "crowdsec-bouncer" "api-key"))
-               (file (local-file sops-sublation-secrets-path))
-               (permissions #o400))
+             sops-secret-caddy-netlify-access-token
+             sops-secret-caddy-crowdsec-bouncer-api-key
              sops-secret-tinyauth-dotenv
              sops-secret-netbird-dotenv
              sops-secret-copyparty-dotenv
@@ -285,6 +290,15 @@
               (oci-container-configuration
                 (provision "crowdsec")
                 (image "crowdsecurity/crowdsec:latest")
+                (requirement '(home-sops-secret-caddy/crowdsec-bouncer/api-key))
+                (host-environment
+                 (list
+                  (cons "BOUNCER_KEY_caddy"
+                        #~(call-with-input-file
+                              #$(sops-secret->secret-file
+                                 sops-secret-caddy-crowdsec-bouncer-api-key
+                                 #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
+                            (@ (ice-9 textual-ports) get-string-all)))))
                 (environment
                  (list (cons "TZ" "America/Chicago")
                        (cons "LOCAL_API_URL" (string-append "http://127.0.0.1:" lapi-port))
@@ -296,9 +310,7 @@
                                                      "crowdsecurity/caddy")
                                                    " "))
                        ;; Bouncers
-                       (cons "BOUNCER_KEY_caddy"
-                             (get-sops-secret '("caddy" "crowdsec-bouncer" "api-key")
-                                              #:file sops-sublation-secrets-path))))
+                       "BOUNCER_KEY_caddy"))
                 (ports
                  (list (string-append "127.0.0.1:" lapi-port ":" lapi-port) ; LAPI
                        "127.0.0.1:6060:6060")) ; Prometheus metrics
@@ -461,13 +473,20 @@
          (oci-extension
           (containers
            (list
-            (let ((netlify-access-token
-                   (get-sops-secret-path "caddy/netlify-access-token"))
-                  (crowdsec-bouncer-api-key
-                   (get-sops-secret-path "caddy/crowdsec-bouncer/api-key")))
+            (let ((netlify-access-token-path
+                   (sops-secret->secret-file
+                    sops-secret-caddy-netlify-access-token
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets")))
+                  (crowdsec-bouncer-api-key-path
+                   (sops-secret->secret-file
+                    sops-secret-caddy-crowdsec-bouncer-api-key
+                    #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))))
               (oci-container-configuration
                 (provision "caddy")
-                (requirement '(copyparty-socket home-oci-pocket-id-socket))
+                (requirement '(copyparty-socket
+                               home-oci-pocket-id-socket
+                               home-sops-secret-caddy/netlify-access-token
+                               home-sops-secret-caddy/crowdsec-bouncer/api-key))
                 (image
                   (oci-image
                     ;; OCI images locations follow a
@@ -512,8 +531,8 @@
                        ;; Secrets.  Reference these in the Caddyfile with
                        ;; file placeholders; see
                        ;; https://caddyserver.com/docs/conventions#placeholders
-                       (cons netlify-access-token netlify-access-token)
-                       (cons crowdsec-bouncer-api-key crowdsec-bouncer-api-key)))
+                       (cons netlify-access-token-path netlify-access-token-path)
+                       (cons crowdsec-bouncer-api-key-path crowdsec-bouncer-api-key-path)))
                 (command '("caddy" "run" "--config" "/config/Caddyfile"))
                 (auto-start? #t)
                 (respawn? #f)))))))
