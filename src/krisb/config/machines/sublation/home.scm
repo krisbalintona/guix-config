@@ -271,6 +271,39 @@
                 (ports '("127.0.0.1:9882:9882"))
                 (auto-start? #t)
                 (respawn? #f)))))))
+       (simple-service 'home-oci-diun
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (oci-container-configuration
+              (provision "diun")
+              (image "crazymax/diun:latest")
+              (requirement '(home-podman-socket))
+              (environment
+               (list (cons "TZ" "America/Chicago")
+                     (cons "DIUN_WATCH_RUNONSTARTUP" "true")
+                     (cons "DIUN_WATCH_WORKERS" "10")
+                     (cons "DIUN_WATCH_SCHEDULE" "0 */6 * * *") ; Every 6 hours
+                     (cons "DIUN_WATCH_JITTER" "30s")
+                       
+                     (cons "DIUN_PROVIDERS_DOCKER" "true")
+                     (cons "DIUN_PROVIDERS_DOCKER_ENDPOINT" (string-append "unix://" home-podman-socket))
+                     (cons "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" "true")
+       
+                     (cons "DIUN_NOTIF_NTFY_ENDPOINT" "https://ntfy.home.kristofferbalintona.me")
+                     (cons "DIUN_NOTIF_NTFY_TOPIC" "diun")
+                     (cons "DIUN_NOTIF_NTFY_TOKEN" "tk_ukvx5fanl2hmdd9kxc7x4wx85jsax")
+                     (cons "DIUN_NOTIF_NTFY_TIMEOUT" "10s")))
+              (extra-arguments
+               (list
+                ;; For Ntfy notifications
+                "--add-host" "ntfy.home.kristofferbalintona.me:host-gateway"))
+              (volumes
+               (list (cons home-podman-socket (string-append home-podman-socket ":ro"))
+                     (cons "/home/krisbalintona/services/diun/data" "/data")))
+              (auto-start? #t)
+              (respawn? #f))))))
        (service home-openssh-service-type
          (home-openssh-configuration
            (hosts
