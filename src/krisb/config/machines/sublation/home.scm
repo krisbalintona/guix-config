@@ -46,9 +46,8 @@
   #:use-module (gnu home services syncthing)
   )
 
-(define home-podman-socket
-  (string-append (getenv "XDG_RUNTIME_DIR")
-                 "/podman/podman.sock"))
+(define podman-socket-path
+  (string-append (getenv "XDG_RUNTIME_DIR") "/podman/podman.sock"))
 (define services-dir
   (string-append (getenv "HOME") "/services"))
 (define sops-secret-crowdsec-web-ui-lapi-auth-password
@@ -240,37 +239,34 @@
          (oci-extension
           (containers
            (list
-            (let ((container-podman-socket "/run/podman/podman.sock"))
-              (oci-container-configuration
-                (provision "prometheus-podman-exporter")
-                (requirement '(home-podman-socket))
-                (image "quay.io/navidys/prometheus-podman-exporter:latest")
-                (environment
-                 (list
-                  (cons "CONTAINER_HOST"
-                        (string-append "unix://" container-podman-socket))))
-                (volumes
-                 (list (cons home-podman-socket container-podman-socket)))
-                ;; See also
-                ;; https://github.com/containers/prometheus-podman-exporter?tab=readme-ov-file#usage-and-options
-                ;; for a list of other collectors available for enabling.  You
-                ;; can see which collectors are enabled from the startup logs
-                ;; of the container.  The default collector
-                ;; (collector.container) seems sufficient for all the data
-                ;; required by the podman-exporter Grafana dashboard I use:
-                ;; https://grafana.com/grafana/dashboards/21559-podman-exporter-dashboard/.
-                (extra-arguments
-                 '(;; 2026-01-24: Instructed to include this if, I think, Using
-                   ;; SELinux, which I'm not.  But I've left it here in the
-                   ;; future in case I use SELinux.
-                   "--security-opt" "label=disable"
-                   ;; The podman socket is only readable by the host user, and
-                   ;; we must make that socket readable by the container
-                   ;; process
-                   "--userns=keep-id:uid=65534"))
-                (ports '("127.0.0.1:9882:9882"))
-                (auto-start? #t)
-                (respawn? #f)))))))
+            (oci-container-configuration
+              (provision "prometheus-podman-exporter")
+              (requirement '(home-podman-socket))
+              (image "quay.io/navidys/prometheus-podman-exporter:latest")
+              (environment
+               (list (cons "CONTAINER_HOST" (string-append "unix://" podman-socket-path))))
+              (volumes
+               (list (cons podman-socket-path podman-socket-path)))
+              ;; See also
+              ;; https://github.com/containers/prometheus-podman-exporter?tab=readme-ov-file#usage-and-options
+              ;; for a list of other collectors available for enabling.  You
+              ;; can see which collectors are enabled from the startup logs
+              ;; of the container.  The default collector
+              ;; (collector.container) seems sufficient for all the data
+              ;; required by the podman-exporter Grafana dashboard I use:
+              ;; https://grafana.com/grafana/dashboards/21559-podman-exporter-dashboard/.
+              (extra-arguments
+               '(;; 2026-01-24: Instructed to include this if, I think, Using
+                 ;; SELinux, which I'm not.  But I've left it here in the
+                 ;; future in case I use SELinux.
+                 "--security-opt" "label=disable"
+                 ;; The podman socket is only readable by the host user, and
+                 ;; we must make that socket readable by the container
+                 ;; process
+                 "--userns=keep-id:uid=65534"))
+              (ports '("127.0.0.1:9882:9882"))
+              (auto-start? #t)
+              (respawn? #f))))))
        (simple-service 'home-oci-diun
            home-oci-service-type
          (oci-extension
@@ -288,7 +284,7 @@
                      (cons "DIUN_WATCH_JITTER" "30s")
                        
                      (cons "DIUN_PROVIDERS_DOCKER" "true")
-                     (cons "DIUN_PROVIDERS_DOCKER_ENDPOINT" (string-append "unix://" home-podman-socket))
+                     (cons "DIUN_PROVIDERS_DOCKER_ENDPOINT" (string-append "unix://" podman-socket-path))
                      (cons "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" "true")
        
                      (cons "DIUN_NOTIF_NTFY_ENDPOINT" "https://ntfy.home.kristofferbalintona.me")
@@ -300,7 +296,7 @@
                 ;; For Ntfy notifications
                 "--add-host" "ntfy.home.kristofferbalintona.me:host-gateway"))
               (volumes
-               (list (cons home-podman-socket (string-append home-podman-socket ":ro"))
+               (list (cons podman-socket-path podman-socket-path)
                      (cons "/home/krisbalintona/services/diun/data" "/data")))
               (auto-start? #t)
               (respawn? #f))))))
