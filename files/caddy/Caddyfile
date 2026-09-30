@@ -679,3 +679,10 @@ ntfy.home.kristofferbalintona.me {
 	reverse_proxy 127.0.0.1:16200
 	import policy_private
 }
+
+# ** Crowdsec web UI
+
+crowdsec.home.kristofferbalintona.me {
+	reverse_proxy 127.0.0.1:3200
+	import policy_private
+}

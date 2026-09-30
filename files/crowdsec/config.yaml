@@ -38,6 +38,7 @@ api:
     trusted_ips: # IP ranges, or IPs which can have admin API access
       - 127.0.0.1
       - ::1
+      - 10.89.5.0/24 # 2026-09-30: The container's Podman network subnet
     online_client: # Central API credentials (to push signals and receive bad IPs)
       credentials_path: /etc/crowdsec//online_api_credentials.yaml
     enable: true

@@ -17,6 +17,7 @@
   #:use-module (gnu packages containers)
   #:use-module (gnu home services ssh)
   #:use-module (sops services sops)
+  #:use-module (sops services sops)
   #:use-module (krisb packages networking)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
@@ -50,6 +51,11 @@
                  "/podman/podman.sock"))
 (define services-dir
   (string-append (getenv "HOME") "/services"))
+(define sops-secret-crowdsec-web-ui-lapi-auth-password
+  (sops-secret
+    (key '("crowdsec-web-ui" "lapi-auth-password"))
+    (file (local-file sops-sublation-secrets-path))
+    (permissions #o400)))
 (define pocket-id-socket-dir
     (string-append (getenv "XDG_RUNTIME_DIR")
                    "/pocket-id"))
@@ -185,6 +191,7 @@
            (verbose? #t)
            (secrets
             (list
+             sops-secret-crowdsec-web-ui-lapi-auth-password
              (sops-secret
                (key '("pocket-id-encryption-key"))
                (file (local-file sops-sublation-secrets-path))
@@ -284,6 +291,12 @@
        (simple-service 'home-oci-crowdsec
            home-oci-service-type
          (oci-extension
+          (networks
+           (list
+            (oci-network-configuration
+             (name "crowdsec-network")
+             (subnet "10.89.5.0/24") ; Used in api.server.trusted_ips in Crowdsec's config.yaml
+             (gateway "10.89.5.1"))))
           (containers
            (list
             (let ((lapi-port "7200"))
@@ -311,6 +324,7 @@
                                                    " "))
                        ;; Bouncers
                        "BOUNCER_KEY_caddy"))
+                (network "crowdsec-network")
                 (ports
                  (list (string-append "127.0.0.1:" lapi-port ":" lapi-port) ; LAPI
                        "127.0.0.1:6060:6060")) ; Prometheus metrics
@@ -327,6 +341,41 @@
                        (cons (config-files-path "crowdsec/ntfy.yaml") "/etc/crowdsec/notifications/ntfy.yaml")
                        ;; All Caddy logs
                        (cons "/home/krisbalintona/services/caddy/log" "/var/log/caddy")))
+                (auto-start? #t)
+                (respawn? #f)))))))
+       (simple-service 'home-oci-crowdsec-web-ui
+           home-oci-service-type
+         (oci-extension
+          (containers
+           (list
+            (let ((port "3200"))
+              (oci-container-configuration
+                (provision "crowdsec-web-ui")
+                (image "ghcr.io/theduffman85/crowdsec-web-ui:latest")
+                (requirement
+                 '(home-sops-secret-crowdsec-web-ui/lapi-auth-password
+                   crowdsec))                  ; For network
+                (network "crowdsec-network")
+                (container-user "1000:1000")
+                (host-environment
+                 (list
+                  (cons "CONFIG_INSTANCE_LAPI_AUTH_PASSWORD"
+                        #~(call-with-input-file
+                              #$(sops-secret->secret-file
+                                 sops-secret-crowdsec-web-ui-lapi-auth-password
+                                 #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
+                            (@ (ice-9 textual-ports) get-string-all)))))
+                (environment
+                 (list (cons "CONFIG_UI_TIME_ZONE" "America/Chicago")
+                       (cons "CONFIG_SERVER_PORT" port)
+                       (cons "CONFIG_INSTANCE_LAPI_URL" "http://crowdsec:7200")
+                       (cons "CONFIG_INSTANCE_LAPI_AUTH_USERNAME" "crowdsec-web-ui")
+                       "CONFIG_INSTANCE_LAPI_AUTH_PASSWORD"
+                       (cons "CONFIG_INSTANCE_METRICS_URL" "http://crowdsec:6060/metrics")))
+                (ports
+                 (list (string-append "127.0.0.1:" port ":" port)))
+                (volumes
+                 (list (cons "/home/krisbalintona/services/crowdsec-web-ui/data" "/app/data")))
                 (auto-start? #t)
                 (respawn? #f)))))))
        (simple-service 'home-oci-pocket-id-socket

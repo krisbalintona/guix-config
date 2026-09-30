@@ -924,6 +924,12 @@ Several of my services integrate with ~fail2ban-service-type~.
   (simple-service 'home-oci-crowdsec
       home-oci-service-type
     (oci-extension
+     (networks
+      (list
+       (oci-network-configuration
+        (name "crowdsec-network")
+        (subnet "10.89.5.0/24") ; Used in api.server.trusted_ips in Crowdsec's config.yaml
+        (gateway "10.89.5.1"))))
      (containers
       (list
        (let ((lapi-port "7200"))
@@ -951,6 +957,7 @@ Several of my services integrate with ~fail2ban-service-type~.
                                               " "))
                   ;; Bouncers
                   "BOUNCER_KEY_caddy"))
+           (network "crowdsec-network")
            (ports
             (list (string-append "127.0.0.1:" lapi-port ":" lapi-port) ; LAPI
                   "127.0.0.1:6060:6060")) ; Prometheus metrics
@@ -980,6 +987,60 @@ Several of my services integrate with ~fail2ban-service-type~.
       #:repository sops-sublation-repository-path
       #:schedule "0 0 */2 * *"
       #:files (list (string-append services-dir "/crowdsec")))))
+#+end_src
+
+**** CrowdSec Web UI: Self-hosted web UI
+
+#+begin_src scheme :noweb-ref sublation-home-modules
+  (sops services sops)
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-helpers
+  (define sops-secret-crowdsec-web-ui-lapi-auth-password
+    (sops-secret
+      (key '("crowdsec-web-ui" "lapi-auth-password"))
+      (file (local-file sops-sublation-secrets-path))
+      (permissions #o400)))
+#+end_src
+#+begin_src scheme :noweb-ref sublation-home-sops-secrets
+  sops-secret-crowdsec-web-ui-lapi-auth-password
+#+end_src
+
+#+begin_src scheme :noweb-ref sublation-home-services
+  (simple-service 'home-oci-crowdsec-web-ui
+      home-oci-service-type
+    (oci-extension
+     (containers
+      (list
+       (let ((port "3200"))
+         (oci-container-configuration
+           (provision "crowdsec-web-ui")
+           (image "ghcr.io/theduffman85/crowdsec-web-ui:latest")
+           (requirement
+            '(home-sops-secret-crowdsec-web-ui/lapi-auth-password
+              crowdsec))                  ; For network
+           (network "crowdsec-network")
+           (container-user "1000:1000")
+           (host-environment
+            (list
+             (cons "CONFIG_INSTANCE_LAPI_AUTH_PASSWORD"
+                   #~(call-with-input-file
+                         #$(sops-secret->secret-file
+                            sops-secret-crowdsec-web-ui-lapi-auth-password
+                            #:directory (string-append "/run/user/" (number->string (getuid)) "/secrets"))
+                       (@ (ice-9 textual-ports) get-string-all)))))
+           (environment
+            (list (cons "CONFIG_UI_TIME_ZONE" "America/Chicago")
+                  (cons "CONFIG_SERVER_PORT" port)
+                  (cons "CONFIG_INSTANCE_LAPI_URL" "http://crowdsec:7200")
+                  (cons "CONFIG_INSTANCE_LAPI_AUTH_USERNAME" "crowdsec-web-ui")
+                  "CONFIG_INSTANCE_LAPI_AUTH_PASSWORD"
+                  (cons "CONFIG_INSTANCE_METRICS_URL" "http://crowdsec:6060/metrics")))
+           (ports
+            (list (string-append "127.0.0.1:" port ":" port)))
+           (volumes
+            (list (cons "/home/krisbalintona/services/crowdsec-web-ui/data" "/app/data")))
+           (auto-start? #t)
+           (respawn? #f)))))))
 #+end_src
 
 *** Pocket ID: An out-of-the-box OIDC-compliant IdP provider
