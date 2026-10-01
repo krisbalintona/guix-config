@@ -1,8 +1,10 @@
 (define-module (krisb services shells)
+  #:use-module (srfi srfi-1)
+
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (guix packages)
-  
+
   #:use-module (gnu services)
   #:use-module (gnu services configuration)
   #:use-module (gnu home services)

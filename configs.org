@@ -111,272 +111,6 @@ Fisher (plugin package manager):
 
 * Command line
 
-** Common CLI tools
-
-Essential:
-#+begin_src scheme :noweb-ref common-home-packages
-  "coreutils"
-  "findutils"
-  "diffutils"
-  "file"
-  "grep"
-  "sed"
-  "less"
-  "which"
-#+end_src
-
-System monitoring packages:
-#+begin_src scheme :noweb-ref common-home-packages
-  "btop"
-  "glances"
-  "nmon"
-  "atop"
-#+end_src
-See also [[#h:20251222T054114.716045][Goaccess: Web log access analytics]].
-
-Build systems and programming languages:
-#+begin_src scheme :noweb-ref common-home-packages
-  "git"
-  "make"
-  "cmake"
-  "python"
-#+end_src
-
-File searching, visualization, and transfer:
-  #+begin_src scheme :noweb-ref common-home-packages
-    "tree"
-    "ripgrep"
-    "fd"
-    "jq"
-    "rsync"
-  #+end_src
-
-Partition management:
-#+begin_src scheme :noweb-ref common-home-packages
-  "parted"
-#+end_src
-
-Compression:
-#+begin_src scheme :noweb-ref common-home-modules
-  (gnu packages compression)
-#+end_src
-#+begin_src scheme :noweb-ref common-home-packages
-  "unzip"
-  "zip"
-  "gzip"
-  "bzip2"
-  "xz"
-  "tar"
-#+end_src
-
-** Replacements for essential CLI utilities
-
-*** Bat: Fancier ~cat~
-
-Configurable. Options include output with syntax highlighting, line numbers, and automatic piping to ~less~.
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (abbe packages rust)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "bat"
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'home-fish-bat
-      home-fish-service-type
-    (home-fish-extension
-      (aliases
-       `(("cat" . ,(string-join '("bat" "--theme=ansi"
-                                  "--style=plain,header-filesize,grid,snip --paging auto"
-                                  "--italic-text=always --nonprintable-notation=caret")))))))
-  (simple-service 'pager-environment-variables
-      home-environment-variables-service-type
-    ;; Use bat as a pager for man.  Taken from
-    ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
-    '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
-#+end_src
-
-*** Zoxide: A DWIM ~cd~
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (krisb services shells)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (service home-zoxide-service-type
-    (home-zoxide-configuration
-      (zoxide (@ (abbe packages rust) zoxide))))
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'home-fish-zoxide
-      home-fish-service-type
-    (home-fish-extension
-      (abbreviations '(("cd" . "z")))))
-#+end_src
-
-*** Procs: Fancier ~ps~
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "procs"
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'home-fish-procs
-      home-fish-service-type
-    (home-fish-extension
-      (abbreviations `(("ps" . "procs")))))
-#+end_src
-
-** Hardware control
-
-#+begin_src scheme :noweb-ref sublation-home-packages
-  "brightnessctl"
-#+end_src
-
-** Git
-
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'krisb-symlink-git-config-files-service-type
-      home-xdg-configuration-files-service-type
-    `(("git/config"
-       ,(local-file (config-files-path "git/config")))))
-#+end_src
-
-** Jujutsu: Distributed VCS
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (abbe packages rust)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "jujutsu"
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'jj-config-files-service-type
-        home-xdg-configuration-files-service-type
-      `(("jj/config.toml"
-         ,(local-file (config-files-path "jujutsu/config.toml")))))
-#+end_src
-
-Compatibility with the fish shell:
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'fish-vcs-jj
-        home-xdg-configuration-files-service-type
-      `(("fish/functions/fish_jj_prompt.fish"
-         ,(local-file (config-files-path "jujutsu/fish_jj_prompt.fish")))
-        ("fish/functions/fish_vcs_prompt.fish"
-         ,(local-file (config-files-path "jujutsu/fish_vcs_prompt.fish")))))
-#+end_src
-
-** FZF: Generic fuzzy matching interface
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (gnu packages terminals)                ; fzf
-  (gnu packages rust-apps)                ; fd
-#+end_src
-
-Bespoke integration with Fish. The initial inspiration for this was [[https://github.com/gazorby/fifc][gazorby/fifc]].
-#+begin_src scheme :noweb-ref common-home-services
-  (simple-service 'fish-fzf-packages
-      home-profile-service-type
-    (list fd fzf))                        ; Function dependencies
-  (simple-service 'fish-fzf-function
-        home-xdg-configuration-files-service-type
-      `(("fish/functions/fzf_complete.fish"
-         ,(local-file (config-files-path "fish/fzf_complete.fish")))))
-  (simple-service 'fish-fzf-config
-      home-fish-service-type
-    (home-fish-extension
-      (config
-       (list (plain-file "fzf_custom.fish" "bind \\t fzf_complete")))))
-#+end_src
-
-** Atuin: Share shell history across shells and machines
-
-# TODO 2026-01-04: Consider self-hosting a sync server. See
-# https://docs.atuin.sh/cli/self-hosting/server-setup/
-
-Atuin.  Don't forget to register then log in to sync history across machines; see https://docs.atuin.sh/cli/guide/sync/. Alternatives include:
-+ [[https://github.com/cantino/mcfly][GitHub - cantino/mcfly: Fly through your shell history. Great Scott! · GitHub]] (see also [[https://github.com/bnprks/mcfly-fzf][GitHub - bnprks/mcfly-fzf: Integrate Mcfly with fzf to combine a solid command history database with a widely-loved fuzzy search UI · GitHub]])
-+ [[https://github.com/ddworken/hishtory][GitHub - ddworken/hishtory: Your shell history: synced, queryable, and in context · GitHub]]
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (krisb services shells)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (service home-atuin-service-type
-    (home-atuin-configuration
-      (atuin-fish-flags '("--disable-up-arrow"))
-      (atuin-bash-flags '("--disable-up-arrow"))))
-  (simple-service 'krisb-symlink-atuin-config-files-service-type
-      home-xdg-configuration-files-service-type
-    `(("atuin/config.toml"
-       ,(local-file (config-files-path "atuin/config.toml")))))
-#+end_src
-
-** Zellij: What fish is to zsh but for tmux
-
-A batteries-included tmux alternative.
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "zellij"
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (direct-symlink-service
-   'zellij-config-symlink-service
-   (string-append (or (getenv "XDG_CONFIG_HOME")
-                      (string-append (getenv "HOME") "/.config"))
-                  "/zellij/config.kdl")
-   (config-files-path "zellij/config.kdl"))
-#+end_src
-
-** Direnv: Directory-local environments
-
-  #+begin_src scheme :noweb-ref common-home-packages
-  "direnv"
-  #+end_src
-
-Setup for Fish shell:
-  #+begin_src scheme :noweb-ref common-home-services
-    (simple-service 'home-fish-direnv
-        home-fish-service-type
-      (home-fish-extension
-        (config (list (plain-file "direnv_setup.fish" "direnv hook fish | source")))))
-  #+end_src
-
-Setup for Bash shell:
-  #+begin_src scheme :noweb-ref common-home-services
-    (simple-service 'home-bash-direnv
-      home-bash-service-type
-      (home-bash-extension
-        (bashrc (list (plain-file "direnv_setup.bash" "eval \"$(direnv hook bash)\"")))))
-#+end_src
-
-** Tools for video and audio codecs
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (gnu home services dotfiles)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "ffmpeg"                          ; Diagnose video info (e.g., codecs)
-  "mediainfo"
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-services
-  (service home-dotfiles-service-type
-    (home-dotfiles-configuration
-      (source-directory %config-files-dir)
-      (layout 'plain)
-      (directories (list "scripts"))))
-#+end_src
-
 ** Guile and Guix
 
 *** The =.guile= file
@@ -1847,7 +1581,7 @@ Completely self-hosted and open source alternative to Tailscale
     (list
      (envsubst-substitution
       (name 'netbird)
-      (template (local-file "files/netbird-server/config.yaml.template"))
+      (template (local-file (config-files-path "netbird-server/config.yaml.template")))
       (output "/home/krisbalintona/services/netbird-server/config/config.yaml")
       (environment-file
        (sops-secret->secret-file
@@ -5038,6 +4772,8 @@ Configuration helpers for my machines.
 
   <<common-helpers>>
 
+  <<shared-service-definitions>>
+
   (define-public common-home-packages
     (specifications->packages
      (list
@@ -5115,6 +4851,7 @@ Configuration helpers for my machines.
   (define-module (krisb config machines sublation home)
     #:use-module (krisb config common)
     #:use-module (krisb config machines sublation common)
+    #:use-module (krisb config machines sublation features cli)
     #:use-module (guix gexp)
     #:use-module (gnu packages)
     #:use-module (gnu system shadow)      ; For user-group 
@@ -5143,17 +4880,30 @@ Configuration helpers for my machines.
           ))))
       
       (services
-       (append
-        common-home-services
-        (cons*
-         <<sublation-home-services>>
-         (simple-service 'files-Xdefaults
-             home-files-service-type
-           `((".Xdefaults" ,%default-xdefaults)))
-         (service home-xdg-configuration-files-service-type
-           `(("gdb/gdbinit" ,%default-gdbinit)
-             ("nano/nanorc" ,%default-nanorc)))
-         %base-home-services)))))
+       (append (feature-cli-essentials)
+               (feature-software-development)
+               (feature-file-archivers)
+               (feature-system-monitoring)
+               (feature-zoxide)
+               (feature-bat)
+               (feature-procs)
+               (feature-hardware-control)
+               (feature-git)
+               (feature-jujutsu)
+               (feature-fzf)
+               (feature-atuin)
+               (feature-zellij)
+               (feature-direnv)
+               common-home-services
+               (cons*
+                <<sublation-home-services>>
+                (simple-service 'files-Xdefaults
+                    home-files-service-type
+                  `((".Xdefaults" ,%default-xdefaults)))
+                (service home-xdg-configuration-files-service-type
+                  `(("gdb/gdbinit" ,%default-gdbinit)
+                    ("nano/nanorc" ,%default-nanorc)))
+                %base-home-services)))))
 #+end_src
 
 **** Hardware
