@@ -1,6 +1,8 @@
 (define-module (krisb config machines mute home)
   #:use-module (krisb config common)
   #:use-module (krisb config machines features shell)
+  #:use-module (krisb config machines mute features editors)
+  #:use-module (krisb config machines mute features fonts)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -15,7 +17,6 @@
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services backup)
   #:use-module (gnu home services syncthing)
-  #:use-module (krisb packages fonts)
   #:use-module (gnu packages wordnet)
   #:use-module (gnu services dict)
   #:use-module (gnu home services dict)
@@ -33,20 +34,6 @@
         "nss-certs"
         "glibc-locales"
         "xmodmap"
-        "font-iosevka"
-        "font-google-noto-emoji" ; For emojis
-        "font-iosevka"
-        "font-iosevka-aile-nerd-font"
-        "font-iosevka-term-ss04-nerd-font"
-        "font-iosevka-ss11"
-        "font-iosevka-ss11-nerd-font"
-        "font-iosevka-term-ss11-nerd-font"
-        "font-overpass-nerd-font"
-        "font-jetbrains-mono-nerd-font"
-        "font-adobe-source-sans"
-        "font-adobe-source-serif"
-        "nano"
-        "neovim"
         "zotero"
         "mpv"
         "libreoffice"
@@ -73,6 +60,8 @@
      (append (feature-base-environment)
              (feature-bash-shell)
              (feature-fish-shell)
+             (feature-fonts)
+             (feature-editors)
              common-home-services
              (cons*
               (service home-gpg-agent-service-type

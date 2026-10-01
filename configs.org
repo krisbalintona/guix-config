@@ -4247,43 +4247,7 @@ Later, I combine these mount points into MergerFS[fn:16] pools: see [[#h:2026070
   "xdg-user-dirs"
 #+end_src
 
-* Fonts
-
-Fonts generally:
-#+begin_src scheme  :noweb-ref common-home-packages
-  "fontconfig"
-#+end_src
-
-Font for terminal:
-#+begin_src scheme  :noweb-ref mute-home-packages
-  "font-iosevka"
-#+end_src
-
-Fonts for Emacs:
-#+begin_src scheme  :noweb-ref mute-home-modules
-  (krisb packages fonts)
-#+end_src
-#+begin_src scheme :noweb-ref mute-home-packages
-  "font-google-noto-emoji" ; For emojis
-  "font-iosevka"
-  "font-iosevka-aile-nerd-font"
-  "font-iosevka-term-ss04-nerd-font"
-  "font-iosevka-ss11"
-  "font-iosevka-ss11-nerd-font"
-  "font-iosevka-term-ss11-nerd-font"
-  "font-overpass-nerd-font"
-  "font-jetbrains-mono-nerd-font"
-  "font-adobe-source-sans"
-  "font-adobe-source-serif"
-#+end_src
-
 * Desktop
-
-Text editors:
-#+begin_src scheme :noweb-ref mute-home-packages
-  "nano"
-  "neovim"
-#+end_src
 
 Media:
 #+begin_src scheme :noweb-ref mute-home-packages
@@ -4621,6 +4585,8 @@ Configuration helpers for my machines.
   (define-module (krisb config machines mute home)
     #:use-module (krisb config common)
     #:use-module (krisb config machines features shell)
+    #:use-module (krisb config machines mute features editors)
+    #:use-module (krisb config machines mute features fonts)
     #:use-module (guix gexp)
     #:use-module (gnu packages)
     #:use-module (gnu system shadow)      ; For user-group 
@@ -4650,6 +4616,8 @@ Configuration helpers for my machines.
        (append (feature-base-environment)
                (feature-bash-shell)
                (feature-fish-shell)
+               (feature-fonts)
+               (feature-editors)
                common-home-services
                (cons*
                 <<mute-home-services>>
@@ -4698,10 +4666,6 @@ Configuration helpers for my machines.
         (specifications->packages
          (list
           "glibc" ; 2026-09-19: For Emacs Ghostel's shell auto-detection, via 'getent'
-          ;; Editors
-          "vim"
-          "neovim"
-          "emacs"
           ;; Other packages
           <<sublation-home-packages>>
           ))))

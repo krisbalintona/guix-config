@@ -153,10 +153,6 @@
       (specifications->packages
        (list
         "glibc" ; 2026-09-19: For Emacs Ghostel's shell auto-detection, via 'getent'
-        ;; Editors
-        "vim"
-        "neovim"
-        "emacs"
         ;; Other packages
         "pinentry"
         "bind:utils"

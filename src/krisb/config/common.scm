@@ -140,7 +140,6 @@
     "restic"
     "xdg-utils"
     "xdg-user-dirs"
-    "fontconfig"
     )))
 
 (define-public common-system-services
