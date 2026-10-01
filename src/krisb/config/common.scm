@@ -10,14 +10,6 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu home services shells)
   #:use-module (krisb services shells)
-  #:use-module (gnu packages compression)
-  #:use-module (abbe packages rust)
-  #:use-module (krisb services shells)
-  #:use-module (abbe packages rust)
-  #:use-module (gnu packages terminals)                ; fzf
-  #:use-module (gnu packages rust-apps)                ; fd
-  #:use-module (krisb services shells)
-  #:use-module (gnu home services dotfiles)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu home services gnupg)
@@ -135,45 +127,12 @@
 
 (define-public syncthing-biblio-folder-id "kjtm2-zyajn")
 
+
+
 (define-public common-home-packages
   (specifications->packages
    (list
     "bash-completion"
-    "coreutils"
-    "findutils"
-    "diffutils"
-    "file"
-    "grep"
-    "sed"
-    "less"
-    "which"
-    "btop"
-    "glances"
-    "nmon"
-    "atop"
-    "git"
-    "make"
-    "cmake"
-    "python"
-    "tree"
-    "ripgrep"
-    "fd"
-    "jq"
-    "rsync"
-    "parted"
-    "unzip"
-    "zip"
-    "gzip"
-    "bzip2"
-    "xz"
-    "tar"
-    "bat"
-    "procs"
-    "jujutsu"
-    "zellij"
-    "direnv"
-    "ffmpeg"                          ; Diagnose video info (e.g., codecs)
-    "mediainfo"
     "guile-readline"
     "guile-colorized"
     "gnupg"
@@ -202,82 +161,6 @@
        home-environment-variables-service-type
      '(("PATH" . "$HOME/.local/bin:$PATH")
        ("PAGER" . "less -RKF")))
-   (simple-service 'home-fish-bat
-       home-fish-service-type
-     (home-fish-extension
-       (aliases
-        `(("cat" . ,(string-join '("bat" "--theme=ansi"
-                                   "--style=plain,header-filesize,grid,snip --paging auto"
-                                   "--italic-text=always --nonprintable-notation=caret")))))))
-   (simple-service 'pager-environment-variables
-       home-environment-variables-service-type
-     ;; Use bat as a pager for man.  Taken from
-     ;; https://github.com/sharkdp/bat?tab=readme-ov-file#man
-     '(("MANPAGER" . "sh -c 'sed -u -e \"s/\\x1B\\[[0-9;]*m//g; s/.\\x08//g\" | bat -p -lman'")))
-   (service home-zoxide-service-type
-     (home-zoxide-configuration
-       (zoxide (@ (abbe packages rust) zoxide))))
-   (simple-service 'home-fish-zoxide
-       home-fish-service-type
-     (home-fish-extension
-       (abbreviations '(("cd" . "z")))))
-   (simple-service 'home-fish-procs
-       home-fish-service-type
-     (home-fish-extension
-       (abbreviations `(("ps" . "procs")))))
-   (simple-service 'krisb-symlink-git-config-files-service-type
-       home-xdg-configuration-files-service-type
-     `(("git/config"
-        ,(local-file (config-files-path "git/config")))))
-   (simple-service 'jj-config-files-service-type
-         home-xdg-configuration-files-service-type
-       `(("jj/config.toml"
-          ,(local-file (config-files-path "jujutsu/config.toml")))))
-   (simple-service 'fish-vcs-jj
-         home-xdg-configuration-files-service-type
-       `(("fish/functions/fish_jj_prompt.fish"
-          ,(local-file (config-files-path "jujutsu/fish_jj_prompt.fish")))
-         ("fish/functions/fish_vcs_prompt.fish"
-          ,(local-file (config-files-path "jujutsu/fish_vcs_prompt.fish")))))
-   (simple-service 'fish-fzf-packages
-       home-profile-service-type
-     (list fd fzf))                        ; Function dependencies
-   (simple-service 'fish-fzf-function
-         home-xdg-configuration-files-service-type
-       `(("fish/functions/fzf_complete.fish"
-          ,(local-file (config-files-path "fish/fzf_complete.fish")))))
-   (simple-service 'fish-fzf-config
-       home-fish-service-type
-     (home-fish-extension
-       (config
-        (list (plain-file "fzf_custom.fish" "bind \\t fzf_complete")))))
-   (service home-atuin-service-type
-     (home-atuin-configuration
-       (atuin-fish-flags '("--disable-up-arrow"))
-       (atuin-bash-flags '("--disable-up-arrow"))))
-   (simple-service 'krisb-symlink-atuin-config-files-service-type
-       home-xdg-configuration-files-service-type
-     `(("atuin/config.toml"
-        ,(local-file (config-files-path "atuin/config.toml")))))
-   (direct-symlink-service
-    'zellij-config-symlink-service
-    (string-append (or (getenv "XDG_CONFIG_HOME")
-                       (string-append (getenv "HOME") "/.config"))
-                   "/zellij/config.kdl")
-    (config-files-path "zellij/config.kdl"))
-   (simple-service 'home-fish-direnv
-       home-fish-service-type
-     (home-fish-extension
-       (config (list (plain-file "direnv_setup.fish" "direnv hook fish | source")))))
-   (simple-service 'home-bash-direnv
-     home-bash-service-type
-     (home-bash-extension
-       (bashrc (list (plain-file "direnv_setup.bash" "eval \"$(direnv hook bash)\"")))))
-   (service home-dotfiles-service-type
-     (home-dotfiles-configuration
-       (source-directory %config-files-dir)
-       (layout 'plain)
-       (directories (list "scripts"))))
    (simple-service 'files-dotguile
        home-files-service-type
      `((".guile" ,%default-dotguile)))
