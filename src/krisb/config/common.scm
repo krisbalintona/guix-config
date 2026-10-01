@@ -7,10 +7,6 @@
   #:use-module (gnu home services shepherd)
   #:use-module (krisb services utils)
   #:use-module (gnu services ssh)
-  #:use-module (gnu packages shells)
-  #:use-module (gnu home services shells)
-  #:use-module (krisb services shells)
-  #:use-module (gnu system shadow)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
@@ -132,9 +128,6 @@
 (define-public common-home-packages
   (specifications->packages
    (list
-    "bash-completion"
-    "guile-readline"
-    "guile-colorized"
     "gnupg"
     "age"
     "keychain"
@@ -157,12 +150,5 @@
 
 (define-public common-home-services
   (list
-   (simple-service 'common-environment-variables
-       home-environment-variables-service-type
-     '(("PATH" . "$HOME/.local/bin:$PATH")
-       ("PAGER" . "less -RKF")))
-   (simple-service 'files-dotguile
-       home-files-service-type
-     `((".guile" ,%default-dotguile)))
    (service home-restic-backup-service-type) ; Need this service in order to extend it in other services
    ))

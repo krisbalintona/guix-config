@@ -1,5 +1,6 @@
 (define-module (krisb config machines sublation home)
   #:use-module (krisb config common)
+  #:use-module (krisb config machines features shell)
   #:use-module (krisb config machines sublation common)
   #:use-module (krisb config machines sublation features cli)
   #:use-module (krisb config machines sublation features editors)
@@ -10,7 +11,6 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services shells)
-  #:use-module (gnu packages shells)
   #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
@@ -170,7 +170,10 @@
         ))))
     
     (services
-     (append (feature-cli-essentials)
+     (append (feature-base-environment)
+             (feature-bash-shell)
+             (feature-fish-shell)
+             (feature-cli-essentials)
              (feature-software-development)
              (feature-file-archivers)
              (feature-system-monitoring)
@@ -187,17 +190,6 @@
              (feature-editors)
              common-home-services
              (cons*
-              (service home-fish-service-type
-                (home-fish-configuration
-                  (config
-                   (list
-                    ;; TODO 2026-09-20: Should I open a but report in Guix about
-                    ;; this issue?  I need to add Guix's paths into SSH sessions
-                    ;; because the default only adds it to login sessions
-                    (plain-file "path_in_ssh.fish"
-                      "set -q SSH_CONNECTION; and not status is-interactive; and set -gx PATH (/bin/sh -lc 'echo $PATH' | string split :)")
-                    (plain-file "non_interactive_early_return.fish" "status is-interactive; or return")
-                    (plain-file "fish_greeting.fish" "set -g fish_greeting")))))
               (service home-gpg-agent-service-type)
               (service home-sops-secrets-service-type
                 (home-sops-service-configuration
