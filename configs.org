@@ -7,40 +7,6 @@
 
 * Authentication
 
-** GnuPG
-
-#+begin_src scheme :noweb-ref common-home-modules
-  (gnu packages gnupg)
-  (gnu home services gnupg)
-#+end_src
-
-#+begin_src scheme :noweb-ref common-home-packages
-  "gnupg"
-#+end_src
-
-Sublation:
-#+begin_src scheme :noweb-ref sublation-home-modules
-  (gnu home services gnupg)
-#+end_src
-#+begin_src scheme :noweb-ref sublation-home-services
-  (service home-gpg-agent-service-type)
-#+end_src
-
-Mute:
-#+begin_src scheme :noweb-ref mute-home-modules
-  (gnu packages gnupg)                    ; For pinentry
-  (gnu home services gnupg)
-#+end_src
-#+begin_src scheme :noweb-ref sublation-home-packages
-  "pinentry"
-#+end_src
-#+begin_src scheme :noweb-ref mute-home-services
-  (service home-gpg-agent-service-type
-    (home-gpg-agent-configuration
-      (pinentry-program
-       (file-append pinentry "/bin/pinentry"))))
-#+end_src
-
 ** SOPS-Guix: Secrets management in Guix
 
 #+begin_src scheme :noweb-ref common-home-modules
@@ -4587,6 +4553,7 @@ Configuration helpers for my machines.
     #:use-module (krisb config machines features shell)
     #:use-module (krisb config machines mute features editors)
     #:use-module (krisb config machines mute features fonts)
+    #:use-module (krisb config machines mute features auth)
     #:use-module (guix gexp)
     #:use-module (gnu packages)
     #:use-module (gnu system shadow)      ; For user-group 
@@ -4618,6 +4585,7 @@ Configuration helpers for my machines.
                (feature-fish-shell)
                (feature-fonts)
                (feature-editors)
+               (feature-gnupg)
                common-home-services
                (cons*
                 <<mute-home-services>>
@@ -4646,6 +4614,7 @@ Configuration helpers for my machines.
     #:use-module (krisb config machines sublation common)
     #:use-module (krisb config machines sublation features cli)
     #:use-module (krisb config machines sublation features editors)
+    #:use-module (krisb config machines sublation features auth)
     #:use-module (guix gexp)
     #:use-module (gnu packages)
     #:use-module (gnu system shadow)      ; For user-group 
@@ -4689,6 +4658,7 @@ Configuration helpers for my machines.
                (feature-zellij)
                (feature-direnv)
                (feature-editors)
+               (feature-gnupg)
                common-home-services
                (cons*
                 <<sublation-home-services>>

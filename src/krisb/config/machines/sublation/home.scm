@@ -4,6 +4,7 @@
   #:use-module (krisb config machines sublation common)
   #:use-module (krisb config machines sublation features cli)
   #:use-module (krisb config machines sublation features editors)
+  #:use-module (krisb config machines sublation features auth)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -11,7 +12,6 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services shells)
-  #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
   #:use-module (gnu services containers)
@@ -154,7 +154,6 @@
        (list
         "glibc" ; 2026-09-19: For Emacs Ghostel's shell auto-detection, via 'getent'
         ;; Other packages
-        "pinentry"
         "bind:utils"
         "soju"
         "smartmontools"            ; For smartctl
@@ -184,9 +183,9 @@
              (feature-zellij)
              (feature-direnv)
              (feature-editors)
+             (feature-gnupg)
              common-home-services
              (cons*
-              (service home-gpg-agent-service-type)
               (service home-sops-secrets-service-type
                 (home-sops-service-configuration
                   (age-key-file %sublation-sops-age-key-file)

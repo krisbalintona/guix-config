@@ -7,8 +7,6 @@
   #:use-module (gnu home services shepherd)
   #:use-module (krisb services utils)
   #:use-module (gnu services ssh)
-  #:use-module (gnu packages gnupg)
-  #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops services sops)
   #:use-module (sops home services sops)
@@ -128,7 +126,6 @@
 (define-public common-home-packages
   (specifications->packages
    (list
-    "gnupg"
     "age"
     "keychain"
     "inetutils"

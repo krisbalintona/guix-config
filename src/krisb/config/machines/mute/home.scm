@@ -3,6 +3,7 @@
   #:use-module (krisb config machines features shell)
   #:use-module (krisb config machines mute features editors)
   #:use-module (krisb config machines mute features fonts)
+  #:use-module (krisb config machines mute features auth)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -10,8 +11,6 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (gnu home services shells)
-  #:use-module (gnu packages gnupg)                    ; For pinentry
-  #:use-module (gnu home services gnupg)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
   #:use-module (gnu home services ssh)
@@ -62,12 +61,9 @@
              (feature-fish-shell)
              (feature-fonts)
              (feature-editors)
+             (feature-gnupg)
              common-home-services
              (cons*
-              (service home-gpg-agent-service-type
-                (home-gpg-agent-configuration
-                  (pinentry-program
-                   (file-append pinentry "/bin/pinentry"))))
               (service home-sops-secrets-service-type
                 (home-sops-service-configuration
                   (verbose? #t)
