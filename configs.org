@@ -4536,40 +4536,6 @@ Corresponding SOPS secrets:
       #:files (list (string-append (getenv "HOME") "/Documents/emails")))))
 #+end_src
 
-* Substitute servers
-
-#+begin_src scheme :noweb-ref sublation-system-helpers
-  (define %signing-keys-dir
-    ;; The cwd should be the repository root
-    (string-append (getcwd) "/signing-keys"))
-
-  (define (signing-keys-path path)
-    (string-append %signing-keys-dir "/" path))
-#+end_src
-
-** Nonguix
-
-#+begin_src scheme :noweb-ref sublation-system-services
-  (simple-service 'nonguix-substitutes
-      guix-service-type
-    (guix-extension
-      (authorized-keys
-       (list (local-file (signing-keys-path "nonguix.pub"))))
-      (substitute-urls
-       (list "https://substitutes.nonguix.org"))))
-#+end_src
-
-** Guix Moe
-
-#+begin_src scheme :noweb-ref sublation-system-services
-  (simple-service 'guix-moe-substitutes
-      guix-service-type
-    (guix-extension
-      (authorized-keys
-       (list (local-file (signing-keys-path "guix-moe.pub"))))
-      (substitute-urls (list "https://cache-cdn.guix.moe"))))
-#+end_src
-
 * WSL2-specific fixes
 
 WSL2 requires certain fixes to get typical behavior.
@@ -4797,6 +4763,7 @@ Configuration helpers for my machines.
 #+begin_src scheme :tangle "src/krisb/config/machines/sublation/system.scm"
   (define-module (krisb config machines sublation system)
     #:use-module (krisb config common)
+    #:use-module (krisb config machines features substitute-servers)
     #:use-module (krisb config machines sublation common)
     #:use-module (krisb config machines sublation hardware)
     #:use-module (gnu)
@@ -4862,21 +4829,21 @@ Configuration helpers for my machines.
       ;; Below is the list of system services.  To search for available
       ;; services, run 'guix system search KEYWORD' in a terminal.
       (services
-       (append
-        common-system-services
-        (cons*
-         <<sublation-system-services>>
-         (service network-manager-service-type)
-         (service wpa-supplicant-service-type)
-         (service ntp-service-type)
-         (service elogind-service-type
-           (elogind-configuration
-             ;; Inhibit laptop sleeping and hibernation on lid close
-             (handle-lid-switch 'ignore)
-             (handle-lid-switch-docked 'ignore)
-             (handle-lid-switch-external-power 'ignore)
-             (lid-switch-ignore-inhibited? #t)))
-         %base-services)))
+       (append (feature-substitute-servers)
+               common-system-services
+               (cons*
+                <<sublation-system-services>>
+                (service network-manager-service-type)
+                (service wpa-supplicant-service-type)
+                (service ntp-service-type)
+                (service elogind-service-type
+                  (elogind-configuration
+                    ;; Inhibit laptop sleeping and hibernation on lid close
+                    (handle-lid-switch 'ignore)
+                    (handle-lid-switch-docked 'ignore)
+                    (handle-lid-switch-external-power 'ignore)
+                    (lid-switch-ignore-inhibited? #t)))
+                %base-services)))
       
       (bootloader (bootloader-configuration
                     (bootloader grub-efi-bootloader)

@@ -1,5 +1,6 @@
 (define-module (krisb config machines sublation system)
   #:use-module (krisb config common)
+  #:use-module (krisb config machines features substitute-servers)
   #:use-module (krisb config machines sublation common)
   #:use-module (krisb config machines sublation hardware)
   #:use-module (gnu)
@@ -29,12 +30,7 @@
   #:use-module (gnu services linux)
   #:use-module (gnu services sysctl))
 
-(define %signing-keys-dir
-  ;; The cwd should be the repository root
-  (string-append (getcwd) "/signing-keys"))
 
-(define (signing-keys-path path)
-  (string-append %signing-keys-dir "/" path))
 
 (define-public sublation-operating-system
   (operating-system
@@ -91,139 +87,126 @@
     ;; Below is the list of system services.  To search for available
     ;; services, run 'guix system search KEYWORD' in a terminal.
     (services
-     (append
-      common-system-services
-      (cons*
-       (service sops-secrets-service-type
-         (sops-service-configuration
-           (age-key-file %sublation-sops-age-key-file)
-           (verbose? #t)
-           (secrets
-            (list
-             ))))
-       ;; Rootless podman also needs 'iptables-service-type' specifically for
-       ;; its (non-internal) networks; 'nftables-service-type' will not
-       ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
-       ;; though, since the default ruleset for iptables is to accept
-       ;; everything.
-       (service iptables-service-type)
-       (service rootless-podman-service-type
-         (rootless-podman-configuration
-           (subgids (list (subid-range (name "krisbalintona"))))
-           (subuids (list (subid-range (name "krisbalintona"))))))
-       ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid lowering
-       ;; the unprivileged port start?
-       ;;
-       ;; For rootless services that require lower port numbers, such as a
-       ;; reverse proxy (Caddy) and DNS server (Technitium)
-       (simple-service 'sysctl-podman
-           sysctl-service-type
-         '(("net.ipv4.ip_unprivileged_port_start" . "53")))
-       (service nftables-service-type
-         (nftables-configuration
-           (ruleset
-            (local-file (config-files-path "nftables/sublation.nft")))))
-       ;; Enable IPv4 packet forwarding
-       ;;
-       ;; NOTE: Plain Wireguard doesn't do this for me, but Netbird does
-       ;; (according to
-       ;; https://docs.netbird.io/manage/networks/how-routing-peers-work#ip-forwarding).
-       ;; Nevertheless, we set this in case IPv4 forwarding is possible.
-       ;; Also be aware of its IPv6 counterpart:
-       ;; net.ipv6.conf.all.forwarding.
-       (simple-service 'sysctl-nftables-forwarding
-           sysctl-service-type
-         '(("net.ipv4.ip_forward" . "1")))
-       (service fail2ban-service-type)
-       (simple-service 'fail2ban-openssh
-           fail2ban-service-type
-         (list
-          (fail2ban-jail-configuration
-            (name "sshd")
-            (enabled? #t)
-            (max-retry 5)
-            (find-time "10m")
-            (ban-time "1h"))))
-       (simple-service 'fail2ban-caddy
-           fail2ban-service-type
-         (list 
-          (fail2ban-jail-configuration
-            (name "caddy-bots")
-            (enabled? #t)
-            (max-retry 3)
-            (find-time "5m")
-            (ban-time "1h")
-            (log-path
-             '("/home/krisbalintona/services/caddy/log/copyparty.log"))
-            (filter
-             (fail2ban-jail-filter-configuration
-               (name "nginx-botsearch"))))))
-       (service netbird-service-type
-         (netbird-configuration
-          (respawn? #f)))
-       (service soju-service-type
-         (soju-configuration
-          (title "Personal bouncer")
-          (hostname "irc.home.kristofferbalintona.me")
-          (listen '("irc://localhost:6667"
-                    "http://localhost:9500"
-                    ;; Create a UNIX socket allows administering the bouncer
-                    ;; from the command line with `sojuctl'.  (Recommended in
-                    ;; (guix) Messaging Services.)
-                    "unix+admin:///var/lib/soju/soju.sock"))
-          (extra-content
-           ;; I use Caddy with the caddy-l4 (layer 4) app as a reverse proxy
-           ;; in front of Soju which handles TLS termination.
-           ;; "accept-proxy-ip localhost" is needed to tell Soju to trust the
-           ;; PROXY protocol header that I've configured caddy-l4 to wrap the
-           ;; TCP packets in ("proxy_protocol v2").
-           (list (plain-file "soju-trusted-proxy.conf" "accept-proxy-ip localhost")))))
-       (service prometheus-node-exporter-service-type
-         (prometheus-node-exporter-configuration
-           (web-listen-address "127.0.0.1:21005")))
-       (service zram-device-service-type
-         (zram-device-configuration
-           (size "3G")
-           (memory-limit "2G")
-           (compression-algorithm 'zstd)
-           (priority 100)))
-       ;; Based on the settings recommended here
-       ;; https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
-       ;; (follow the links there recursively for some reasoning)
-       (simple-service 'sysctl-zram
-           sysctl-service-type
-         '(("vm.swappiness" . "170")
-           ("vm.watermark_boost_factor". "0")
-           ("vm.watermark_scale_factor" . "110")
-           ("vm.page-cluster" . "0")))
-       (simple-service 'mergerfs-pools shepherd-root-service-type
-         (list shepherd-service-mergerfs-media
-               shepherd-service-mergerfs-torrents-incomplete
-               shepherd-service-mergerfs-immich))
-       (simple-service 'nonguix-substitutes
-           guix-service-type
-         (guix-extension
-           (authorized-keys
-            (list (local-file (signing-keys-path "nonguix.pub"))))
-           (substitute-urls
-            (list "https://substitutes.nonguix.org"))))
-       (simple-service 'guix-moe-substitutes
-           guix-service-type
-         (guix-extension
-           (authorized-keys
-            (list (local-file (signing-keys-path "guix-moe.pub"))))
-           (substitute-urls (list "https://cache-cdn.guix.moe"))))
-       (service network-manager-service-type)
-       (service wpa-supplicant-service-type)
-       (service ntp-service-type)
-       (service elogind-service-type
-         (elogind-configuration
-           ;; Inhibit laptop sleeping and hibernation on lid close
-           (handle-lid-switch 'ignore)
-           (handle-lid-switch-docked 'ignore)
-           (handle-lid-switch-external-power 'ignore)
-           (lid-switch-ignore-inhibited? #t)))
-       %base-services)))
+     (append (feature-substitute-servers)
+             common-system-services
+             (cons*
+              (service sops-secrets-service-type
+                (sops-service-configuration
+                  (age-key-file %sublation-sops-age-key-file)
+                  (verbose? #t)
+                  (secrets
+                   (list
+                    ))))
+              ;; Rootless podman also needs 'iptables-service-type' specifically for
+              ;; its (non-internal) networks; 'nftables-service-type' will not
+              ;; suffice.  See (guix) Miscellaneous Services.  We may have both,
+              ;; though, since the default ruleset for iptables is to accept
+              ;; everything.
+              (service iptables-service-type)
+              (service rootless-podman-service-type
+                (rootless-podman-configuration
+                  (subgids (list (subid-range (name "krisbalintona"))))
+                  (subuids (list (subid-range (name "krisbalintona"))))))
+              ;; TODO 2025-12-22: Figure out an ergonomic solution to avoid lowering
+              ;; the unprivileged port start?
+              ;;
+              ;; For rootless services that require lower port numbers, such as a
+              ;; reverse proxy (Caddy) and DNS server (Technitium)
+              (simple-service 'sysctl-podman
+                  sysctl-service-type
+                '(("net.ipv4.ip_unprivileged_port_start" . "53")))
+              (service nftables-service-type
+                (nftables-configuration
+                  (ruleset
+                   (local-file (config-files-path "nftables/sublation.nft")))))
+              ;; Enable IPv4 packet forwarding
+              ;;
+              ;; NOTE: Plain Wireguard doesn't do this for me, but Netbird does
+              ;; (according to
+              ;; https://docs.netbird.io/manage/networks/how-routing-peers-work#ip-forwarding).
+              ;; Nevertheless, we set this in case IPv4 forwarding is possible.
+              ;; Also be aware of its IPv6 counterpart:
+              ;; net.ipv6.conf.all.forwarding.
+              (simple-service 'sysctl-nftables-forwarding
+                  sysctl-service-type
+                '(("net.ipv4.ip_forward" . "1")))
+              (service fail2ban-service-type)
+              (simple-service 'fail2ban-openssh
+                  fail2ban-service-type
+                (list
+                 (fail2ban-jail-configuration
+                   (name "sshd")
+                   (enabled? #t)
+                   (max-retry 5)
+                   (find-time "10m")
+                   (ban-time "1h"))))
+              (simple-service 'fail2ban-caddy
+                  fail2ban-service-type
+                (list 
+                 (fail2ban-jail-configuration
+                   (name "caddy-bots")
+                   (enabled? #t)
+                   (max-retry 3)
+                   (find-time "5m")
+                   (ban-time "1h")
+                   (log-path
+                    '("/home/krisbalintona/services/caddy/log/copyparty.log"))
+                   (filter
+                    (fail2ban-jail-filter-configuration
+                      (name "nginx-botsearch"))))))
+              (service netbird-service-type
+                (netbird-configuration
+                 (respawn? #f)))
+              (service soju-service-type
+                (soju-configuration
+                 (title "Personal bouncer")
+                 (hostname "irc.home.kristofferbalintona.me")
+                 (listen '("irc://localhost:6667"
+                           "http://localhost:9500"
+                           ;; Create a UNIX socket allows administering the bouncer
+                           ;; from the command line with `sojuctl'.  (Recommended in
+                           ;; (guix) Messaging Services.)
+                           "unix+admin:///var/lib/soju/soju.sock"))
+                 (extra-content
+                  ;; I use Caddy with the caddy-l4 (layer 4) app as a reverse proxy
+                  ;; in front of Soju which handles TLS termination.
+                  ;; "accept-proxy-ip localhost" is needed to tell Soju to trust the
+                  ;; PROXY protocol header that I've configured caddy-l4 to wrap the
+                  ;; TCP packets in ("proxy_protocol v2").
+                  (list (plain-file "soju-trusted-proxy.conf" "accept-proxy-ip localhost")))))
+              (service prometheus-node-exporter-service-type
+                (prometheus-node-exporter-configuration
+                  (web-listen-address "127.0.0.1:21005")))
+              (service zram-device-service-type
+                (zram-device-configuration
+                  (size "3G")
+                  (memory-limit "2G")
+                  (compression-algorithm 'zstd)
+                  (priority 100)))
+              ;; Based on the settings recommended here
+              ;; https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+              ;; (follow the links there recursively for some reasoning)
+              (simple-service 'sysctl-zram
+                  sysctl-service-type
+                '(("vm.swappiness" . "170")
+                  ("vm.watermark_boost_factor". "0")
+                  ("vm.watermark_scale_factor" . "110")
+                  ("vm.page-cluster" . "0")))
+              (simple-service 'mergerfs-pools shepherd-root-service-type
+                (list shepherd-service-mergerfs-media
+                      shepherd-service-mergerfs-torrents-incomplete
+                      shepherd-service-mergerfs-immich))
+              (service network-manager-service-type)
+              (service wpa-supplicant-service-type)
+              (service ntp-service-type)
+              (service elogind-service-type
+                (elogind-configuration
+                  ;; Inhibit laptop sleeping and hibernation on lid close
+                  (handle-lid-switch 'ignore)
+                  (handle-lid-switch-docked 'ignore)
+                  (handle-lid-switch-external-power 'ignore)
+                  (lid-switch-ignore-inhibited? #t)))
+              %base-services)))
     
     (bootloader (bootloader-configuration
                   (bootloader grub-efi-bootloader)
