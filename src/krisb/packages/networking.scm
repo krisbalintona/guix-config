@@ -364,7 +364,7 @@ by WP-Statistics. Built from a pinned git commit.")
 
 (define caddy-netlify-crowdsec-coraza-maxmind-l4
   (let ((pkg (caddy-custom
-              "2.11.4"
+              "2.11.7"
               ;; TODO 2026-04-15: I should pin the versions of the
               ;; modules of the other Caddy packages defined in this
               ;; file
@@ -380,8 +380,8 @@ by WP-Statistics. Built from a pinned git commit.")
                 ("github.com/corazawaf/coraza-caddy/v2" . "v2.5.0") ; Coraza WAF
                 ("github.com/porech/caddy-maxmind-geolocation" . "v1.0.3") ; MaxMind
                 ("github.com/mholt/caddy-l4" . "v0.1.1")) ; Layer 4
-              "1rnnc9176zclal8nd3dcq39afrxamng54vbp4dy7ydl1svbxcklz"
-              "1xwhq3kf7sr08yj5pvyg9860jasf8vmvf6jq9fpmhp0mmjsi9jfy")))
+              "10p8mi7vdv09b1wwya4mic28m6ragiab94kqcdv404qjhs12n5f4"
+              "1cwd49frrdr75nksz2507b5drfb076c35ajy0g0cflgxm9daj3c3")))
     (package/inherit pkg
       (name "caddy-netlify-crowdsec-coraza-maxmind-l4")
       (version"2.11.4") 
