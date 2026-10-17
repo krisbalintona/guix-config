@@ -15,7 +15,7 @@
 ;; NOTE(KrisB): Package definition copied from
 ;; https://codeberg.org/technicalrenaissance/renaissance/
 
-(define %netbird-version "0.79.0")
+(define %netbird-version "0.81.2")
 
 (define %netbird-source
   (origin
@@ -25,7 +25,7 @@
            (commit (string-append "v" %netbird-version))))
     (file-name (git-file-name "netbird" %netbird-version))
     (sha256
-     (base32 "0g54jxi1x7mf77l2zm28jv3dh9alz3yw904ga53g2ahm3yx3fbq6"))))
+     (base32 "1c68pqs2041ay5iqm5zp0i8fylr8vm7nwziggz3zg467gc2kf54j"))))
 
 ;; Fixed-output derivation populating the Go module cache. Passing
 ;; #:hash / #:hash-algo through computed-file's #:options makes this a
@@ -92,7 +92,7 @@
     ;; from the mismatch, paste it here, rebuild. #:hash wants raw bytes —
     ;; base32 returns those; never wrap in (sha256 …), which is a hasher.
     (list #:hash-algo 'sha256
-          #:hash (base32 "1ipvb40kq3x7y901l0i5rcxx84r0w8j468nba2a3sjnqdar2gm3f")
+          #:hash (base32 "00pgfnw8mjj2chya4k62fvbcf4rsfdqxkbd97ncg5q2gxjc43qvb")
           #:recursive? #t)))
 
 (define netbird
