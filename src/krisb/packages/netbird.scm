@@ -1,6 +1,7 @@
 (define-module (krisb packages netbird)
   #:use-module (guix packages)
   #:use-module (guix git-download)
+  #:use-module (guix utils)             ; substitute-keyword-arguments
   #:use-module (guix gexp)
   #:use-module (guix build-system go)
   #:use-module ((guix licenses) #:prefix license:)
@@ -11,7 +12,15 @@
   #:use-module (gnu packages nss)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages dns)       ; openresolv
-  #:export (netbird))
+  #:use-module (gnu packages freedesktop) ; xdg-utils
+  #:use-module (gnu packages glib)
+  #:use-module (gnu packages gtk)       ; GTK 4
+  #:use-module (gnu packages node)      ; node-lts
+  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages webkit)    ; webkitgtk
+  #:use-module (gnu packages xorg)      ; libx11
+  #:export (netbird
+            netbird-ui))
 
 ;; NOTE(KrisB): Package definition copied from
 ;; https://codeberg.org/technicalrenaissance/renaissance/
@@ -89,9 +98,6 @@
             (copy-recursively cache #$output))))
     #:local-build? #f
     #:options
-    ;; fakeHash: build once with zeros, read the reported "actual" base32
-    ;; from the mismatch, paste it here, rebuild. #:hash wants raw bytes —
-    ;; base32 returns those; never wrap in (sha256 …), which is a hasher.
     (list #:hash-algo 'sha256
           #:hash (base32 "00pgfnw8mjj2chya4k62fvbcf4rsfdqxkbd97ncg5q2gxjc43qvb")
           #:recursive? #t)))
@@ -177,3 +183,173 @@
      "NetBird combines WireGuard with a control plane for zero-config
 peer-to-peer mesh networking.")
     (license (list license:bsd-3 license:agpl3))))
+
+;; netbird-ui: the desktop UI (Wails v3, GTK4 + WebKitGTK 6, with a
+;; React/TypeScript frontend).  It lives in the same Go module as the
+;; client, so it reuses `netbird-go-modules' for the Go side.  The
+;; frontend needs two more things that cannot be produced in the
+;; offline build container: node_modules and the Wails-generated
+;; TypeScript bindings.  `netbird-ui-frontend-deps' fetches both in a
+;; second fixed-output derivation, same technique as above.
+;;
+;; DRAFT, untested.  Things to check on the first build:
+;; - the package manager: pnpm if the frontend has a pnpm-lock.yaml
+;;   (version pinned below, match `packageManager' in
+;;   client/ui/frontend/package.json), otherwise `npm ci'.
+
+;; Matches `packageManager' in client/ui/frontend/package.json.
+(define %pnpm-version "11.4.0")
+
+(define (netbird-ui-frontend-deps version source)
+  (computed-file
+      (string-append "netbird-ui-frontend-deps-" version)
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((top (getcwd))
+                 (cacert (string-append #$nss-certs
+                                        "/etc/ssl/certs/ca-certificates.crt"))
+                 (pnpm-dir (string-append top "/pnpm-tool")))
+            (setenv "PATH"
+                    (string-append #$(file-append go-1.26 "/bin") ":"
+                                   #$(file-append node-lts "/bin") ":"
+                                   #$(file-append git-minimal "/bin") ":"
+                                   (getenv "PATH")))
+            (setenv "HOME" top)
+            (setenv "CI" "true")
+            ;; TLS trust store for Go (Node ships its own roots)
+            (setenv "SSL_CERT_FILE" cacert)
+            (setenv "SSL_CERT_DIR" (string-append #$nss-certs "/etc/ssl/certs"))
+            (setenv "GOPATH"      (string-append top "/go"))
+            (setenv "GOMODCACHE"  (string-append top "/gomodcache"))
+            (setenv "GOCACHE"     (string-append top "/gocache"))
+            (setenv "GOSUMDB"     "off")
+            (setenv "GOFLAGS"     "-mod=mod")
+            (setenv "GOTELEMETRY" "off")
+            (setenv "GOTOOLCHAIN" "local")
+            (setenv "CGO_ENABLED" "0")
+
+            (copy-recursively #$source "src")
+            (for-each (lambda (f) (chmod f #o644))
+                      (find-files "src" #:directories? #f))
+            (for-each (lambda (d) (chmod d #o755))
+                      (find-files "src" #:directories? #t))
+
+            (with-directory-excursion "src/client/ui/frontend"
+              (if (file-exists? "pnpm-lock.yaml")
+                  (begin
+                    (invoke "npm" "install" "--prefix" pnpm-dir
+                            (string-append "pnpm@" #$%pnpm-version))
+                    (invoke "node"
+                            (string-append pnpm-dir
+                                           "/node_modules/pnpm/bin/pnpm.cjs")
+                            "install" "--frozen-lockfile" "--ignore-scripts"
+                            "--config.node-linker=hoisted"
+                            "--store-dir" (string-append top "/pnpm-store")))
+                  (invoke "npm" "ci" "--ignore-scripts"))
+              ;; Strip anything that embeds timestamps or absolute
+              ;; build paths so the output hash is stable
+              (for-each (lambda (f)
+                          (when (file-exists? f)
+                            (delete-file-recursively f)))
+                        '("node_modules/.bin" "node_modules/.cache"
+                          "node_modules/.vite"))
+              (for-each delete-file
+                        (append
+                         (find-files "node_modules"
+                                     "^\\.pnpm-workspace-state.*\\.json$")
+                         (find-files "node_modules" "^\\.modules\\.yaml$"))))
+
+            ;; Wails TypeScript bindings, generated from the Go
+            ;; services.
+            (with-directory-excursion "src/client/ui"
+              (invoke "go" "run" "github.com/wailsapp/wails/v3/cmd/wails3"
+                      "generate" "bindings" "-clean=true" "-ts"))
+
+            (mkdir-p #$output)
+            (copy-recursively "src/client/ui/frontend/node_modules"
+                              (string-append #$output "/node_modules"))
+            (copy-recursively "src/client/ui/frontend/bindings"
+                              (string-append #$output "/bindings")))))
+    #:local-build? #f
+    #:options
+    (list #:hash-algo 'sha256
+          #:hash (base32 "0dlkc6lgmjvgp0ssn0cxk77s8cmsgf9vgvicrk6i90xnjkajq7cl")
+          #:recursive? #t)))
+
+(define netbird-ui
+  (package
+    (inherit netbird)
+    (name "netbird-ui")
+    (arguments
+     (substitute-keyword-arguments (package-arguments netbird)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'set-module-cache 'unpack-frontend-deps
+              (lambda _
+                (let ((frontend
+                       "src/github.com/netbirdio/netbird/client/ui/frontend")
+                      (deps #$(netbird-ui-frontend-deps %netbird-version
+                                                        %netbird-source)))
+                  (copy-recursively (string-append deps "/node_modules")
+                                    (string-append frontend "/node_modules"))
+                  (copy-recursively (string-append deps "/bindings")
+                                    (string-append frontend "/bindings"))
+                  (for-each (lambda (f)
+                              (let ((s (lstat f)))
+                                (unless (eq? (stat:type s) 'symlink)
+                                  (chmod f (logior (stat:perms s) #o200)))))
+                            (find-files frontend #:directories? #t)))))
+            (add-before 'build 'build-frontend
+              (lambda _
+                (with-directory-excursion
+                    "src/github.com/netbirdio/netbird/client/ui/frontend"
+                  (invoke "node" "node_modules/typescript/bin/tsc")
+                  (invoke "node" "node_modules/vite/bin/vite.js"
+                          "build" "--mode" "production"))))
+            (replace 'build
+              (lambda _
+                ;; GTK4/WebKitGTK bindings need cgo
+                (setenv "CGO_ENABLED" "1")
+                (with-directory-excursion
+                    "src/github.com/netbirdio/netbird"
+                  (mkdir-p (string-append #$output "/bin"))
+                  ;; `production' is the Wails build tag.
+                  (invoke "go" "build" "-tags" "production" "-trimpath"
+                          "-ldflags"
+                          (string-append
+                           "-X github.com/netbirdio/netbird/version.version=v"
+                           #$%netbird-version " -s -w")
+                          "-o" (string-append #$output "/bin/netbird-ui")
+                          "github.com/netbirdio/netbird/client/ui"))))
+            ;; The client's wrapper phase wraps bin/netbird, which the
+            ;; UI package does not have
+            (delete 'wrap-netbird)
+            (add-after 'build 'install-extras
+              (lambda _
+                (let* ((ui "src/github.com/netbirdio/netbird/client/ui")
+                       (apps (string-append #$output "/share/applications"))
+                       (icons (string-append
+                               #$output
+                               "/share/icons/hicolor/1024x1024/apps")))
+                  (install-file (string-append ui "/build/linux/netbird-ui.desktop")
+                                apps)
+                  (substitute* (string-append apps "/netbird-ui.desktop")
+                    (("/usr/bin/netbird-ui") "netbird-ui"))
+                  (mkdir-p icons)
+                  (copy-file (string-append ui "/build/appicon.png")
+                             (string-append icons "/netbird-ui.png"))
+                  ;; The UI shells out to xdg-open for the SSO login.
+                  (wrap-program (string-append #$output "/bin/netbird-ui")
+                    `("PATH" ":" prefix
+                      (,(string-append #$(this-package-input "xdg-utils")
+                                       "/bin")))))))))))
+    (inputs (list gtk webkitgtk glib libx11 xdg-utils))
+    (native-inputs (modify-inputs (package-native-inputs netbird)
+                     (prepend node-lts pkg-config)))
+    (synopsis "NetBird desktop UI")
+    (description
+     "Graphical client for NetBird, a WireGuard-based peer-to-peer
+overlay network.  It talks to the @command{netbird} daemon over its
+gRPC socket.")
+    (license license:bsd-3)))
