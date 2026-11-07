@@ -10,6 +10,7 @@
   #:use-module (gnu packages vpn)             ; wireguard-tools
   #:use-module (gnu packages nss)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages dns)       ; openresolv
   #:export (netbird))
 
 ;; NOTE(KrisB): Package definition copied from
@@ -158,9 +159,17 @@
                    ("signal"     . "netbird-signal")
                    ("management" . "netbird-management")
                    ("relay"      . "netbird-relay"))))))
+          (add-after 'build 'wrap-netbird
+            (lambda _
+              (wrap-program (string-append #$output "/bin/netbird")
+                ;; The openresolv package provides 'resolvconf', which
+                ;; Netbird may sometimes use it to update the contents
+                ;; of /etc/resolv.conf
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "openresolv") "/sbin"))))))
           (delete 'install)
           (delete 'check))))
-    (inputs (list wireguard-tools))
+    (inputs (list wireguard-tools openresolv))
     (native-inputs (list git-minimal))
     (home-page "https://netbird.io")
     (synopsis "WireGuard-based mesh networking")
