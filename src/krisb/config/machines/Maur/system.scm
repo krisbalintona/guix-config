@@ -10,6 +10,7 @@
   #:use-module (gnu services ssh)
   #:use-module (gnu services xorg)
   #:use-module (nonguix transformations)
+  #:use-module (krisb services netbird)
   #:export (Maur-operating-system))
 
 (define Maur-operating-system
@@ -31,7 +32,10 @@
                    %base-user-accounts))
 
      (services
-      (append (list (service gnome-desktop-service-type)
+      (append (list (service netbird-service-type
+                      (netbird-configuration
+                       (respawn? #f)))
+                    (service gnome-desktop-service-type)
 		    (service nftables-service-type)
 		    (service nix-service-type)
                     (service openssh-service-type)
