@@ -19,7 +19,7 @@
   "-c 0 -M 3")
 
 (define accepted-hosts
-  (list "mute" "sublation"))
+  (list "mute" "sublation" "Maur"))
 
 (define wsl-host?
   ;; Linux distributions inside WSL and WSL2 have "WSL" in their OS
