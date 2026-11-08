@@ -364,27 +364,24 @@ by WP-Statistics. Built from a pinned git commit.")
 
 (define caddy-netlify-crowdsec-coraza-maxmind-l4
   (let ((pkg (caddy-custom
-              "2.11.7"
-              ;; TODO 2026-04-15: I should pin the versions of the
-              ;; modules of the other Caddy packages defined in this
-              ;; file
+              "2.11.9"
               '(("github.com/caddy-dns/netlify" . "v1.1.0")
                 ;; The next three are directories from the
                 ;; caddy-crowdsec-bouncer module
-                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.14.1")
-                "github.com/hslatman/caddy-crowdsec-bouncer/http"
-                "github.com/hslatman/caddy-crowdsec-bouncer/layer4"
-                "github.com/hslatman/caddy-crowdsec-bouncer/appsec"
+                ("github.com/hslatman/caddy-crowdsec-bouncer" . "v0.15.0")
+                ("github.com/hslatman/caddy-crowdsec-bouncer/http" . "v0.15.0")
+                ("github.com/hslatman/caddy-crowdsec-bouncer/layer4" . "v0.15.0")
+                ("github.com/hslatman/caddy-crowdsec-bouncer/appsec" . "v0.15.0")
                 ;; The next two packages are for optional features in
                 ;; caddy
                 ("github.com/corazawaf/coraza-caddy/v2" . "v2.5.0") ; Coraza WAF
                 ("github.com/porech/caddy-maxmind-geolocation" . "v1.0.3") ; MaxMind
-                ("github.com/mholt/caddy-l4" . "v0.1.1")) ; Layer 4
-              "10p8mi7vdv09b1wwya4mic28m6ragiab94kqcdv404qjhs12n5f4"
-              "1cwd49frrdr75nksz2507b5drfb076c35ajy0g0cflgxm9daj3c3")))
+                ("github.com/mholt/caddy-l4" . "v0.1.2")) ; Layer 4
+              "11gxq6hsnqa17b8329vfas96arjpcy7vn6fhprjpqpclsrqgfdix"
+              "0wyjkk6ffwgk9rgxs0zfikl0ccns0sypr0pxax6g0dcsxg1zmyha")))
     (package/inherit pkg
       (name "caddy-netlify-crowdsec-coraza-maxmind-l4")
-      (version"2.11.4") 
+      (version"2.11.9") 
       (arguments
        (substitute-keyword-arguments (package-arguments pkg)
          ((#:phases phases)
