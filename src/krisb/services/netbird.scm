@@ -36,7 +36,7 @@
 (define-record-type* <netbird-configuration>
   netbird-configuration make-netbird-configuration
   netbird-configuration?
-  (netbird netbird-configuration-netbird ; file-like
+  (package netbird-configuration-package ; file-like
            (default netbird))
   (log-level netbird-configuration-log-level ; string
              (default "info"))
@@ -54,12 +54,8 @@
                  (default '())))
 
 (define (netbird-shepherd-service config)
-  (let ((netbird (netbird-configuration-netbird config))
-        (log-level (netbird-configuration-log-level config))
-        (log-file (netbird-configuration-log-file config))
-        (daemon-addr (netbird-configuration-daemon-addr config))
-        (config-file (netbird-configuration-config-file config))
-        (extra (netbird-configuration-extra-options config)))
+  (match-record config <netbird-configuration>
+                (package log-level log-file daemon-addr config-file extra-options)
     (list (shepherd-service
             (documentation "Run the NetBird daemon.")
             (provision '(netbird-client))
@@ -79,7 +75,7 @@
                        #$@(if config-file
                               (list "--config" config-file)
                               '())
-                       #$@extra)
+                       #$@extra-options)
                       #:log-file #$log-file))
             (respawn? (netbird-configuration-respawn? config))
             (stop #~(make-kill-destructor))))))
