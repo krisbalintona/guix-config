@@ -1627,15 +1627,15 @@
               (simple-service 'home-oci-immich
                   home-oci-service-type
                 (let* ((immich-network-subnet "10.89.12.0/24")
-                       (immich-version "v2.7.5")
+                       (immich-version "v3.3.6")
                        ;; These Database (postgres) variables are the ones that I've
                        ;; customized; they must be provided (as env vars inside the
                        ;; container) to all Immich workers (i.e., the server and
                        ;; machine learning containers).  See
                        ;; https://docs.immich.app/install/environment-variables/#database
                        (db-hostname "DB_HOSTNAME=immich-postgres")
-                       (db-password "DB_PASSWORD=s6nshtP8kkKcjF")
-                       (db-storage-type "DB_STORAGE_TYPE=HDD") ; I use an HDD
+                       (db-password "DB_PASSWORD=s6nshtP8kkKcjF") ; FIXME 2026-11-07: Should this be hidden?
+                       (db-storage-type "DB_STORAGE_TYPE=HDD")    ; I use an HDD
                        ;; Do not change these two variables
                        (db-username "DB_USERNAME=postgres")
                        (db-database-name "DB_DATABASE_NAME=immich")
@@ -1738,7 +1738,7 @@
                          (cons "POSTGRES_DB" db-database-name)
                          (cons "POSTGRES_INITDB_ARGS" "--data-checksums")
                          "DB_STORAGE_TYPE"))
-                       (extra-arguments '("--shm-size=256m"))
+                       (extra-arguments '("--shm-size=128m"))
                        (network "immich-network")
                        (volumes
                         '(("/home/krisbalintona/services/immich/postgres-data" . "/var/lib/postgresql/data")))
