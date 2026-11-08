@@ -254,7 +254,7 @@
 	# network
 	@untrusted not remote_ip private_ranges 100.83.0.0/16
 
-	# Block if outside US/IL (and not in a trusted subnet) with
+	# Block if outside a trusted geographical region with
 	# caddy-maxmind-geolocation
 	#
 	# To test whether geoblocking is working, use something like
@@ -263,7 +263,7 @@
 		not maxmind_geolocation {
 			db_path /var/lib/geoip/GeoLite2-City.mmdb
 			allow_countries US
-			allow_subdivisions IL
+			allow_subdivisions IL GA
 		}
 	}
 
