@@ -1132,7 +1132,7 @@
                           "UMASK=022"
                           "ORIGIN=https://profilarr.home.kristofferbalintona.me" ; Because behind reverse proxy
               
-                          "AUTH=oidc"))  ; OIDC-related env vars are set in env file
+                          "AUTH=on"))  ; OIDC-related env vars are set in env file
                        (extra-arguments
                         (list "--env-file" env-file
                               ;; For reaching the Pocket ID container's endpoint
