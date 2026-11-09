@@ -62,4 +62,21 @@
 
      (kernel-arguments
       (append hardware:swap-kernel-parameters
+
+              ;; Enable zswap.  For a comparison of zswap to zram, and
+              ;; a justification of why zswap is preferrable to zram
+              ;; and why zram shouldn't be used in conjunction with
+              ;; zswap, see
+              ;; https://linuxblog.io/zswap-better-than-zram/
+              ;;
+              ;; Run the command below to see the current value of all
+              ;; zswap-related options:
+              ;;   grep -r . /sys/module/zswap/parameters/
+              ;;
+              ;; To see the current stats of zswap, run:
+              ;;   grep -r . /sys/kernel/debug/zswap/
+              (list "zswap.enabled=1"
+                    "zswap.max_pool_percent=25"
+                    "zswap.shrinker_enabled=1")
+
               %default-kernel-arguments)))))
