@@ -21,6 +21,7 @@
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
   #:use-module (nongnu packages mozilla) ; Firefox
+  #:use-module (krisb config machines Maur features auth)
   #:export (Maur-home-environment))
 
 (define Maur-home-environment
@@ -40,18 +41,19 @@
                     direnv
                     firefox))
     (services
-     (append
-      (list
-       (service home-dbus-service-type) ; Required by 'home-pipewire-service-type', Flatpak, and probably other
-       (service home-pipewire-service-type)
+     (append (feature-openssh)
+             (list
+              
+              (service home-dbus-service-type) ; Required by 'home-pipewire-service-type', Flatpak, and probably other
+              (service home-pipewire-service-type)
 
-       (service home-bash-service-type)
-       (service home-fish-service-type)
+              (service home-bash-service-type)
+              (service home-fish-service-type)
 
-       (service home-files-service-type
-         `((".guile" ,%default-dotguile)
-	   (".Xdefaults" ,%default-xdefaults)))
-       (service home-xdg-configuration-files-service-type
-         `(("gdb/gdbinit" ,%default-gdbinit)
-	   ("nano/nanorc" ,%default-nanorc))))
-      %base-home-services))))
+              (service home-files-service-type
+                `((".guile" ,%default-dotguile)
+	          (".Xdefaults" ,%default-xdefaults)))
+              (service home-xdg-configuration-files-service-type
+                `(("gdb/gdbinit" ,%default-gdbinit)
+	          ("nano/nanorc" ,%default-nanorc))))
+             %base-home-services))))
