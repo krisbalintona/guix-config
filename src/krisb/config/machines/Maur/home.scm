@@ -10,7 +10,6 @@
   #:use-module (gnu packages admin)     ; tree
   #:use-module (gnu packages window-management)
   #:use-module (gnu packages version-control)
-  #:use-module (gnu packages emacs)
   #:use-module (gnu packages ssh)         ; x11-ssh-askpass
   #:use-module (gnu packages vim)         ; neovim
   #:use-module (gnu packages rust-apps)   ; jujutsu
@@ -28,7 +27,6 @@
   (home-environment
     (packages (list git
                     x11-ssh-askpass
-                    emacs
                     neovim
                     jujutsu
                     fd
