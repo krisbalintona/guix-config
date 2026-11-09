@@ -11,6 +11,7 @@
   #:use-module (gnu services xorg)
   #:use-module (nonguix transformations)
   #:use-module (krisb services netbird)
+  #:use-module ((krisb config machines Maur hardware) #:prefix hardware:)
   #:export (Maur-operating-system))
 
 (define Maur-operating-system
@@ -48,22 +49,17 @@
                    (targets (list "/boot/efi"))
                    (keyboard-layout keyboard-layout)))
 
-     (file-systems (cons* (file-system
-                            (mount-point "/")
-                            (device (uuid
-                                     "3a9b954f-6eca-4272-baa2-9d7554d118bc"
-                                     'btrfs))
-                            (type "btrfs")
-                            (options "subvol=@,compress=zstd"))
-                          (file-system
-                            (mount-point "/home")
-                            (device (uuid
-                                     "3a9b954f-6eca-4272-baa2-9d7554d118bc"
-                                     'btrfs))
-                            (type "btrfs")
-                            (options "subvol=@home,compress=zstd"))
-                          (file-system
-                            (mount-point "/boot/efi")
-                            (device (uuid "2037-86C8"
-                                          'fat32))
-                            (type "vfat")) %base-file-systems)))))
+     (file-systems (cons* hardware:btrfs-subvolume-home
+                          hardware:btrfs-subvolume-root
+                          hardware:btrfs-subvolume-swap
+                          hardware:partition-efi
+                          %base-file-systems))
+     ;; Activate swap devices (swapon); swapfiles/partitions must be
+     ;; set up manually beforehand
+     (swap-devices
+      (list hardware:swap-space-hibernation
+            hardware:swap-space-everyday))
+
+     (kernel-arguments
+      (append hardware:swap-kernel-parameters
+              %default-kernel-arguments)))))
