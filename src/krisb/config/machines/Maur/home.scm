@@ -20,6 +20,7 @@
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
   #:use-module (nongnu packages mozilla) ; Firefox
+  #:use-module (krisb home services audio)
   #:use-module (krisb config machines Maur features auth)
   #:export (Maur-home-environment))
 
@@ -40,18 +41,28 @@
                     firefox))
     (services
      (append (feature-openssh)
-             (list
-              
-              (service home-dbus-service-type) ; Required by 'home-pipewire-service-type', Flatpak, and probably other
-              (service home-pipewire-service-type)
+             (list (service home-easyeffects-service-type
+                     (home-easyeffects-configuration
+                      (respawn? #f)))
 
-              (service home-bash-service-type)
-              (service home-fish-service-type)
+                   (service home-dbus-service-type) ; Required by 'home-pipewire-service-type', Flatpak, and probably other
+                   (service home-pipewire-service-type)
+                   ;; The 'home-wayland-service-type' provides the
+                   ;; 'wayland-display' Shepherd service, whose value
+                   ;; is used by other services to determine the value
+                   ;; of the WAYLAND_DISPLAY env var.  Nothing I have
+                   ;; currently instantiates it, so I instantiate it
+                   ;; myself.  If in the future I use a service-type
+                   ;; that does instantiate it, I can delete this one.
+                   (service home-wayland-service-type 30)
 
-              (service home-files-service-type
-                `((".guile" ,%default-dotguile)
-	          (".Xdefaults" ,%default-xdefaults)))
-              (service home-xdg-configuration-files-service-type
-                `(("gdb/gdbinit" ,%default-gdbinit)
-	          ("nano/nanorc" ,%default-nanorc))))
+                   (service home-bash-service-type)
+                   (service home-fish-service-type)
+
+                   (service home-files-service-type
+                     `((".guile" ,%default-dotguile)
+	               (".Xdefaults" ,%default-xdefaults)))
+                   (service home-xdg-configuration-files-service-type
+                     `(("gdb/gdbinit" ,%default-gdbinit)
+	               ("nano/nanorc" ,%default-nanorc))))
              %base-home-services))))
