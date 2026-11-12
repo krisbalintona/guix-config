@@ -27,6 +27,9 @@
   #:export (netbird-configuration
             netbird-service-type))
 
+;;
+;;; Netbird client
+;;
 ;; NOTE(KrisB): Module modified from
 ;; https://codeberg.org/technicalrenaissance/renaissance
 

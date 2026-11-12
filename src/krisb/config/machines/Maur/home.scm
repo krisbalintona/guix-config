@@ -21,6 +21,7 @@
   #:use-module (gnu system shadow)
   #:use-module (nongnu packages mozilla) ; Firefox
   #:use-module (krisb home services audio)
+  #:use-module (krisb home services netbird)
   #:use-module (krisb config machines Maur features auth)
   #:export (Maur-home-environment))
 
@@ -41,7 +42,10 @@
                     firefox))
     (services
      (append (feature-openssh)
-             (list (service home-easyeffects-service-type
+             (list (service home-netbird-ui-service-type
+                     (home-netbird-ui-configuration
+                      (respawn? #f)))
+                   (service home-easyeffects-service-type
                      (home-easyeffects-configuration
                       (respawn? #f)))
 
