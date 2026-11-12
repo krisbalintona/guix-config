@@ -32,6 +32,8 @@
 		     (shell (file-append fish "/bin/fish")))
                    %base-user-accounts))
 
+     (packages (cons* niri
+                      %base-packages))
      (services
       (append (list (service netbird-service-type
                       (netbird-configuration
