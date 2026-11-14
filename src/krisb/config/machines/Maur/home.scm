@@ -73,8 +73,8 @@
 
                    (service home-files-service-type
                      `((".guile" ,%default-dotguile)
-	               (".Xdefaults" ,%default-xdefaults)))
+                       (".Xdefaults" ,%default-xdefaults)))
                    (service home-xdg-configuration-files-service-type
                      `(("gdb/gdbinit" ,%default-gdbinit)
-	               ("nano/nanorc" ,%default-nanorc))))
+                       ("nano/nanorc" ,%default-nanorc))))
              %base-home-services))))

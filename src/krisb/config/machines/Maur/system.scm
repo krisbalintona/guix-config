@@ -30,7 +30,7 @@
                      (group "users")
                      (home-directory "/home/krisbalintona")
                      (supplementary-groups '("wheel" "netdev" "audio" "video"))
-		     (shell (file-append fish "/bin/fish")))
+                     (shell (file-append fish "/bin/fish")))
                    %base-user-accounts))
 
      (packages (cons* niri
@@ -41,8 +41,8 @@
                       (netbird-configuration
                        (respawn? #f)))
                     (service gnome-desktop-service-type)
-		    (service nftables-service-type)
-		    (service nix-service-type)
+                    (service nftables-service-type)
+                    (service nix-service-type)
                     (service openssh-service-type)
                     (service cups-service-type)
                     (set-xorg-configuration
