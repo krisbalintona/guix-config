@@ -6,6 +6,7 @@
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services shells)
   #:use-module (gnu home services sway)
+  #:use-module (gnu packages base)      ; gnu-make
   #:use-module (gnu packages linux)
   #:use-module (gnu packages admin)     ; tree
   #:use-module (gnu packages window-management)
@@ -17,6 +18,7 @@
   #:use-module (gnu packages shellutils)  ; direnv
   #:use-module (gnu packages freedesktop) ; xdg-utils
   #:use-module (gnu packages music)       ; playerctl
+  #:use-module (gnu packages compression) ; zip
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
   #:use-module (nongnu packages mozilla) ; Firefox
@@ -39,7 +41,13 @@
                     wlr-randr
                     xdg-utils
                     direnv
-                    firefox))
+                    firefox
+                    gnu-make
+                    zip
+                    unzip
+                    tar
+                    btop
+                    ripgrep))
     (services
      (append (feature-openssh)
              (list (service home-netbird-ui-service-type
