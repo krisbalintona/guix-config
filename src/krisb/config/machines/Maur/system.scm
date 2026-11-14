@@ -11,6 +11,7 @@
   #:use-module (gnu services xorg)
   #:use-module (nonguix transformations)
   #:use-module (krisb services netbird)
+  #:use-module (gnu services pm)
   #:use-module ((krisb config machines Maur hardware) #:prefix hardware:)
   #:export (Maur-operating-system))
 
@@ -35,7 +36,8 @@
      (packages (cons* niri
                       %base-packages))
      (services
-      (append (list (service netbird-service-type
+      (append (list (service power-profiles-daemon-service-type)
+                    (service netbird-service-type
                       (netbird-configuration
                        (respawn? #f)))
                     (service gnome-desktop-service-type)
