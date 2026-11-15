@@ -32,9 +32,7 @@
                      (supplementary-groups '("wheel" "netdev" "audio" "video"))
                      (shell (file-append fish "/bin/fish")))
                    %base-user-accounts))
-
-     (packages (cons* niri
-                      %base-packages))
+     
      (services
       (append (list (service power-profiles-daemon-service-type)
                     (service netbird-service-type
@@ -47,7 +45,19 @@
                     (service cups-service-type)
                     (set-xorg-configuration
                      (xorg-configuration (keyboard-layout keyboard-layout))))
-              %desktop-services))
+              (modify-services %desktop-services
+                ;; I use the 'home-niri-service-type' in my Guix Home
+                ;; configuration.  As explained in (guix) Niri window
+                ;; manager, 'home-niri-service-type' does not work
+                ;; with 'gdm-service-type'.
+                ;;
+                ;; There is work upstream that proposes a change in
+                ;; the 'home-niri-service-type' to make them
+                ;; compatible:
+                ;; https://codeberg.org/guix/guix/issues/5899.  Until
+                ;; the issue is addressed, I will have to remove
+                ;; 'gdm-service-type' from '%desktop-services'.
+                (delete gdm-service-type))))
      (bootloader (bootloader-configuration
                    (bootloader grub-efi-bootloader)
                    (targets (list "/boot/efi"))

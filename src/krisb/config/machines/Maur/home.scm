@@ -5,7 +5,7 @@
   #:use-module (gnu home services sound)
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services shells)
-  #:use-module (gnu home services sway)
+  #:use-module (gnu home services niri) ; 'home-niri-service-type'
   #:use-module (gnu packages base)      ; gnu-make
   #:use-module (gnu packages linux)
   #:use-module (gnu packages admin)     ; tree
@@ -14,7 +14,6 @@
   #:use-module (gnu packages ssh)         ; x11-ssh-askpass
   #:use-module (gnu packages vim)         ; neovim
   #:use-module (gnu packages rust-apps)   ; jujutsu
-  #:use-module (gnu packages xorg)        ; xwayland-satellite
   #:use-module (gnu packages shellutils)  ; direnv
   #:use-module (gnu packages freedesktop) ; xdg-utils
   #:use-module (gnu packages music)       ; playerctl
@@ -37,7 +36,6 @@
                     tree
                     noctalia-shell
                     playerctl
-                    xwayland-satellite  ; For Niri's use of xwayland
                     wlr-randr
                     xdg-utils
                     direnv
@@ -57,7 +55,7 @@
                      (home-easyeffects-configuration
                       (respawn? #f)))
 
-                   (service home-dbus-service-type) ; Required by 'home-pipewire-service-type', Flatpak, and probably other
+                   (service home-niri-service-type)
                    (service home-pipewire-service-type)
                    ;; The 'home-wayland-service-type' provides the
                    ;; 'wayland-display' Shepherd service, whose value
