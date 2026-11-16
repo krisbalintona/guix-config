@@ -5,6 +5,7 @@
   #:use-module (krisb config machines mute features editors)
   #:use-module (krisb config machines mute features fonts)
   #:use-module (krisb config machines mute features auth)
+  #:use-module (krisb config machines mute features syncthing)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -60,7 +61,8 @@
         ))))
 
     (services
-     (append (feature-jujutsu)
+     (append (feature-syncthing)
+             (feature-jujutsu)
              (feature-git)
              (feature-base-environment)
              (feature-bash-shell)
@@ -171,6 +173,7 @@
                      (user "krisbalintona")
                      (config-file
                       (syncthing-config-file
+                        (inherit common:%syncthing-gui-safe-config)
                         ;; We use a non-standard port because we are on WSL with
                         ;; other distros and we want them using different ports
                         (gui-address "127.0.0.1:8386")

@@ -2090,6 +2090,7 @@
                      (user "krisbalintona")
                      (config-file
                       (syncthing-config-file
+                        (inherit common:%syncthing-gui-safe-config)
                         (folders (list biblio-folder))))))))
               (simple-service 'files-Xdefaults
                   home-files-service-type

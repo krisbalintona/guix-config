@@ -29,4 +29,5 @@
                (user "krisbalintona")
                (config-file
                 (syncthing-config-file
+                  (inherit common:%syncthing-gui-safe-config)
                   (folders (list agenda-folder notes-folder))))))))))
