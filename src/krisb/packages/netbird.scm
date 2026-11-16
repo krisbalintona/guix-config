@@ -260,6 +260,17 @@ peer-to-peer mesh networking.")
                                      "^\\.pnpm-workspace-state.*\\.json$")
                          (find-files "node_modules" "^\\.modules\\.yaml$"))))
 
+            ;; Take Go modules from the already-pinned
+            ;; netbird-go-modules output and forbid network access, so
+            ;; nothing can float.
+            (let ((cache (string-append top "/gomodcache")))
+              (copy-recursively #$(netbird-go-modules version source) cache)
+              (for-each (lambda (d) (chmod d #o755))
+                        (find-files cache #:directories? #t))
+              (for-each (lambda (f) (chmod f #o644))
+                        (find-files cache #:directories? #f)))
+            (setenv "GOPROXY" "off")
+
             ;; Wails TypeScript bindings, generated from the Go
             ;; services.
             (with-directory-excursion "src/client/ui"
@@ -274,7 +285,7 @@ peer-to-peer mesh networking.")
     #:local-build? #f
     #:options
     (list #:hash-algo 'sha256
-          #:hash (base32 "0dlkc6lgmjvgp0ssn0cxk77s8cmsgf9vgvicrk6i90xnjkajq7cl")
+          #:hash (base32 "0qr1x1fmnmd7r6acf541cj6vpb7gqk8wni3arx3al9sl3z85nwhd")
           #:recursive? #t)))
 
 (define netbird-ui
