@@ -6,6 +6,7 @@
   #:use-module (krisb config machines sublation features cli)
   #:use-module (krisb config machines sublation features editors)
   #:use-module (krisb config machines sublation features auth)
+  #:use-module (krisb config machines sublation features syncthing)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu system shadow)      ; For user-group 
@@ -47,8 +48,6 @@
   #:use-module (krisb services containers)
   #:use-module (sops services sops)
   #:use-module (gnu home services backup)
-  #:use-module (gnu home services syncthing)
-  #:use-module ((krisb config machines common syncthing) #:prefix common:)
   )
 
 (define podman-socket-path
@@ -168,7 +167,8 @@
         ))))
     
     (services
-     (append (feature-base-environment)
+     (append (feature-syncthing)
+             (feature-base-environment)
              (feature-bash-shell)
              (feature-fish-shell)
              (feature-cli-essentials)
@@ -2077,21 +2077,6 @@
                   #:repository sops-sublation-repository-path
                   #:schedule "0 0 * * *"
                   #:files (list (string-append services-dir "/vaultwarden")))))
-              (service home-syncthing-service-type
-                (let* (;; Folders
-                       (biblio-folder
-                        (syncthing-folder
-                          (id common:%biblio-folder-id)
-                          (label "Biblio")
-                          (path "~/services/copyparty/data/biblio")
-                          (devices (list common:%one-plus-7-pro-device)))))
-                  (for-home
-                   (syncthing-configuration
-                     (user "krisbalintona")
-                     (config-file
-                      (syncthing-config-file
-                        (inherit common:%syncthing-gui-safe-config)
-                        (folders (list biblio-folder))))))))
               (simple-service 'files-Xdefaults
                   home-files-service-type
                 `((".Xdefaults" ,%default-xdefaults)))
