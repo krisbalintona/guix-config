@@ -1,5 +1,6 @@
 (define-module (krisb config machines mute home)
   #:use-module (krisb config common)
+  #:use-module (krisb config machines features vcs)
   #:use-module (krisb config machines features shell)
   #:use-module (krisb config machines mute features editors)
   #:use-module (krisb config machines mute features fonts)
@@ -59,7 +60,9 @@
         ))))
 
     (services
-     (append (feature-base-environment)
+     (append (feature-jujutsu)
+             (feature-git)
+             (feature-base-environment)
              (feature-bash-shell)
              (feature-fish-shell)
              (feature-fonts)

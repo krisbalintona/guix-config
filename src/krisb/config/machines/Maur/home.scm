@@ -14,7 +14,7 @@
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages ssh)         ; x11-ssh-askpass
   #:use-module (gnu packages vim)         ; neovim
-  #:use-module (gnu packages rust-apps)   ; jujutsu
+  #:use-module (gnu packages rust-apps)   ; fd
   #:use-module (gnu packages shellutils)  ; direnv
   #:use-module (gnu packages freedesktop) ; xdg-utils
   #:use-module (gnu packages music)       ; playerctl
@@ -31,10 +31,8 @@
 
 (define Maur-home-environment
   (home-environment
-    (packages (list git
-                    x11-ssh-askpass
+    (packages (list x11-ssh-askpass
                     neovim
-                    jujutsu
                     fd
                     tree
                     noctalia-shell
@@ -52,6 +50,7 @@
     (services
      (append (feature-openssh)
              (feature-syncthing)
+             (feature-jujutsu)
              (feature-git)
              (list (service home-netbird-ui-service-type
                      (home-netbird-ui-configuration

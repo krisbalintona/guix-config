@@ -34,7 +34,6 @@
             feature-bat
             feature-procs
             feature-hardware-control
-            feature-jujutsu
             feature-fzf
             feature-atuin
             feature-zellij
@@ -168,26 +167,6 @@
   (list (simple-service 'hardware-control-packages
             home-profile-service-type
           (list brightnessctl))))
-
-
-;;;
-;;; Jujutsu
-;;;
-;; Distributed VCS (more ergonomic than Git!)
-
-(define (feature-jujutsu)
-  (list (simple-service 'jujutsu-package
-            home-profile-service-type
-          (list (@ (abbe packages rust) jujutsu)))
-        (simple-service 'jujutsu-config-files
-            home-xdg-configuration-files-service-type
-          `(("jj/config.toml"
-             ,(local-file (config-files-path "jujutsu/config.toml")))
-            ;; Compatibility with the fish shell
-            ("fish/functions/fish_jj_prompt.fish"
-             ,(local-file (config-files-path "jujutsu/fish_jj_prompt.fish")))
-            ("fish/functions/fish_vcs_prompt.fish"
-             ,(local-file (config-files-path "jujutsu/fish_vcs_prompt.fish")))))))
 
 
 ;;;
