@@ -6,6 +6,7 @@
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services shells)
   #:use-module (gnu home services niri) ; 'home-niri-service-type'
+  #:use-module (gnu home services syncthing) ; sy
   #:use-module (gnu packages base)      ; gnu-make
   #:use-module (gnu packages linux)
   #:use-module (gnu packages admin)     ; tree
@@ -24,6 +25,7 @@
   #:use-module (krisb home services audio)
   #:use-module (krisb home services netbird)
   #:use-module (krisb config machines Maur features auth)
+  #:use-module (krisb config machines Maur features syncthing)
   #:export (Maur-home-environment))
 
 (define Maur-home-environment
@@ -48,6 +50,7 @@
                     ripgrep))
     (services
      (append (feature-openssh)
+             (feature-syncthing)
              (list (service home-netbird-ui-service-type
                      (home-netbird-ui-configuration
                       (respawn? #f)))

@@ -1,7 +1,7 @@
 (define-module (krisb config machines sublation system)
   #:use-module (krisb config common)
   #:use-module (krisb config machines features substitute-servers)
-  #:use-module (krisb config machines sublation common)
+  #:use-module (krisb config machines sublation device)
   #:use-module (krisb config machines sublation hardware)
   #:use-module (gnu)
   #:use-module (gnu system accounts)
@@ -14,6 +14,7 @@
   #:use-module (gnu system file-systems)
   #:use-module (sops secrets)
   #:use-module (sops services sops)
+  #:use-module ((krisb config machines sublation device) #:prefix sublation:)
   #:use-module (gnu services containers)
   #:use-module (gnu services sysctl)
   #:use-module (gnu services containers)
@@ -92,7 +93,7 @@
              (cons*
               (service sops-secrets-service-type
                 (sops-service-configuration
-                  (age-key-file %sublation-sops-age-key-file)
+                  (age-key-file sublation:%sops-age-key-file)
                   (verbose? #t)
                   (secrets
                    (list

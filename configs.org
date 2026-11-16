@@ -70,23 +70,16 @@ Helper functions:
 
 *** Sublation
 
-#+begin_src scheme :noweb-ref sublation-common-helpers
-  (define-public %sublation-sops-age-key-file
-    (let ((path "/home/krisbalintona/.config/sops/age/keys.txt"))
-      (if (file-exists? path)
-          path
-          (error "Age key file not found:" path))))
-#+end_src
-
 Home secrets:
 #+begin_src scheme :noweb-ref sublation-home-modules
   (sops secrets)
   (sops home services sops)
+  ((krisb config machines sublation device) #:prefix sublation:)
 #+end_src
 #+begin_src scheme :noweb-ref sublation-home-services
   (service home-sops-secrets-service-type
     (home-sops-service-configuration
-      (age-key-file %sublation-sops-age-key-file)
+      (age-key-file sublation:%sops-age-key-file)
       (verbose? #t)
       (secrets
        (list
@@ -97,11 +90,12 @@ System secrets:
 #+begin_src scheme :noweb-ref sublation-system-modules
   (sops secrets)
   (sops services sops)
+  ((krisb config machines sublation device) #:prefix sublation:)
 #+end_src
 #+begin_src scheme :noweb-ref sublation-system-services
   (service sops-secrets-service-type
     (sops-service-configuration
-      (age-key-file %sublation-sops-age-key-file)
+      (age-key-file sublation:%sops-age-key-file)
       (verbose? #t)
       (secrets
        (list
@@ -3717,54 +3711,20 @@ Mute restic backup jobs:
 
 * Syncthing: Bidirectionally sync files between devices
 
-My devices and folder IDs:
-#+begin_src scheme :noweb-ref common-home-modules
-  (gnu home services syncthing)
-#+end_src
-#+begin_src scheme :noweb-ref common-helpers
-  ;; Devices
-  (define-public syncthing-sublation-arch-device
-    (syncthing-device
-      (id "IEIGZYX-QJGTCMC-LTWQ6S4-2RB77GM-WOXUBMM-J26I7LO-KIROD5R-XP7LXAT")
-      (name "Sublation (laptop server, Guix)")))
-
-  (define-public syncthing-guix-arch-device
-    (syncthing-device
-      (id "UIVVWP3-XZ2GV2F-7N3RMXC-FRIKYXP-Y2MAXNA-JMGD45T-AZYZZJC-FBFSQQ5")
-      (name "Mute (G14 2024, Guix in Arch))")))
-
-  (define-public syncthing-wsl-arch-device
-    (syncthing-device
-      (id "OQHSZRW-L2TT7IC-7USSLNU-ST7JYML-J7J6CU3-42P7NCA-WHE7BEL-SASRXA3")
-      (name "G14 2024 Arch WSL")))
-
-  (define-public syncthing-one-plus-7-pro-device
-    (syncthing-device
-      (id "OVGYOBF-JPFQJKE-6CKRY7J-JULRCWK-WSGSA6Y-SQZYLLE-B2OLSDJ-6DRSTQZ")
-      (name "OnePlus 7 Pro")))
-
-  ;; Folder IDs
-  (define-public syncthing-notes-folder-id "qtuzy-ufufb")
-
-  (define-public syncthing-agenda-folder-id "k4vqh-rny7b")
-
-  (define-public syncthing-biblio-folder-id "kjtm2-zyajn")
-#+end_src
-
 For Sublation:
 #+begin_src scheme :noweb-ref sublation-home-modules
   (gnu home services syncthing)
+  ((krisb config machines common syncthing) #:prefix common:)
 #+end_src
 #+begin_src scheme :noweb-ref sublation-home-services
   (service home-syncthing-service-type
     (let* (;; Folders
            (biblio-folder
             (syncthing-folder
-              (id syncthing-biblio-folder-id)
+              (id common:%biblio-folder-id)
               (label "Biblio")
               (path "~/services/copyparty/data/biblio")
-              (devices
-               (list syncthing-one-plus-7-pro-device)))))
+              (devices (list common:%one-plus-7-pro-device)))))
       (for-home
        (syncthing-configuration
          (user "krisbalintona")
@@ -3776,24 +3736,29 @@ For Sublation:
 For Mute:
 #+begin_src scheme :noweb-ref mute-home-modules
   (gnu home services syncthing)
+  ((krisb config machines common syncthing) #:prefix common:)
+  ((krisb config machines mute device) #:prefix mute:)
+  ((krisb config machines Maur device) #:prefix Maur:)
 #+end_src
 #+begin_src scheme :noweb-ref mute-home-services
   (service home-syncthing-service-type
     (let* (;; Folders
            (agenda-folder
             (syncthing-folder
-              (id "k4vqh-rny7b")
+              (id common:%agenda-folder-id)
               (label "Agenda")
               (path "~/Documents/org-database/agenda/")
               (devices
-               (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device))))
+               (list Maur:%syncthing-device
+                     common:%one-plus-7-pro-device))))
            (notes-folder
             (syncthing-folder
-              (id "qtuzy-ufufb")
+              (id common:%notes-folder-id)
               (label "Notes")
               (path "~/Documents/org-database/notes")
               (devices
-               (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device)))))
+               (list Maur:%syncthing-device
+                     common:%one-plus-7-pro-device)))))
       (for-home
        (syncthing-configuration
          (user "krisbalintona")
@@ -4599,23 +4564,13 @@ Configuration helpers for my machines.
 
 *** Sublation
 
-**** Common
-
-#+begin_src scheme :tangle "src/krisb/config/machines/sublation/common.scm"
-  (define-module (krisb config machines sublation common)
-    #:use-module (krisb config common)
-    )
-
-  <<sublation-common-helpers>>
-#+end_src
-
 **** Home
 
 #+begin_src scheme :tangle "src/krisb/config/machines/sublation/home.scm"
   (define-module (krisb config machines sublation home)
     #:use-module (krisb config common)
     #:use-module (krisb config machines features shell)
-    #:use-module (krisb config machines sublation common)
+    #:use-module (krisb config machines sublation device)
     #:use-module (krisb config machines sublation features cli)
     #:use-module (krisb config machines sublation features editors)
     #:use-module (krisb config machines sublation features auth)
@@ -4697,7 +4652,7 @@ Configuration helpers for my machines.
   (define-module (krisb config machines sublation system)
     #:use-module (krisb config common)
     #:use-module (krisb config machines features substitute-servers)
-    #:use-module (krisb config machines sublation common)
+    #:use-module (krisb config machines sublation device)
     #:use-module (krisb config machines sublation hardware)
     #:use-module (gnu)
     #:use-module (gnu system accounts)

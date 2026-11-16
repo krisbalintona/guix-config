@@ -1,7 +1,7 @@
 (define-module (krisb config machines sublation home)
   #:use-module (krisb config common)
   #:use-module (krisb config machines features shell)
-  #:use-module (krisb config machines sublation common)
+  #:use-module (krisb config machines sublation device)
   #:use-module (krisb config machines sublation features cli)
   #:use-module (krisb config machines sublation features editors)
   #:use-module (krisb config machines sublation features auth)
@@ -14,6 +14,7 @@
   #:use-module (gnu home services shells)
   #:use-module (sops secrets)
   #:use-module (sops home services sops)
+  #:use-module ((krisb config machines sublation device) #:prefix sublation:)
   #:use-module (gnu services containers)
   #:use-module (gnu home services containers)
   #:use-module (gnu packages containers)
@@ -46,6 +47,7 @@
   #:use-module (sops services sops)
   #:use-module (gnu home services backup)
   #:use-module (gnu home services syncthing)
+  #:use-module ((krisb config machines common syncthing) #:prefix common:)
   )
 
 (define podman-socket-path
@@ -188,7 +190,7 @@
              (cons*
               (service home-sops-secrets-service-type
                 (home-sops-service-configuration
-                  (age-key-file %sublation-sops-age-key-file)
+                  (age-key-file sublation:%sops-age-key-file)
                   (verbose? #t)
                   (secrets
                    (list
@@ -2078,11 +2080,10 @@
                 (let* (;; Folders
                        (biblio-folder
                         (syncthing-folder
-                          (id syncthing-biblio-folder-id)
+                          (id common:%biblio-folder-id)
                           (label "Biblio")
                           (path "~/services/copyparty/data/biblio")
-                          (devices
-                           (list syncthing-one-plus-7-pro-device)))))
+                          (devices (list common:%one-plus-7-pro-device)))))
                   (for-home
                    (syncthing-configuration
                      (user "krisbalintona")

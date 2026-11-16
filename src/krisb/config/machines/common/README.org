@@ -1,0 +1,3 @@
+Each device I configure with Guix contains a module for device-specific exports.  They are found in =(krisb config machines HOST-NAME device)=.
+
+However, for devices that I do not configure with Guix, their device-specific exports live in the modules in this subdirectory.

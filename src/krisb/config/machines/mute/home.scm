@@ -16,6 +16,9 @@
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services backup)
   #:use-module (gnu home services syncthing)
+  #:use-module ((krisb config machines common syncthing) #:prefix common:)
+  #:use-module ((krisb config machines mute device) #:prefix mute:)
+  #:use-module ((krisb config machines Maur device) #:prefix Maur:)
   #:use-module (gnu packages wordnet)
   #:use-module (gnu services dict)
   #:use-module (gnu home services dict)
@@ -146,18 +149,20 @@
                 (let* (;; Folders
                        (agenda-folder
                         (syncthing-folder
-                          (id "k4vqh-rny7b")
+                          (id common:%agenda-folder-id)
                           (label "Agenda")
                           (path "~/Documents/org-database/agenda/")
                           (devices
-                           (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device))))
+                           (list Maur:%syncthing-device
+                                 common:%one-plus-7-pro-device))))
                        (notes-folder
                         (syncthing-folder
-                          (id "qtuzy-ufufb")
+                          (id common:%notes-folder-id)
                           (label "Notes")
                           (path "~/Documents/org-database/notes")
                           (devices
-                           (list syncthing-wsl-arch-device syncthing-one-plus-7-pro-device)))))
+                           (list Maur:%syncthing-device
+                                 common:%one-plus-7-pro-device)))))
                   (for-home
                    (syncthing-configuration
                      (user "krisbalintona")
