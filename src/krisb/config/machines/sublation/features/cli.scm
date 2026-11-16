@@ -34,7 +34,6 @@
             feature-bat
             feature-procs
             feature-hardware-control
-            feature-git
             feature-jujutsu
             feature-fzf
             feature-atuin
@@ -169,19 +168,6 @@
   (list (simple-service 'hardware-control-packages
             home-profile-service-type
           (list brightnessctl))))
-
-
-;;;
-;;; Git
-;;;
-
-(define (feature-git)
-  (list (simple-service 'git-package
-            home-profile-service-type
-          (list git))
-        (simple-service 'git-config-files
-            home-xdg-configuration-files-service-type
-          `(("git/config" ,(local-file (config-files-path "git/config")))))))
 
 
 ;;;

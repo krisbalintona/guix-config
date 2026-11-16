@@ -1,6 +1,7 @@
 (define-module (krisb config machines sublation home)
   #:use-module (krisb config common)
   #:use-module (krisb config machines features shell)
+  #:use-module (krisb config machines features vcs)
   #:use-module (krisb config machines sublation device)
   #:use-module (krisb config machines sublation features cli)
   #:use-module (krisb config machines sublation features editors)

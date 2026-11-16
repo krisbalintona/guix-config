@@ -24,6 +24,7 @@
   #:use-module (nongnu packages mozilla) ; Firefox
   #:use-module (krisb home services audio)
   #:use-module (krisb home services netbird)
+  #:use-module (krisb config machines features vcs)
   #:use-module (krisb config machines Maur features auth)
   #:use-module (krisb config machines Maur features syncthing)
   #:export (Maur-home-environment))
@@ -51,6 +52,7 @@
     (services
      (append (feature-openssh)
              (feature-syncthing)
+             (feature-git)
              (list (service home-netbird-ui-service-type
                      (home-netbird-ui-configuration
                       (respawn? #f)))
