@@ -66,8 +66,17 @@
 ;;
 ;;; MergerFS pools
 ;;
+;; NOTE 2026-07-02: Currently, the 'file-system' records below for the
+;; file systems I use for my MergerFS pools are not directly used.
+;; They would normally be used in the 'file-systems' field of the
+;; 'operating-system' record, but mounting MergerFS pools via
+;; 'file-system' records does not currently work.  I suspect it is
+;; related to some lack of support mounting FUSE file systems this
+;; way?  The relevant Codeberg issue:
+;; https://codeberg.org/guix/guix/issues/7693.
 
 (define media-mount-point "/home/krisbalintona/services/media")
+
 (define mergerfs-mount-options-base
   (string-join
    '(;; FIXME 2026-07-01: We set "allow_other" (here and in other
@@ -100,6 +109,7 @@
      ;;   disk quota) mid-write.
      "moveonenospc=mfs")
    ","))
+
 ;; HDD 1
 (define hdd-1-uuid "9ebe0061-06bd-477d-b32b-5deeda8b757c")
 
@@ -235,17 +245,24 @@
      (string-append mergerfs-mount-options-base
                     ",category.create=mfs,minfreespace=10G"))
     (dependencies (list file-system-hdd-1-immich file-system-hdd-2-immich))))
-;;; Mergerfs pools
+
+;;; 2026-07-02: A temporary solution for Mergerfs pools
 ;;
-;; Guix's 'file-system' record only accepts a device that is a label,
-;; a UUID, or a /dev node (see (guix) File Systems).  Mergerfs's
-;; colon-separated branch syntax ("path1:path2") doesn't fit any of
-;; those, and Guix's device-resolution code (canonicalize-device-spec)
-;; has no case for it, so these pools cannot be declared as
-;; 'file-system' entries no matter what 'device'/'type'/'options' are
-;; set to.  Instead, each pool is started directly as an ordinary
-;; Shepherd service that execs the 'mergerfs' binary, the same way
-;; Guix itself starts any other daemon.
+;; Guix's 'file-system' record accepts mergerfs's colon-separated
+;; branch syntax, and the entry mounts without error when all branches
+;; are present.  However, 'canonicalize-device-spec' only waits for
+;; labels, UUIDs, and /dev nodes to appear, so a pool whose branches
+;; live on a slow device (e.g. USB) can fail at boot.  Mergerfs is
+;; also a FUSE filesystem that needs its daemon running, which the
+;; generic 'mount' path does not start.  So each pool is run as a
+;; Shepherd service that execs the 'mergerfs' binary in the foreground
+;; after waiting for its branches.
+;;
+;; Once upstream Guix supports this use case, then the below may be
+;; removed and replaced with proper 'file-system' records (above) in
+;; the 'file-systems' field of the 'operating-system' record.  The
+;; relevant Codeberg issue:
+;; https://codeberg.org/guix/guix/issues/7693.
 
 (define* (mergerfs-shepherd-service name branches mount-point mergerfs-options
                                     #:optional (extra-requirement '()))

@@ -19,6 +19,9 @@
   #:use-module (gnu services sysctl)
   #:use-module (gnu services containers)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages admin)        ; For smartmontools
+  #:use-module (gnu packages file-systems) ; For Mergerfs and BTRFS tools
+  #:use-module (gnu packages lsof)         ; For 'lsof'
   #:use-module (gnu services networking)
   #:use-module (ice-9 textual-ports)                   ; For 'get-string-all'
   #:use-module (krisb packages networking)
@@ -91,6 +94,15 @@
 
     (packages
      (cons*
+      smartmontools                  ; For smartctl
+      ;; MergerFS maintenance and usage
+      mergerfs
+      mergerfs-tools
+      ;; BTRFS maintenance and usage
+      btrfs-progs
+      compsize
+      lsof
+
       netbird
       glibc-locales
       %base-packages))
