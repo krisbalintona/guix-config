@@ -5,7 +5,67 @@
   #:use-module (gnu packages file-systems)
   #:use-module (guix gexp)
   #:use-module (srfi srfi-13)
-  )
+  #:export (system-partition-efi
+            system-partition-root
+            backup-partition
+
+            file-system-hdd-1-media
+            file-system-hdd-1-torrents-incomplete
+            file-system-hdd-1-immich
+            file-system-hdd-2-media
+            file-system-hdd-2-torrents-incomplete
+            file-system-hdd-2-immich
+
+            mergerfs-pool-media
+            mergerfs-pool-torrents-incomplete
+            mergerfs-pool-immich
+
+            shepherd-service-mergerfs-media
+            shepherd-service-mergerfs-torrents-incomplete
+            shepherd-service-mergerfs-immich
+
+            swap-space-swapfile))
+
+
+;;
+;;; System drive
+;;
+
+(define efi-partition-uuid "8D5D-5605")
+
+(define root-partition-uuid "849da8e9-c001-4a8b-9948-d996c774fc09")
+
+(define system-partition-efi
+  (file-system
+    (mount-point "/boot/efi")
+    (device (uuid efi-partition-uuid 'fat32))
+    (type "vfat")))
+
+(define system-partition-root
+  (file-system
+    (mount-point "/")
+    (device (uuid root-partition-uuid 'ext4))
+    (type "ext4")))
+
+
+;;
+;;; Backup HDD
+;;
+
+(define backup-partition-uuid "7526f253-87d5-47d9-80f9-66c99c70bb8f")
+
+(define backup-partition
+  (file-system
+    (mount-point "/mnt/backup-hdd")
+    (flags '(no-atime no-diratime))
+    (device (uuid backup-partition-uuid 'ext4))
+    (type "ext4")
+    (create-mount-point? #t)))
+
+
+;;
+;;; MergerFS pools
+;;
 
 (define media-mount-point "/home/krisbalintona/services/media")
 (define mergerfs-mount-options-base
@@ -65,7 +125,7 @@
 (define hdd-2-mount-point-immich (string-append hdd-2-mount-point "/immich"))
 
 ;; HDD 1
-(define-public file-system-hdd-1-media
+(define file-system-hdd-1-media
   (file-system
     (device (uuid hdd-1-uuid))
     (mount-point hdd-1-mount-point-media)
@@ -74,7 +134,7 @@
     (options "subvol=@media,compress=zstd")
     (create-mount-point? #t)))
 
-(define-public file-system-hdd-1-torrents-incomplete
+(define file-system-hdd-1-torrents-incomplete
   (file-system
     (device (uuid hdd-1-uuid))
     (mount-point hdd-1-mount-point-torrents-incomplete)
@@ -89,7 +149,7 @@
     (options "subvol=@torrents-incomplete,compress=zstd")
     (create-mount-point? #t)))
 
-(define-public file-system-hdd-1-immich
+(define file-system-hdd-1-immich
   (file-system
     (device (uuid hdd-1-uuid))
     (mount-point hdd-1-mount-point-immich)
@@ -99,7 +159,7 @@
     (create-mount-point? #t)))
 
 ;; HDD 2
-(define-public file-system-hdd-2-media
+(define file-system-hdd-2-media
   (file-system
     (device (uuid hdd-2-uuid))
     (mount-point hdd-2-mount-point-media)
@@ -108,7 +168,7 @@
     (options "subvol=@media,compress=zstd")
     (create-mount-point? #t)))
 
-(define-public file-system-hdd-2-torrents-incomplete
+(define file-system-hdd-2-torrents-incomplete
   (file-system
     (device (uuid hdd-2-uuid))
     (mount-point hdd-2-mount-point-torrents-incomplete)
@@ -119,7 +179,7 @@
     (options "subvol=@torrents-incomplete,compress=zstd")
     (create-mount-point? #t)))
 
-(define-public file-system-hdd-2-immich
+(define file-system-hdd-2-immich
   (file-system
     (device (uuid hdd-2-uuid))
     (mount-point hdd-2-mount-point-immich)
@@ -128,7 +188,7 @@
     (options "subvol=@immich,compress=zstd")
     (create-mount-point? #t)))
 
-(define-public mergerfs-pool-media
+(define mergerfs-pool-media
   (file-system
     (device
      (string-append hdd-1-mount-point-media ":" hdd-2-mount-point-media))
@@ -142,7 +202,7 @@
                     ",category.create=mfs,minfreespace=10G"))
     (dependencies (list file-system-hdd-1-media file-system-hdd-2-media))))
 
-(define-public mergerfs-pool-torrents-incomplete
+(define mergerfs-pool-torrents-incomplete
   (file-system
     (device
      (string-append hdd-1-mount-point-torrents-incomplete ":" hdd-2-mount-point-torrents-incomplete))
@@ -165,7 +225,7 @@
      (list file-system-hdd-1-torrents-incomplete
            file-system-hdd-2-torrents-incomplete
            mergerfs-pool-media))))
-(define-public mergerfs-pool-immich
+(define mergerfs-pool-immich
   (file-system
     (device
      (string-append hdd-1-mount-point-immich ":" hdd-2-mount-point-immich))
@@ -254,7 +314,7 @@ live underneath."
                pid))))
       (stop #~(make-kill-destructor)))))
 
-(define-public shepherd-service-mergerfs-media
+(define shepherd-service-mergerfs-media
   (mergerfs-shepherd-service
    'media
    (list hdd-1-mount-point-media hdd-2-mount-point-media)
@@ -263,7 +323,7 @@ live underneath."
    (string-append mergerfs-mount-options-base
                   ",category.create=mfs,minfreespace=10G")))
 
-(define-public shepherd-service-mergerfs-torrents-incomplete
+(define shepherd-service-mergerfs-torrents-incomplete
   (mergerfs-shepherd-service
    'torrents-incomplete
    (list hdd-1-mount-point-torrents-incomplete
@@ -277,7 +337,7 @@ live underneath."
    ;; the media pool is already mounted.
    '(mergerfs-media)))
 
-(define-public shepherd-service-mergerfs-immich
+(define shepherd-service-mergerfs-immich
   (mergerfs-shepherd-service
    'immich
    (list hdd-1-mount-point-immich hdd-2-mount-point-immich)
@@ -285,3 +345,15 @@ live underneath."
    ;; 2026-07-02: Manually copied from 'mergerfs-pool-media'
    (string-append mergerfs-mount-options-base
                   ",category.create=mfs,minfreespace=10G")))
+
+
+;;
+;;; Swap spaces
+;;
+;; For a discussion on swap, its benefits of swap, as well as
+;; recommendations, see docs/memory_management.org.
+
+(define swap-space-swapfile
+  (swap-space
+    (target "/swapfile")
+    (dependencies (list system-partition-root))))

@@ -27,9 +27,7 @@
   #:use-module (krisb services netbird)
   #:use-module (gnu services messaging)
   #:use-module (gnu services monitoring)
-  #:use-module (gnu services monitoring)
-  #:use-module (gnu services linux)
-  #:use-module (gnu services sysctl))
+  #:use-module (gnu services monitoring))
 
 
 
@@ -49,10 +47,22 @@
     (initrd microcode-initrd)
 
     (kernel-arguments
-     (cons*
+     (append
+      ;; Enable zswap.  For a comparison of zswap to zram, read
+      ;; docs/memory_management.org.
+      ;;
+      ;; Run the command below to see the current value of all
+      ;; zswap-related options:
+      ;;   grep -r . /sys/module/zswap/parameters/
+      ;;
+      ;; To see the current stats of zswap, run:
+      ;;   grep -r . /sys/kernel/debug/zswap/
+      (list "zswap.enabled=1"
+            "zswap.max_pool_percent=25"
+            "zswap.shrinker_enabled=1")
       ;; Enable the kernel module corresponding to step 2 in
       ;; https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel/#configure-and-verify-lp-mode-on-linux
-      "i915.enable_guc=3"
+      (list "i915.enable_guc=3")
       %default-kernel-arguments))
 
     (locale "en_US.utf8")
@@ -75,8 +85,8 @@
 
     (groups (cons*
 	     (user-group
-	      (name "containers")
-	      (id 166535))
+	       (name "containers")
+	       (id 166535))
 	     %base-groups))
 
     (packages
@@ -178,21 +188,6 @@
               (service prometheus-node-exporter-service-type
                 (prometheus-node-exporter-configuration
                   (web-listen-address "127.0.0.1:21005")))
-              (service zram-device-service-type
-                (zram-device-configuration
-                  (size "3G")
-                  (memory-limit "2G")
-                  (compression-algorithm 'zstd)
-                  (priority 100)))
-              ;; Based on the settings recommended here
-              ;; https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
-              ;; (follow the links there recursively for some reasoning)
-              (simple-service 'sysctl-zram
-                  sysctl-service-type
-                '(("vm.swappiness" . "170")
-                  ("vm.watermark_boost_factor". "0")
-                  ("vm.watermark_scale_factor" . "110")
-                  ("vm.page-cluster" . "0")))
               (simple-service 'mergerfs-pools shepherd-root-service-type
                 (list shepherd-service-mergerfs-media
                       shepherd-service-mergerfs-torrents-incomplete
@@ -214,25 +209,9 @@
                   (targets (list "/boot/efi"))
                   (keyboard-layout keyboard-layout)))
 
-    (file-systems (cons* (file-system
-                           (mount-point "/mnt/backup-hdd")
-                           (flags '(no-atime no-diratime))
-                           (device (uuid
-                                    "7526f253-87d5-47d9-80f9-66c99c70bb8f"
-                                    'ext4))
-                           (type "ext4")
-                           (create-mount-point? #t))
-                         (file-system
-                           (mount-point "/")
-                           (device (uuid
-                                    "849da8e9-c001-4a8b-9948-d996c774fc09"
-                                    'ext4))
-                           (type "ext4"))
-                         (file-system
-                           (mount-point "/boot/efi")
-                           (device (uuid "8D5D-5605"
-                                         'fat32))
-                           (type "vfat"))
+    (file-systems (cons* backup-partition
+                         system-partition-root
+                         system-partition-efi
                          ;; HDD 1
                          file-system-hdd-1-media
                          file-system-hdd-1-torrents-incomplete
@@ -244,10 +223,4 @@
                          %base-file-systems))
 
     (swap-devices
-     (list
-      (swap-space
-        (target "/swapfile")
-        (dependencies
-         (filter (file-system-mount-point-predicate "/")
-                 file-systems))
-        (priority 0))))))
+     (list swap-space-swapfile))))
