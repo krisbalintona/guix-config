@@ -12,7 +12,7 @@
   #:use-module (nonguix transformations)
   #:use-module (krisb services netbird)
   #:use-module (gnu services pm)
-  #:use-module ((krisb config machines Maur hardware) #:prefix hardware:)
+  #:use-module (krisb config machines Maur hardware)
   #:export (Maur-operating-system))
 
 (define Maur-operating-system
@@ -63,19 +63,19 @@
                    (targets (list "/boot/efi"))
                    (keyboard-layout keyboard-layout)))
 
-     (file-systems (cons* hardware:btrfs-subvolume-home
-                          hardware:btrfs-subvolume-root
-                          hardware:btrfs-subvolume-swap
-                          hardware:partition-efi
+     (file-systems (cons* btrfs-subvolume-home
+                          btrfs-subvolume-root
+                          btrfs-subvolume-swap
+                          partition-efi
                           %base-file-systems))
      ;; Activate swap devices (swapon); swapfiles/partitions must be
      ;; set up manually beforehand
      (swap-devices
-      (list hardware:swap-space-hibernation
-            hardware:swap-space-everyday))
+      (list swap-space-hibernation
+            swap-space-everyday))
 
      (kernel-arguments
-      (append hardware:swap-kernel-parameters
+      (append swap-kernel-parameters
 
               ;; Enable zswap.  For a comparison of zswap to zram,
               ;; read docs/memory_management.org.
