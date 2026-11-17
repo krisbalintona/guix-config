@@ -1,4 +1,5 @@
 (define-module (krisb config machines sublation device)
+  #:use-module (gnu services syncthing)
   #:use-module (krisb config common)
   #:export (%sops-age-key-file
             %syncthing-device))
