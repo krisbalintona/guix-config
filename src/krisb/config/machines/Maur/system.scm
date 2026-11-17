@@ -77,11 +77,8 @@
      (kernel-arguments
       (append hardware:swap-kernel-parameters
 
-              ;; Enable zswap.  For a comparison of zswap to zram, and
-              ;; a justification of why zswap is preferrable to zram
-              ;; and why zram shouldn't be used in conjunction with
-              ;; zswap, see
-              ;; https://linuxblog.io/zswap-better-than-zram/
+              ;; Enable zswap.  For a comparison of zswap to zram,
+              ;; read docs/memory_management.org.
               ;;
               ;; Run the command below to see the current value of all
               ;; zswap-related options:

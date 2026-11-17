@@ -1,0 +1,117 @@
+#+title: Memory management
+
+This document discusses memory management: swap spaces, zram vs. zswap, appropriate swap space sizes for various use cases, and similar.
+
+I've only linked to resources that were useful enough to inform my own decisions.
+
+* Swap
+
+What is swap? From [[https://chrisdown.name/2018/01/02/in-defence-of-swap.html][In defence of swap: common misconceptions]]:
+#+begin_quote
+First, it's important to understand what =vm.swappiness= does. =vm.swappiness= is a sysctl that biases memory reclaim either towards reclamation of anonymous pages, or towards file pages.... This means that, in general, *=vm.swappiness= is simply a ratio of how costly reclaiming and refaulting anonymous memory is compared to file memory for your hardware and workload.* The lower the value, the more you tell the kernel that infrequently accessed anonymous pages are expensive to swap out and in on your hardware. The higher the value, the more you tell the kernel that the cost of swapping anonymous pages and file pages is similar on your hardware.
+#+end_quote
+So in other words, /a higher swappiness means a greater willingness by the kernel to reclaim anonymous pages (i.e., memory used by processes) instead of file-backed ones, meaning a lower likelihood of file-backed page reclamation/.
+
+*Interpreted, this means file-heavy workloads (e.g., seeding, video streaming) should benefit from higher =vm.swappiness= values.*[fn:1]
+
+Swap is always a good idea! Even when you have enough RAM: [[https://linuxblog.io/linux-performance-almost-always-add-swap-space/][Linux Performance: Almost Always Add Swap Space | LinuxBlog.io]].
+
+Generally, the appropriate size of swap for any given device depends highly on its usage.
+
+Additionally, there are various settings that control swap behavior. Read about them here: [[https://wiki.archlinux.org/title/Swap#Performance]]. Notably,
++ =vm.swappiness= (kernel parameter)
++ =vm.vfs_cache_pressure= (kernel parameter)
++ priority (on swap space creation, e.g., ~swapon --priority 100 /dev/sda1~)
+
+[fn:1] This recommendation is supported by [[https://chrisdown.name/2018/01/02/in-defence-of-swap.html][In defence of swap: common misconceptions]] and [[https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/monitoring_and_managing_system_status_and_performance/configuring-an-operating-system-to-optimize-memory-access_monitoring-and-managing-system-status-and-performance][Chapter 35. Configuring an operating system to optimize memory access | Monitoring and managing system status and performance | Red Hat Enterprise Linux | 8 | Red Hat Documentation]].
+
+** BTRFS
+
+If a swap file is created in a BTRFS file system, special steps need to be taken to create a swap file. See [[https://btrfs.readthedocs.io/en/latest/Swapfile.html][Swapfile — BTRFS documentation]] for instructions.
+
+** Hibernation
+
+For hibernation, the kernel will target a stored image size of 2/5 the total RAM. This is merely a target; there is no guarantee that this target will be met. Therefore, for devices that intend to hibernate (e.g., laptops), swap must be /at least/ 2/5s of the total RAM. (Older advice is for swap space to account for at least the size of total RAM, though this is antiquated advice that neglects the current kernel's attempts to have a smaller image.) Add a buffer of a few GBs then add the total swap space you'd otherwise use. As an example, a system with 16GB of total RAM may use a swap space of:
++ 2/5 x 16GB = 6.4GB (swap for for hibernation)
++ 10GB of swap (everyday paging)
++ 16.4GB total swap space
+
+One problem one may encounter on hibernation is the swap space is too full for the hibernation image to fit. One solution is presented here: [[https://linuxblog.io/set-up-hibernation-linux-swap/][How to Set Up Hibernation on Linux (Swap Done Right) | LinuxBlog.io]]. Have two swap files, one for everyday paging and another for hibernation. Then, set the swap file for hibernation to the lowest priority. Consequently, the swap file for hibernation will be filled last. Of course, this is not a guarantee, but by observing one's daily usage of swap space, one can be confident that under typical circumstances the hibernation swap file will hardly be used.
+
+Finally, to actually resume from hibernation with a swap file, don't forget to set the =resume= and =esume_offset= kernel arguments (or just the former if using a swap partition).  See =(guix) Swap Space for more information)=.
+
+* Zram vs. zswap
+
+** Zram
+
+Zram creates a /compressed/ RAM block device. This block device is often used for swapping.
+
+The effect is that usable RAM is decreased but this zram swap device, by being in RAM and involving compression, increases total memory. 
+
+It is compatible with swap, but not zswap:
+#+begin_quote
+With zram, there is no equivalent process. Nothing is watching the device fill up and taking action. When it hits capacity, it simply stops accepting pages. If there is a lower-priority disk swap device, the kernel spills to that, with all the LRU inversion problems described above. If there is no other device, the system either hangs while the kernel desperately tries to reclaim anything it can, or the OOM killer fires. In neither case does the system degrade gracefully. ([[https://chrisdown.name/2026/03/24/zswap-vs-zram-when-to-use-what.html][Debunking zswap and zram myths]])
+#+end_quote
+In other words, zram paired with swap leads to LRU inversion.
+
+To learn more: [[https://wiki.archlinux.org/title/Zram][zram - ArchWiki]].
+
+For zram 
+https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+
+
+** Zswap
+
+Zswap sits in front of swap. When the OS would attempt to move page into swap, zswap would instead attempt to compress those pages into RAM. Additionally, zswap attempts to keep hot pages in RAM and only move cold pages (least recently used, LRU) to disk.[fn:2]
+
+There are [[https://wiki.archlinux.org/title/Zswap#Set_parameters][various parameters]] that can be set, at boot using kernel parameters and at runtime.
+
+Zswap requires swap space.
+
+To learn more: [[https://wiki.archlinux.org/title/Zswap][zswap - ArchWiki]]
+
+[fn:2] This is the function of the "shrinker," which may be enabled or disabled. There is practically no reason to leave the shrinker disabled.
+
+** Comparison: which to use?
+
+Based on these articles, ordered by insightfulness:
+1. [[https://chrisdown.name/2026/03/24/zswap-vs-zram-when-to-use-what.html][Debunking zswap and zram myths]]
+2. [[https://linuxblog.io/zswap-better-than-zram/][I was wrong! zswap IS better than zram | LinuxBlog.io]]
+*Zswap should almost always be preferred over zram, for both desktop and server usage.*
+
+A good comparison from [[https://chrisdown.name/2026/03/24/zswap-vs-zram-when-to-use-what.html][Debunking zswap and zram myths]]:
+#+begin_quote
+Both technologies trade CPU cycles for reduced I/O – and under normal operation, their overhead profiles are broadly comparable. The differences that matter are in the failure modes, and those differences are significant.
+#+end_quote
+#+begin_quote
++ zram acts as a compressed block device, essentially a virtual disk in RAM. When a process needs to swap, the kernel treats swap on zram like it does on any other block device, sending I/O requests through the block layer. Importantly, once zram fills up, it's just another storage device that's reached capacity. There's no automatic mechanism to move data elsewhere, which means cold pages that were swapped out first stay locked in fast RAM with no way to evict them. As you can imagine, that's typically very bad.
++ zswap, on the other hand, is more integrated with the memory management subsystem. It acts as a compression layer that sits in front of your disk swap. When a process needs to swap, zswap intercepts the page before it reaches disk, decides whether to compress it, and if it does, it stores it in a memory pool. When that pool fills up, zswap uses its own heuristics to evict the least recently used pages to your backing swap device, aiming to keep your hot data present in the compressed RAM cache.
+
+To put it another way, zram provides a hard capacity limit, whereas zswap provides automatic tiering between faster (that is, compressed RAM) and slower swap (that is, your disk) and gracefully degrades as memory pressure increases. For most people, graceful degradation is what you want, but let's look at how these play out in practice.
+#+end_quote
+
+Regarding zram:
++ Should always be paired with a (userspace) OOM-killer
++ Poor choice for workloads with lots of incompressible data
++ Great choice for embedded systems (ones without disk storage)
+
+Regarding zswap:
++ More integrated with the kernel's memory management decisions, letting swapping and capacity adapt to the current workload, resource constraints (e.g., from cgroups), knowing which pages are hot and cold, and so on[fn:3]
++ Zswap handles incompressible data more efficiently and gracefully[fn:4]
+
+A note about incompressible data:
++ Since both zswap and zram involve compression, their usual benefits disappear with incompresible data. And may even have downsides.
++ Zram keeps the whole chunk of data uncompressed in RAM.
++ Zswap ends up just sending those pages to disk, but with additional overhead that makes it slower than swap alone.
+
+[fn:3] Read more in the "Performance under memory pressure" section of [[https://chrisdown.name/2026/03/24/zswap-vs-zram-when-to-use-what.html][Debunking zswap and zram myths]].
+
+[fn:4] From the "Handling incompressible data" section of [[https://chrisdown.name/2026/03/24/zswap-vs-zram-when-to-use-what.html][Debunking zswap and zram myths]]. Basically: the kernel can detect incompressible pages and quickly reject them.
+
+* Other resources
+
++ [[https://linuxblog.io/free-vs-available-memory-in-linux/][Free vs. Available Memory in Linux]]
++ A discussion of both zram and zswap, with light recommendations for desktop usage: [[https://assets.theregister.com/2026/03/13/zram_vs_zswap/][RAM is getting expensive, so squeeze the most from it • The Register]]
++ Understanding swap on a deeper, more technical level: [[https://chrisdown.name/2018/01/02/in-defence-of-swap.html][In defence of swap: common misconceptions]]
++ Not all recommendations are accurate, but still a decent resource: [[https://www.bigiron.cc/guides/zswap-vs-zram-measured-under-memory-pressure?utm_source=chatgpt.com][zswap vs zram, Measured Under Memory Pressure - Big Iron]]
++ Technical details and recommendations by Red Hat: [[https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/monitoring_and_managing_system_status_and_performance/configuring-an-operating-system-to-optimize-memory-access_monitoring-and-managing-system-status-and-performance][Chapter 35. Configuring an operating system to optimize memory access | Monitoring and managing system status and performance | Red Hat Enterprise Linux | 8 | Red Hat Documentation]]

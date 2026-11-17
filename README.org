@@ -2,7 +2,11 @@
 
 This repository contains the configuration files for all machines that use Guix. All configuration files (~home-environment~ and ~operating-system~ records for all of my machines) may be found under =src/krisb/config=.
 
-All personally-packaged packages may be found under =src/krisb= (with the exception of =src/krisb/config=). (These are for my use; they are not guaranteed to be regularly updated nor high-quality (and likely won't!).)
+All personally-packaged packages and services may be found under =src/krisb= (with the exception of =src/krisb/config=). These are for my own use and learning; they are not guaranteed to be regularly updated nor high-quality.
+
+* Documentation
+
+Documents may be found under =docs/=. These documents concern aspects of my systems that deserve a prolonged discussion unsuitable for mere code comments.
 
 * Maak (Guile's =Makefile=)
 

@@ -50,27 +50,8 @@
 ;;
 ;;; Swap spaces
 ;;
-;; For an extended look into the benefits of swap spaces, even when
-;; RAM is not filled, read
-;; https://linuxblog.io/linux-performance-almost-always-add-swap-space/.
-;;
-;; To almost guarantee there is swap space for hibernation, I have a
-;; swap space for everyday paging and another dedicated for
-;; hibernation - although this swap space can be used once the other
-;; swap space is entirely full.  The kernel aims to compress the
-;; hibernation image to 2/5 the size of total RAM, so on my 16gb
-;; machine I've created this swapfile 60% of my total RAM (9.6GB).
-;; For an extended look into this 2-swapfile rationale, see
-;; https://linuxblog.io/set-up-hibernation-linux-swap/.
-;;
-;; For instructions for how to create and use swap spaces on BTRFS
-;; partitions as well as caveats, see
-;; https://btrfs.readthedocs.io/en/latest/Swapfile.html.
-;;
-;; To actually resume from hibernation with a swapfile, don't forget
-;; to set the resume and resume_offset kernel arguments (or just the
-;; former if using a swap partition).  See (guix) Swap Space for more
-;; information).
+;; For a discussion on swap, its benefits of swap, as well as
+;; recommendations, see docs/memory_management.org.
 
 (define swap-path "/swap")
 
